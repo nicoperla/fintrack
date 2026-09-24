@@ -133,3 +133,30 @@
     @apply font-sans;
   }
 }
+
+/* Data-viz tokens: categorical slots 1-2 and delta text, stepped separately for each mode
+   (validated with the dataviz palette checker against the card surfaces). */
+:root {
+  color-scheme: light;
+  --viz-income: #2a78d6;
+  --viz-expense: #eb6834;
+  --viz-other: #a3a3a3;
+  --delta-good: #006300;
+  --delta-bad: #c62f2f;
+}
+
+.dark {
+  color-scheme: dark;
+  --viz-income: #3987e5;
+  --viz-expense: #d95926;
+  --viz-other: #737373;
+  --delta-good: #2fbf2f;
+  --delta-bad: #f07272;
+}
+
+/* Theme switch: the new theme is revealed by a circular clip-path animated from the toggle. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}

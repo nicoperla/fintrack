@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth/session";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { DesktopNav, MobileNav } from "@/components/layout/app-nav";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -20,6 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <span className="text-muted-foreground hidden truncate text-sm sm:inline">
               {user.email}
             </span>
+            <ThemeToggle />
             <SignOutButton />
           </div>
         </div>

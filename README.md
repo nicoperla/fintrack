@@ -43,6 +43,8 @@ Le route in `middleware.ts` richiedono il login; il reset password usa token mon
 
 ## Funzionalità
 
+- **Dashboard** (`/dashboard`): patrimonio netto, entrate/uscite/saldo del mese (confrontati con lo stesso periodo del mese precedente), trend entrate/uscite degli ultimi 6 mesi (con vista tabella) e spese del mese per categoria principale (max 6 fette, il resto in "Altro"). Numeri con animazione count-up; grafici con Recharts.
+- **Tema chiaro/scuro** con transizione circolare (View Transitions API), che segue il sistema finché l'utente non sceglie. Animazioni disattivate con `prefers-reduced-motion`.
 - **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
 - **Categorie** (`/categories`): categorie e sottocategorie di entrata/uscita con icona e colore.
 - **Transazioni** (`/transactions`): entrate, uscite e trasferimenti con importo, data, conto, categoria, note e tag.
