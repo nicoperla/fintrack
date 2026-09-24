@@ -7,6 +7,7 @@ import {
   Ellipsis,
   Flag,
   LayoutDashboard,
+  Lightbulb,
   Tags,
   Target,
   Upload,
@@ -27,10 +28,12 @@ const NAV_ITEMS = [
   { href: "/categories", label: "Categorie", short: "Categorie", icon: Tags },
   { href: "/budgets", label: "Budget", short: "Budget", icon: Target },
   { href: "/goals", label: "Obiettivi", short: "Obiettivi", icon: Flag },
+  { href: "/insights", label: "Analisi", short: "Analisi", icon: Lightbulb },
 ];
 
 const MOBILE_PRIMARY = ["/dashboard", "/transactions", "/budgets", "/goals"];
 const MOBILE_MORE = [
+  { href: "/insights", label: "Analisi", icon: Lightbulb },
   { href: "/accounts", label: "Conti", icon: Wallet },
   { href: "/categories", label: "Categorie", icon: Tags },
   { href: "/transactions/import", label: "Importa CSV", icon: Upload },

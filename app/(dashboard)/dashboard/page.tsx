@@ -10,6 +10,8 @@ import { requireUser } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getGoals } from "@/lib/data/goals";
+import { getInsights } from "@/lib/data/analytics";
+import { InsightList } from "@/components/analytics/insight-list";
 import { BudgetsOverview, GoalsOverview } from "@/components/dashboard/planning-overview";
 
 export const metadata = { title: "Dashboard · FinTrack" };
@@ -19,10 +21,11 @@ const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFracti
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = user.name?.split(" ")[0];
-  const [data, budgets, goals] = await Promise.all([
+  const [data, budgets, goals, insights] = await Promise.all([
     getDashboardData(user.id),
     getBudgetsWithSpending(user.id),
     getGoals(user.id),
+    getInsights(user.id),
   ]);
 
   const greeting = (
@@ -117,6 +120,24 @@ export default async function DashboardPage() {
           }
         />
       </div>
+
+      {insights.length > 0 && (
+        <section aria-labelledby="dash-insights" className="grid gap-3">
+          <div className="flex items-center justify-between">
+            <h2 id="dash-insights" className="font-medium">
+              Insight del mese
+            </h2>
+            <Link
+              href="/insights"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-0.5 text-sm"
+            >
+              Analisi completa
+              <ChevronRight className="size-4" />
+            </Link>
+          </div>
+          <InsightList insights={insights} limit={3} />
+        </section>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">

@@ -47,6 +47,11 @@ Le route in `middleware.ts` richiedono il login; il reset password usa token mon
 - **Budget** (`/budgets`): limite mensile per categoria di uscita (su una categoria principale include le sottocategorie), soglia di avviso personalizzabile (default 80%), stato "in linea / vicino al limite / superato" e spesa giornaliera consigliata fino a fine mese. Salvando una spesa che porta un budget oltre la soglia compare un avviso.
 - **Obiettivi** (`/goals`): target, importo accumulato, data opzionale e contributo mensile suggerito; versamenti e prelievi (mai sotto zero, con UPDATE atomico).
 - **Import CSV** (`/transactions/import`): il file viene letto nel browser (UTF-8 o Windows-1252, separatore rilevato, preambolo della banca saltato). Mappatura colonne proposta in automatico (importo con segno oppure dare/avere, 5 formati data) e ricordata per file con le stesse colonne. Anteprima, controllo dei possibili duplicati (stessa data, importo e tipo nel conto), categorie assegnate imparando dai movimenti con la stessa descrizione. Max 2000 righe per import.
+- **Analisi** (`/insights`):
+  - _Insight automatici_ in italiano, generati da regole di confronto (nessuna AI esterna): ritmo di spesa rispetto allo stesso periodo del mese precedente, categorie in forte aumento o calo (soglie: ±20% e almeno 20 €), tasso di risparmio del mese scorso, esercente più frequente, spesa nel weekend rispetto alla settimana (esclusi pagamenti ≥ 300 €), giorni senza spese. I primi 3 compaiono anche in dashboard.
+  - _Flusso di cassa_ (Sankey) mensile: entrate → disponibile → categorie di spesa + risparmio; se le uscite superano le entrate compare "Prelevato dai risparmi". Di default mostra l'ultimo mese completo.
+  - _Patrimonio netto nel tempo_: saldo complessivo giorno per giorno (3M / 6M / 1A / tutto), attività e passività.
+  - _Calendario delle spese_: heatmap stile GitHub delle ultime 26 settimane, 4 tonalità per quartile; i giorni prima del primo movimento non entrano nelle statistiche.
 - **Tema chiaro/scuro** con transizione circolare (View Transitions API), che segue il sistema finché l'utente non sceglie. Animazioni disattivate con `prefers-reduced-motion`.
 - **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
 - **Categorie** (`/categories`): categorie e sottocategorie di entrata/uscita con icona e colore.

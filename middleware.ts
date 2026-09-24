@@ -12,6 +12,7 @@ export const config = {
     "/categories/:path*",
     "/budgets/:path*",
     "/goals/:path*",
+    "/insights/:path*",
     "/settings/:path*",
   ],
 };
