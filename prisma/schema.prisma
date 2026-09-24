@@ -36,6 +36,8 @@ model User {
   categories          Category[]
   transactions        Transaction[]
   passwordResetTokens PasswordResetToken[]
+  budgets             Budget[]
+  goals               Goal[]
 
   @@map("users")
 }
@@ -88,10 +90,46 @@ model Category {
   parent       Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children     Category[]    @relation("CategoryHierarchy")
   transactions Transaction[]
+  budget       Budget?
 
   @@index([userId])
   @@index([parentId])
   @@map("categories")
+}
+
+// A recurring monthly spending limit. A budget on a parent category also counts its subcategories.
+model Budget {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  categoryId     String   @unique @map("category_id")
+  amount         Decimal  @db.Decimal(14, 2)
+  alertThreshold Int      @default(80) @map("alert_threshold")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  userId        String    @map("user_id")
+  name          String
+  targetAmount  Decimal   @map("target_amount") @db.Decimal(14, 2)
+  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(14, 2)
+  targetDate    DateTime? @map("target_date") @db.Date
+  icon          String?
+  color         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("goals")
 }
 
 // userId is denormalized from the account so per-user queries and ownership checks need no join.

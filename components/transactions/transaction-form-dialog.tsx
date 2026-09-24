@@ -85,6 +85,7 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
       return;
     }
     toast.success(transaction ? "Movimento aggiornato" : "Movimento registrato");
+    res.warnings?.forEach((w) => toast.warning(w, { duration: 7000 }));
     onOpenChange(false);
   }
 

@@ -44,6 +44,9 @@ Le route in `middleware.ts` richiedono il login; il reset password usa token mon
 ## Funzionalità
 
 - **Dashboard** (`/dashboard`): patrimonio netto, entrate/uscite/saldo del mese (confrontati con lo stesso periodo del mese precedente), trend entrate/uscite degli ultimi 6 mesi (con vista tabella) e spese del mese per categoria principale (max 6 fette, il resto in "Altro"). Numeri con animazione count-up; grafici con Recharts.
+- **Budget** (`/budgets`): limite mensile per categoria di uscita (su una categoria principale include le sottocategorie), soglia di avviso personalizzabile (default 80%), stato "in linea / vicino al limite / superato" e spesa giornaliera consigliata fino a fine mese. Salvando una spesa che porta un budget oltre la soglia compare un avviso.
+- **Obiettivi** (`/goals`): target, importo accumulato, data opzionale e contributo mensile suggerito; versamenti e prelievi (mai sotto zero, con UPDATE atomico).
+- **Import CSV** (`/transactions/import`): il file viene letto nel browser (UTF-8 o Windows-1252, separatore rilevato, preambolo della banca saltato). Mappatura colonne proposta in automatico (importo con segno oppure dare/avere, 5 formati data) e ricordata per file con le stesse colonne. Anteprima, controllo dei possibili duplicati (stessa data, importo e tipo nel conto), categorie assegnate imparando dai movimenti con la stessa descrizione. Max 2000 righe per import.
 - **Tema chiaro/scuro** con transizione circolare (View Transitions API), che segue il sistema finché l'utente non sceglie. Animazioni disattivate con `prefers-reduced-motion`.
 - **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
 - **Categorie** (`/categories`): categorie e sottocategorie di entrata/uscita con icona e colore.

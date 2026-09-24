@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { type TransactionInput, transactionSchema } from "@/lib/validations/finance";
+import { getBudgetWarnings } from "@/lib/data/budgets";
+import { currentMonth } from "@/lib/dates";
 
 const NOT_FOUND: ActionResult = { ok: false, error: "Transazione non trovata." };
 
@@ -59,7 +61,17 @@ export async function saveTransaction(id: string | null, input: unknown): Promis
   }
 
   revalidatePath("/", "layout");
-  return { ok: true };
+
+  const { start, end } = currentMonth();
+  const affectsCurrentBudgets =
+    parsed.data.type === "EXPENSE" &&
+    parsed.data.categoryId &&
+    parsed.data.date >= start &&
+    parsed.data.date < end;
+  const warnings = affectsCurrentBudgets
+    ? await getBudgetWarnings(user.id, parsed.data.categoryId!)
+    : [];
+  return { ok: true, warnings };
 }
 
 export async function deleteTransaction(id: string): Promise<ActionResult> {

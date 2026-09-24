@@ -18,7 +18,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <DesktopNav />
           </div>
           <div className="flex min-w-0 items-center gap-2">
-            <span className="text-muted-foreground hidden truncate text-sm sm:inline">
+            <span className="text-muted-foreground hidden truncate text-sm xl:inline">
               {user.email}
             </span>
             <ThemeToggle />
@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 md:pb-10">{children}</main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 lg:pb-10">{children}</main>
       <MobileNav />
     </div>
   );

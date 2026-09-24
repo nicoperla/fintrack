@@ -8,6 +8,9 @@ import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
 import { requireUser } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/data/dashboard";
+import { getBudgetsWithSpending } from "@/lib/data/budgets";
+import { getGoals } from "@/lib/data/goals";
+import { BudgetsOverview, GoalsOverview } from "@/components/dashboard/planning-overview";
 
 export const metadata = { title: "Dashboard · FinTrack" };
 
@@ -16,7 +19,11 @@ const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFracti
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = user.name?.split(" ")[0];
-  const data = await getDashboardData(user.id);
+  const [data, budgets, goals] = await Promise.all([
+    getDashboardData(user.id),
+    getBudgetsWithSpending(user.id),
+    getGoals(user.id),
+  ]);
 
   const greeting = (
     <div>
@@ -122,6 +129,11 @@ export default async function DashboardPage() {
             range={data.monthRange}
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <BudgetsOverview budgets={budgets} />
+        <GoalsOverview goals={goals} />
       </div>
     </div>
   );

@@ -106,6 +106,49 @@ const ACCOUNTS = [
 ] as const;
 type AccountKey = (typeof ACCOUNTS)[number]["key"];
 
+// Sized against the generated spending so the demo shows every state (ok, near limit, over).
+const BUDGETS: { category: string; amount: number; alertThreshold?: number }[] = [
+  { category: "Spesa", amount: 450 },
+  { category: "Ristoranti e bar", amount: 180 },
+  { category: "Trasporti", amount: 250 },
+  { category: "Abbonamenti", amount: 100, alertThreshold: 90 },
+  { category: "Shopping", amount: 150 },
+];
+
+const GOALS: {
+  name: string;
+  target: number;
+  current: number;
+  monthsAhead: number | null;
+  icon: string;
+  color: string;
+}[] = [
+  {
+    name: "Vacanza in Giappone",
+    target: 4000,
+    current: 1350,
+    monthsAhead: 9,
+    icon: "plane",
+    color: "#ec4899",
+  },
+  {
+    name: "Fondo emergenza",
+    target: 10000,
+    current: 6200,
+    monthsAhead: null,
+    icon: "piggy-bank",
+    color: "#22c55e",
+  },
+  {
+    name: "Nuovo laptop",
+    target: 1500,
+    current: 1500,
+    monthsAhead: 2,
+    icon: "laptop",
+    color: "#6366f1",
+  },
+];
+
 type TxSeed = {
   account: AccountKey;
   category?: string;
@@ -444,8 +487,36 @@ async function main() {
     }),
   });
 
+  await prisma.budget.createMany({
+    data: BUDGETS.map((b) => {
+      const categoryId = categoryIds.get(b.category);
+      if (!categoryId) throw new Error(`Categoria sconosciuta: ${b.category}`);
+      return {
+        userId: user.id,
+        categoryId,
+        amount: money(b.amount),
+        alertThreshold: b.alertThreshold ?? 80,
+      };
+    }),
+  });
+
+  await prisma.goal.createMany({
+    data: GOALS.map((g) => ({
+      userId: user.id,
+      name: g.name,
+      targetAmount: money(g.target),
+      currentAmount: money(g.current),
+      targetDate:
+        g.monthsAhead === null
+          ? null
+          : utcDate(today.getUTCFullYear(), today.getUTCMonth() + g.monthsAhead + 1, 0),
+      icon: g.icon,
+      color: g.color,
+    })),
+  });
+
   console.log(
-    `Seed completato: ${ACCOUNTS.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni.`,
+    `Seed completato: ${ACCOUNTS.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
 }

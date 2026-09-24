@@ -13,13 +13,9 @@ import {
 } from "@/components/ui/dialog";
 import { NativeSelectOption } from "@/components/ui/native-select";
 import { FormField, FormMessage, SelectField } from "@/components/forms/form-field";
+import { ColorPicker, IconPicker } from "@/components/forms/icon-color-picker";
 import { saveCategory } from "@/app/(dashboard)/categories/actions";
-import {
-  CATEGORY_COLORS,
-  CATEGORY_ICON_NAMES,
-  CATEGORY_ICONS,
-  CategoryIcon,
-} from "@/lib/category-style";
+import { CATEGORY_COLORS, CategoryIcon } from "@/lib/category-style";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 
@@ -184,65 +180,8 @@ export function CategoryFormDialog({
             ))}
           </SelectField>
 
-          <fieldset>
-            <legend className="mb-2 text-sm font-medium">Icona</legend>
-            <div className="grid grid-cols-8 gap-1.5">
-              {CATEGORY_ICON_NAMES.map((iconName) => {
-                const Icon = CATEGORY_ICONS[iconName];
-                const selected = icon === iconName;
-                return (
-                  <label
-                    key={iconName}
-                    title={iconName}
-                    className={cn(
-                      "hover:bg-muted has-focus-visible:ring-ring/50 flex aspect-square cursor-pointer items-center justify-center rounded-md border border-transparent transition-colors has-focus-visible:ring-3",
-                      selected && "border-foreground/20 bg-muted",
-                    )}
-                    style={selected ? { color } : undefined}
-                  >
-                    <input
-                      type="radio"
-                      name="icon"
-                      value={iconName}
-                      checked={selected}
-                      onChange={() => setIcon(iconName)}
-                      className="sr-only"
-                    />
-                    <Icon className="size-4" aria-hidden />
-                    <span className="sr-only">{iconName}</span>
-                  </label>
-                );
-              })}
-            </div>
-            {errors?.icon && <p className="text-destructive mt-2 text-sm">{errors.icon[0]}</p>}
-          </fieldset>
-
-          <fieldset>
-            <legend className="mb-2 text-sm font-medium">Colore</legend>
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_COLORS.map((c) => (
-                <label
-                  key={c}
-                  className={cn(
-                    "has-focus-visible:ring-ring/50 flex size-7 cursor-pointer items-center justify-center rounded-full ring-offset-2 ring-offset-(--popover) has-focus-visible:ring-3",
-                    color === c && "ring-foreground/60 ring-2",
-                  )}
-                  style={{ backgroundColor: c }}
-                >
-                  <input
-                    type="radio"
-                    name="color"
-                    value={c}
-                    checked={color === c}
-                    onChange={() => setColor(c)}
-                    className="sr-only"
-                  />
-                  <span className="sr-only">{c}</span>
-                </label>
-              ))}
-            </div>
-            {errors?.color && <p className="text-destructive mt-2 text-sm">{errors.color[0]}</p>}
-          </fieldset>
+          <IconPicker value={icon} color={color} onChange={setIcon} error={errors?.icon?.[0]} />
+          <ColorPicker value={color} onChange={setColor} error={errors?.color?.[0]} />
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>

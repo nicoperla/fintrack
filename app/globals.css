@@ -160,3 +160,24 @@
   animation: none;
   mix-blend-mode: normal;
 }
+
+/* Budget meters: the fill carries severity; the track is a lighter step of the same hue. */
+:root {
+  --meter-ok: #2a78d6;
+  --meter-ok-track: #cde2fb;
+  --meter-warn: #eda100;
+  --meter-warn-track: #fdecc2;
+  --warn-text: #8a5a00;
+  --meter-over: #d03b3b;
+  --meter-over-track: #f6d4d4;
+}
+
+.dark {
+  --meter-ok: #3987e5;
+  --meter-ok-track: #173a66;
+  --meter-warn: #fab219;
+  --meter-warn-track: #4a3a12;
+  --warn-text: #fab219;
+  --meter-over: #e25555;
+  --meter-over-track: #4d2020;
+}
