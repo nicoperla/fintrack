@@ -31,6 +31,9 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction?: TransactionDTO | null;
+  /** Initial values for a new transaction (e.g. from quick entry); saving creates a new one. */
+  prefill?: TransactionDTO | null;
+  onSaved?: () => void;
   accounts: AccountOption[];
   categories: CategoryOption[];
   onDelete?: (transaction: TransactionDTO) => void;
@@ -47,9 +50,18 @@ export function TransactionFormDialog(props: Props) {
   );
 }
 
-function TransactionForm({ onOpenChange, transaction, accounts, categories, onDelete }: Props) {
-  const [type, setType] = useState<TxType>(transaction?.type ?? "EXPENSE");
-  const [categoryId, setCategoryId] = useState(transaction?.category?.id ?? "");
+function TransactionForm({
+  onOpenChange,
+  transaction,
+  prefill,
+  accounts,
+  categories,
+  onDelete,
+  onSaved,
+}: Props) {
+  const initial = transaction ?? prefill;
+  const [type, setType] = useState<TxType>(initial?.type ?? "EXPENSE");
+  const [categoryId, setCategoryId] = useState(initial?.category?.id ?? "");
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -86,13 +98,14 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
     }
     toast.success(transaction ? "Movimento aggiornato" : "Movimento registrato");
     res.warnings?.forEach((w) => toast.warning(w, { duration: 7000 }));
+    onSaved?.();
     onOpenChange(false);
   }
 
   const errors = result?.fieldErrors;
-  const defaultAccount = transaction?.account.id ?? accounts[0]?.id ?? "";
+  const defaultAccount = initial?.account.id ?? accounts[0]?.id ?? "";
   const defaultDestination =
-    transaction?.transferAccount?.id ?? accounts.find((a) => a.id !== defaultAccount)?.id ?? "";
+    initial?.transferAccount?.id ?? accounts.find((a) => a.id !== defaultAccount)?.id ?? "";
 
   return (
     <>
@@ -136,7 +149,7 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
             name="amount"
             inputMode="decimal"
             placeholder="0,00"
-            defaultValue={transaction ? transaction.amount.replace(".", ",") : ""}
+            defaultValue={initial ? initial.amount.replace(".", ",") : ""}
             autoFocus={!transaction}
             className="text-lg font-medium tabular-nums"
             errors={errors?.amount}
@@ -145,7 +158,7 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
             label="Data"
             name="date"
             type="date"
-            defaultValue={transaction?.date ?? todayDateInputValue()}
+            defaultValue={initial?.date ?? todayDateInputValue()}
             errors={errors?.date}
           />
         </div>
@@ -154,7 +167,7 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
           label={type === "TRANSFER" ? "Descrizione (facoltativa)" : "Descrizione"}
           name="description"
           placeholder={type === "TRANSFER" ? "Trasferimento" : "Es. Spesa Esselunga"}
-          defaultValue={transaction?.description}
+          defaultValue={initial?.description}
           maxLength={120}
           errors={errors?.description}
         />
@@ -215,7 +228,7 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
           label="Tag"
           name="tags"
           placeholder="Es. vacanza, lavoro"
-          defaultValue={transaction?.tags.join(", ")}
+          defaultValue={initial?.tags.join(", ")}
           hint="Separati da virgola."
           errors={errors?.tags}
         />
@@ -223,7 +236,7 @@ function TransactionForm({ onOpenChange, transaction, accounts, categories, onDe
         <TextareaField
           label="Note"
           name="notes"
-          defaultValue={transaction?.notes ?? ""}
+          defaultValue={initial?.notes ?? ""}
           maxLength={500}
           rows={2}
           errors={errors?.notes}

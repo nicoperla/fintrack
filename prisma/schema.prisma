@@ -38,6 +38,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   budgets             Budget[]
   goals               Goal[]
+  debts               Debt[]
 
   @@map("users")
 }
@@ -159,4 +160,21 @@ model Transaction {
   @@index([transferAccountId])
   @@index([categoryId])
   @@map("transactions")
+}
+
+// A loan or revolving balance for the payoff planner (snowball / avalanche).
+model Debt {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  name           String
+  balance        Decimal  @db.Decimal(14, 2)
+  interestRate   Decimal  @map("interest_rate") @db.Decimal(5, 2)
+  minimumPayment Decimal  @map("minimum_payment") @db.Decimal(14, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("debts")
 }

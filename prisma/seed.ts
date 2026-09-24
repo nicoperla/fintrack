@@ -515,8 +515,24 @@ async function main() {
     })),
   });
 
+  // The smallest debt isn't the most expensive one, so snowball and avalanche pick different orders.
+  const DEBTS = [
+    { name: "Prestito auto", balance: 6200, rate: 6.9, minimum: 190 },
+    { name: "Carta revolving", balance: 1450, rate: 17.9, minimum: 55 },
+    { name: "Finanziamento divano", balance: 900, rate: 9.9, minimum: 60 },
+  ];
+  await prisma.debt.createMany({
+    data: DEBTS.map((d) => ({
+      userId: user.id,
+      name: d.name,
+      balance: money(d.balance),
+      interestRate: money(d.rate),
+      minimumPayment: money(d.minimum),
+    })),
+  });
+
   console.log(
-    `Seed completato: ${ACCOUNTS.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi.`,
+    `Seed completato: ${ACCOUNTS.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
 }

@@ -6,6 +6,7 @@ import { buildCashFlow, buildHeatmap, netWorthSeries, weekdayIndex } from "@/lib
 import { generateInsights, type CategoryTotal } from "@/lib/finance/insights";
 import { formatMonth, formatMonthYear, todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
+import { getRecurring } from "@/lib/data/intelligence";
 
 const DAY_MS = 86_400_000;
 
@@ -174,36 +175,46 @@ export async function getInsights(userId: string) {
   const prevSameEnd = utcDate(today.year, today.month - 1, Math.min(today.day, prevDays) + 1);
   const lifestyleStart = new Date(today.date.getTime() - LIFESTYLE_WINDOW_DAYS * DAY_MS);
 
-  const [categories, now, previous, lastIncome, lastExpense, merchants, lifestyle, spendDays] =
-    await Promise.all([
-      categoryInfo(userId),
-      sumsByCategory(userId, "EXPENSE", monthStart, tomorrow),
-      sumsByCategory(userId, "EXPENSE", prevStart, prevSameEnd),
-      sumsByCategory(userId, "INCOME", prevStart, monthStart),
-      sumsByCategory(userId, "EXPENSE", prevStart, monthStart),
-      prisma.transaction.groupBy({
-        by: ["description"],
-        where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
-        _count: { _all: true },
-        _sum: { amount: true },
-        orderBy: { _count: { description: "desc" } },
-        take: 1,
-      }),
-      prisma.transaction.groupBy({
-        by: ["date"],
-        where: {
-          userId,
-          type: "EXPENSE",
-          amount: { lt: LIFESTYLE_MAX_AMOUNT },
-          date: { gte: lifestyleStart, lt: today.date },
-        },
-        _sum: { amount: true },
-      }),
-      prisma.transaction.groupBy({
-        by: ["date"],
-        where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
-      }),
-    ]);
+  const [
+    categories,
+    now,
+    previous,
+    lastIncome,
+    lastExpense,
+    merchants,
+    lifestyle,
+    spendDays,
+    recurring,
+  ] = await Promise.all([
+    categoryInfo(userId),
+    sumsByCategory(userId, "EXPENSE", monthStart, tomorrow),
+    sumsByCategory(userId, "EXPENSE", prevStart, prevSameEnd),
+    sumsByCategory(userId, "INCOME", prevStart, monthStart),
+    sumsByCategory(userId, "EXPENSE", prevStart, monthStart),
+    prisma.transaction.groupBy({
+      by: ["description"],
+      where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
+      _count: { _all: true },
+      _sum: { amount: true },
+      orderBy: { _count: { description: "desc" } },
+      take: 1,
+    }),
+    prisma.transaction.groupBy({
+      by: ["date"],
+      where: {
+        userId,
+        type: "EXPENSE",
+        amount: { lt: LIFESTYLE_MAX_AMOUNT },
+        date: { gte: lifestyleStart, lt: today.date },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["date"],
+      where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
+    }),
+    getRecurring(userId),
+  ]);
 
   const byId = new Map(categories.map((c) => [c.id, c]));
   const rollUp = (sums: { categoryId: string | null; amount: number }[]): CategoryTotal[] => {
@@ -263,5 +274,8 @@ export async function getInsights(userId: string) {
     weekdayAverage: weekdayDays ? weekday / weekdayDays : 0,
     weekendAverage: weekendDays ? weekend / weekendDays : 0,
     noSpendDays: today.day - spendDays.length,
+    priceIncreases: recurring
+      .filter((r) => r.type === "EXPENSE" && r.active && r.priceChange)
+      .map((r) => ({ name: r.name, ...r.priceChange! })),
   });
 }

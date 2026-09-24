@@ -12,6 +12,11 @@ import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getGoals } from "@/lib/data/goals";
 import { getInsights } from "@/lib/data/analytics";
 import { InsightList } from "@/components/analytics/insight-list";
+import { QuickEntry } from "@/components/quick-entry/quick-entry";
+import { getQuickEntryContext } from "@/lib/data/intelligence";
+import { getAccountOptions } from "@/lib/data/accounts";
+import { getCategoryTree } from "@/lib/data/categories";
+import { toCategoryOptions } from "@/lib/dto";
 import { BudgetsOverview, GoalsOverview } from "@/components/dashboard/planning-overview";
 
 export const metadata = { title: "Dashboard · FinTrack" };
@@ -21,11 +26,14 @@ const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFracti
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = user.name?.split(" ")[0];
-  const [data, budgets, goals, insights] = await Promise.all([
+  const [data, budgets, goals, insights, quickContext, accountOptions, tree] = await Promise.all([
     getDashboardData(user.id),
     getBudgetsWithSpending(user.id),
     getGoals(user.id),
     getInsights(user.id),
+    getQuickEntryContext(user.id),
+    getAccountOptions(user.id),
+    getCategoryTree(user.id),
   ]);
 
   const greeting = (
@@ -62,6 +70,12 @@ export default async function DashboardPage() {
   return (
     <div className="grid grid-cols-1 gap-6">
       {greeting}
+
+      <QuickEntry
+        context={quickContext}
+        accounts={accountOptions}
+        categories={toCategoryOptions([...tree.expense, ...tree.income])}
+      />
 
       <section
         className="bg-card relative overflow-hidden rounded-2xl border p-6"

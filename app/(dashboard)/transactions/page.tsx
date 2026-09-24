@@ -13,6 +13,8 @@ import { listTransactions } from "@/lib/data/transactions";
 import { toCategoryOptions, toTransactionDTO } from "@/lib/dto";
 import { formatCurrency } from "@/lib/format";
 import { transactionFiltersSchema } from "@/lib/validations/finance";
+import { QuickEntry } from "@/components/quick-entry/quick-entry";
+import { getQuickEntryContext } from "@/lib/data/intelligence";
 
 export const metadata = { title: "Transazioni · FinTrack" };
 
@@ -22,10 +24,11 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
   const user = await requireUser();
   const filters = transactionFiltersSchema.parse(searchParams);
 
-  const [list, accounts, tree] = await Promise.all([
+  const [list, accounts, tree, quickContext] = await Promise.all([
     listTransactions(user.id, filters),
     getAccountOptions(user.id),
     getCategoryTree(user.id),
+    getQuickEntryContext(user.id),
   ]);
   const categories = toCategoryOptions([...tree.expense, ...tree.income]);
   const hasFilters = Object.entries(filters).some(([key, v]) => key !== "page" && v !== undefined);
@@ -60,6 +63,8 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           <NewTransactionButton accounts={accounts} categories={categories} />
         </div>
       </div>
+
+      <QuickEntry context={quickContext} accounts={accounts} categories={categories} />
 
       <TransactionFilters
         params={searchParams}

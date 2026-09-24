@@ -9,7 +9,8 @@ export type InsightKind =
   | "savings"
   | "merchant"
   | "weekend"
-  | "no-spend";
+  | "no-spend"
+  | "price-up";
 
 export type Insight = {
   id: string;
@@ -42,12 +43,26 @@ export type InsightInput = {
   weekdayAverage: number;
   weekendAverage: number;
   noSpendDays: number;
+  /** Active subscriptions whose latest charge went up. */
+  priceIncreases?: { name: string; from: number; to: number; pct: number }[];
 };
 
 const MIN_CHANGE_PCT = 20;
 const MIN_CHANGE_EUR = 20;
 
 const pct = (n: number) => `${Math.round(Math.abs(n))}%`;
+
+/** Numbers read with a leading vowel (uno, otto, undici, ottanta…) take the elided article. */
+const startsWithVowelSound = (n: number) => {
+  const r = Math.round(Math.abs(n));
+  return r === 1 || r === 11 || String(r).startsWith("8");
+};
+/** "il 23%" / "l'11%" */
+export const ilPct = (n: number) => (startsWithVowelSound(n) ? `l'${pct(n)}` : `il ${pct(n)}`);
+/** "al 23%" / "all'11%" */
+export const alPct = (n: number) => (startsWithVowelSound(n) ? `all'${pct(n)}` : `al ${pct(n)}`);
+/** "del 23%" / "dell'11%" */
+export const delPct = (n: number) => (startsWithVowelSound(n) ? `dell'${pct(n)}` : `del ${pct(n)}`);
 
 /** Italian "a"/"ad" before a month name: "ad agosto", "a settembre". */
 export const inMonth = (month: string) => (/^a/i.test(month) ? `ad ${month}` : `a ${month}`);
@@ -66,7 +81,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       text:
         Math.abs(change) < 5
           ? `${base}, in linea con lo stesso periodo di ${input.previousMonthName}.`
-          : `${base}, il ${pct(change)} in ${change > 0 ? "più" : "meno"} ${since}.`,
+          : `${base}, ${ilPct(change)} in ${change > 0 ? "più" : "meno"} ${since}.`,
       score: 1000,
     });
   }
@@ -105,7 +120,7 @@ export function generateInsights(input: InsightInput): Insight[] {
             id: `up-${c.id}`,
             kind: "category-up",
             tone: "negative",
-            text: `In ${c.name} hai speso il ${pct((c.delta / c.previous) * 100)} in più ${since} (+${formatCurrency(c.delta)}).`,
+            text: `In ${c.name} hai speso ${ilPct((c.delta / c.previous) * 100)} in più ${since} (+${formatCurrency(c.delta)}).`,
             category,
             score: 700 + c.delta,
           },
@@ -125,7 +140,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       id: `down-${decrease.id}`,
       kind: "category-down",
       tone: "positive",
-      text: `Bene su ${decrease.name}: il ${pct((decrease.delta / decrease.previous) * 100)} in meno ${since} (${formatCurrency(-decrease.delta)} risparmiati).`,
+      text: `Bene su ${decrease.name}: ${ilPct((decrease.delta / decrease.previous) * 100)} in meno ${since} (${formatCurrency(-decrease.delta)} risparmiati).`,
       category: { name: decrease.name, icon: decrease.icon, color: decrease.color },
       score: 600 - decrease.delta,
     });
@@ -142,7 +157,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       text:
         saved < 0
           ? `${capitalize(inMonth(name))} hai speso ${formatCurrency(-saved)} più di quanto è entrato.`
-          : `${capitalize(inMonth(name))} hai messo da parte il ${pct(rate)} delle entrate (${formatCurrency(saved)})${rate >= 20 ? ": ottimo lavoro." : "."}`,
+          : `${capitalize(inMonth(name))} hai messo da parte ${ilPct(rate)} delle entrate (${formatCurrency(saved)})${rate >= 20 ? ": ottimo lavoro." : "."}`,
       score: 500,
     });
   }
@@ -164,7 +179,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       id: "weekend",
       kind: "weekend",
       tone: "neutral",
-      text: `Nel weekend spendi in media ${formatCurrency(input.weekendAverage)} al giorno, il ${pct(extra)} in più che in settimana (${formatCurrency(input.weekdayAverage)}).`,
+      text: `Nel weekend spendi in media ${formatCurrency(input.weekendAverage)} al giorno, ${ilPct(extra)} in più che in settimana (${formatCurrency(input.weekdayAverage)}).`,
       score: 100,
     });
   }
@@ -176,6 +191,16 @@ export function generateInsights(input: InsightInput): Insight[] {
       tone: "positive",
       text: `${capitalize(inMonth(input.monthName))} hai già ${input.noSpendDays} giorni senza nessuna spesa.`,
       score: 80,
+    });
+  }
+
+  for (const p of input.priceIncreases ?? []) {
+    insights.push({
+      id: `price-${p.name}`,
+      kind: "price-up",
+      tone: "negative",
+      text: `${p.name} è aumentato ${delPct(p.pct)}: da ${formatCurrency(p.from)} a ${formatCurrency(p.to)}. Vale ancora la pena?`,
+      score: 900 + p.pct,
     });
   }
 

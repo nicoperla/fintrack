@@ -4,14 +4,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeftRight,
+  Calculator,
+  ChevronDown,
   Ellipsis,
   Flag,
+  Landmark,
   LayoutDashboard,
   Lightbulb,
+  Repeat,
   Tags,
   Target,
   Upload,
   Wallet,
+  type LucideIcon,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,46 +26,82 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-const NAV_ITEMS = [
+type NavItem = { href: string; label: string; icon: LucideIcon; short?: string };
+
+const PRIMARY: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", short: "Home", icon: LayoutDashboard },
   { href: "/transactions", label: "Transazioni", short: "Movimenti", icon: ArrowLeftRight },
-  { href: "/accounts", label: "Conti", short: "Conti", icon: Wallet },
-  { href: "/categories", label: "Categorie", short: "Categorie", icon: Tags },
-  { href: "/budgets", label: "Budget", short: "Budget", icon: Target },
-  { href: "/goals", label: "Obiettivi", short: "Obiettivi", icon: Flag },
-  { href: "/insights", label: "Analisi", short: "Analisi", icon: Lightbulb },
+  { href: "/accounts", label: "Conti", icon: Wallet },
+  { href: "/budgets", label: "Budget", icon: Target },
+  { href: "/goals", label: "Obiettivi", icon: Flag },
+  { href: "/insights", label: "Analisi", icon: Lightbulb },
 ];
 
-const MOBILE_PRIMARY = ["/dashboard", "/transactions", "/budgets", "/goals"];
-const MOBILE_MORE = [
-  { href: "/insights", label: "Analisi", icon: Lightbulb },
-  { href: "/accounts", label: "Conti", icon: Wallet },
+const TOOLS: NavItem[] = [
+  { href: "/recurring", label: "Abbonamenti", icon: Repeat },
+  { href: "/simulator", label: "Simulatore", icon: Calculator },
+  { href: "/debts", label: "Piano debiti", icon: Landmark },
   { href: "/categories", label: "Categorie", icon: Tags },
   { href: "/transactions/import", label: "Importa CSV", icon: Upload },
 ];
 
+const MOBILE_BAR = ["/dashboard", "/transactions", "/budgets", "/goals"];
+const MOBILE_MORE = [...PRIMARY.filter((item) => !MOBILE_BAR.includes(item.href)), ...TOOLS];
+
 function useIsActive() {
   const pathname = usePathname();
-  return (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  return (href: string) => {
+    // "/transactions/import" belongs to the tools, not to "Transazioni".
+    if (href === "/transactions" && pathname.startsWith("/transactions/import")) return false;
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+}
+
+function MenuItems({ items }: { items: NavItem[] }) {
+  const router = useRouter();
+  const isActive = useIsActive();
+  return items.map(({ href, label, icon: Icon }) => (
+    <DropdownMenuItem
+      key={href}
+      onClick={() => router.push(href)}
+      className={cn(isActive(href) && "font-medium")}
+    >
+      <Icon />
+      {label}
+    </DropdownMenuItem>
+  ));
 }
 
 export function DesktopNav() {
   const isActive = useIsActive();
+  const toolsActive = TOOLS.some((item) => isActive(item.href));
+  const linkClass = (active: boolean) =>
+    cn(
+      "text-muted-foreground hover:text-foreground hover:bg-muted flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors",
+      active && "text-foreground bg-muted font-medium",
+    );
+
   return (
     <nav className="hidden items-center gap-1 lg:flex">
-      {NAV_ITEMS.map((item) => (
+      {PRIMARY.map((item) => (
         <Link
           key={item.href}
           href={item.href}
           aria-current={isActive(item.href) ? "page" : undefined}
-          className={cn(
-            "text-muted-foreground hover:text-foreground hover:bg-muted rounded-md px-3 py-1.5 text-sm transition-colors",
-            isActive(item.href) && "text-foreground bg-muted font-medium",
-          )}
+          className={linkClass(isActive(item.href))}
         >
           {item.label}
         </Link>
       ))}
+      <DropdownMenu>
+        <DropdownMenuTrigger className={linkClass(toolsActive)}>
+          Strumenti
+          <ChevronDown className="size-3.5" aria-hidden />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-48">
+          <MenuItems items={TOOLS} />
+        </DropdownMenuContent>
+      </DropdownMenu>
     </nav>
   );
 }
@@ -73,41 +114,31 @@ const mobileItemClass = (active: boolean) =>
 
 export function MobileNav() {
   const isActive = useIsActive();
-  const router = useRouter();
   const moreActive = MOBILE_MORE.some((item) => isActive(item.href));
 
   return (
     <nav className="bg-background/95 supports-backdrop-filter:bg-background/80 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
       <div className="grid grid-cols-5">
-        {NAV_ITEMS.filter((item) => MOBILE_PRIMARY.includes(item.href)).map(
-          ({ href, short, icon: Icon }) => {
-            // "/transactions/import" lives under "Altro", not under "Movimenti".
-            const active = isActive(href) && !(href === "/transactions" && moreActive);
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-current={active ? "page" : undefined}
-                className={mobileItemClass(active)}
-              >
-                <Icon className="size-5" />
-                {short}
-              </Link>
-            );
-          },
+        {PRIMARY.filter((item) => MOBILE_BAR.includes(item.href)).map(
+          ({ href, label, short, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={isActive(href) ? "page" : undefined}
+              className={mobileItemClass(isActive(href))}
+            >
+              <Icon className="size-5" />
+              {short ?? label}
+            </Link>
+          ),
         )}
         <DropdownMenu>
           <DropdownMenuTrigger className={mobileItemClass(moreActive)}>
             <Ellipsis className="size-5" />
             Altro
           </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="end" className="w-44">
-            {MOBILE_MORE.map(({ href, label, icon: Icon }) => (
-              <DropdownMenuItem key={href} onClick={() => router.push(href)}>
-                <Icon />
-                {label}
-              </DropdownMenuItem>
-            ))}
+          <DropdownMenuContent side="top" align="end" className="w-48">
+            <MenuItems items={MOBILE_MORE} />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateInsights, inMonth, type InsightInput } from "./insights";
+import { delPct, generateInsights, ilPct, inMonth, type InsightInput } from "./insights";
 
 // Intl puts a non-breaking space before "€"; compare with plain spaces.
 const plain = (s: string | undefined) => s?.replace(/ /g, " ");
@@ -25,6 +25,22 @@ describe("inMonth", () => {
     expect(inMonth("agosto")).toBe("ad agosto");
     expect(inMonth("aprile")).toBe("ad aprile");
     expect(inMonth("settembre")).toBe("a settembre");
+  });
+});
+
+describe("articles before percentages", () => {
+  it("elides before vowel sounds (uno, otto, undici, ottanta…)", () => {
+    expect([1, 8, 11, 23, 80, 85, 100].map(ilPct)).toEqual([
+      "l'1%",
+      "l'8%",
+      "l'11%",
+      "il 23%",
+      "l'80%",
+      "l'85%",
+      "il 100%",
+    ]);
+    expect(delPct(11)).toBe("dell'11%");
+    expect(delPct(23)).toBe("del 23%");
   });
 });
 
@@ -95,5 +111,19 @@ describe("generateInsights", () => {
       noSpendDays: 4,
     });
     expect(insights.map((i) => i.kind)).toEqual(["category-up", "merchant", "weekend", "no-spend"]);
+  });
+
+  it("warns about subscription price increases first after the pace", () => {
+    const insights = generateInsights({
+      ...base,
+      spentNow: 100,
+      spentPrevious: 100,
+      priceIncreases: [{ name: "Netflix", from: 13.99, to: 15.49, pct: 10.7 }],
+      noSpendDays: 5,
+    });
+    expect(insights.map((i) => i.kind)).toEqual(["pace", "price-up", "no-spend"]);
+    expect(plain(insights[1].text)).toBe(
+      "Netflix è aumentato dell'11%: da 13,99 € a 15,49 €. Vale ancora la pena?",
+    );
   });
 });

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db/prisma";
 import { budgetUsage } from "@/lib/finance/planning";
 import { currentMonth } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
+import { alPct } from "@/lib/finance/insights";
 
 export async function getBudgetsWithSpending(userId: string) {
   const { start, end } = currentMonth();
@@ -69,6 +70,6 @@ export async function getBudgetWarnings(userId: string, categoryId: string) {
     .map((b) =>
       b.status === "over"
         ? `Budget "${b.categoryName}" superato: ${formatCurrency(b.spent)} su ${formatCurrency(b.amount)}`
-        : `Budget "${b.categoryName}" al ${Math.round(b.ratio * 100)}%: restano ${formatCurrency(b.remaining)}`,
+        : `Budget "${b.categoryName}" ${alPct(b.ratio * 100)}: restano ${formatCurrency(b.remaining)}`,
     );
 }

@@ -39,7 +39,7 @@ Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
 ## Autenticazione
 
 NextAuth v4 con provider email/password (bcrypt, 12 round) e sessioni JWT di 30 giorni.
-Le route in `middleware.ts` richiedono il login; il reset password usa token monouso validi 1 ora, salvati solo come hash SHA-256.
+Il middleware richiede il login su tutte le pagine tranne quelle di autenticazione (le nuove pagine sono protette di default); il reset password usa token monouso validi 1 ora, salvati solo come hash SHA-256.
 
 ## Funzionalità
 
@@ -52,6 +52,10 @@ Le route in `middleware.ts` richiedono il login; il reset password usa token mon
   - _Flusso di cassa_ (Sankey) mensile: entrate → disponibile → categorie di spesa + risparmio; se le uscite superano le entrate compare "Prelevato dai risparmi". Di default mostra l'ultimo mese completo.
   - _Patrimonio netto nel tempo_: saldo complessivo giorno per giorno (3M / 6M / 1A / tutto), attività e passività.
   - _Calendario delle spese_: heatmap stile GitHub delle ultime 26 settimane, 4 tonalità per quartile; i giorni prima del primo movimento non entrano nelle statistiche.
+- **Inserimento rapido** (dashboard e transazioni, tasto `/`): frasi come «35 benzina ieri», «caffè 1,50 contanti», «pizza 24 venerdì #amici», «stipendio 2350». Riconosce importo (anche `1.234,56`, `€35`, `+50`), date relative ed esplicite («ieri», «l'altro ieri», «3 giorni fa», «lunedì», «12/09», «5 agosto»), conto («contanti», «carta» o il nome), tag e categoria (descrizioni già usate, nomi delle categorie, dizionario di parole chiave). Anteprima dal vivo; «Modifica» apre il form completo precompilato. Parser in `lib/quick-entry/parse.ts`.
+- **Abbonamenti e ricorrenti** (`/recurring`): rilevati in automatico da almeno 3 movimenti con la stessa descrizione normalizzata, cadenza regolare (settimanale → annuale) e importo stabile (le bollette sono ammesse come "importo variabile"). Mostra costo mensile/annuo, prossimi addebiti, aumenti di prezzo (che diventano anche un insight) e quelli forse disdetti.
+- **Simulatore** (`/simulator`): proiezione con capitalizzazione mensile a partire dal patrimonio attuale; confronta "continuando così" con un risparmio extra e mostra quando raggiungeresti i tuoi obiettivi.
+- **Piano debiti** (`/debts`): debiti con residuo, TAN e rata minima; simulazione mese per mese con strategia valanga (tasso più alto prima) e palla di neve (saldo più piccolo prima), data di estinzione, interessi totali, ordine di chiusura e grafico del residuo. Le rate dei debiti chiusi passano al successivo.
 - **Tema chiaro/scuro** con transizione circolare (View Transitions API), che segue il sistema finché l'utente non sceglie. Animazioni disattivate con `prefers-reduced-motion`.
 - **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
 - **Categorie** (`/categories`): categorie e sottocategorie di entrata/uscita con icona e colore.

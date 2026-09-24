@@ -1,4 +1,12 @@
-import { CalendarDays, Gauge, PiggyBank, Sparkles, Store, type LucideIcon } from "lucide-react";
+import {
+  CalendarDays,
+  Gauge,
+  PiggyBank,
+  Sparkles,
+  Store,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import { CategoryIcon } from "@/lib/category-style";
 import type { Insight, InsightKind, InsightTone } from "@/lib/finance/insights";
 import { cn } from "@/lib/utils";
@@ -9,6 +17,7 @@ const KIND_ICONS: Partial<Record<InsightKind, LucideIcon>> = {
   merchant: Store,
   weekend: CalendarDays,
   "no-spend": Sparkles,
+  "price-up": TrendingUp,
 };
 
 const TONE: Record<InsightTone, { label: string; className: string }> = {
