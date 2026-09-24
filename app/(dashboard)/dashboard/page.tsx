@@ -8,7 +8,7 @@ export default async function DashboardPage() {
   const firstName = user.name?.split(" ")[0];
 
   return (
-    <div className="grid gap-8">
+    <div className="grid grid-cols-1 gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           Ciao{firstName ? `, ${firstName}` : ""}

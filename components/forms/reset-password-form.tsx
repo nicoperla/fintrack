@@ -4,7 +4,8 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { FormField, FormMessage } from "@/components/forms/form-field";
-import { resetPassword, type ActionResult } from "@/app/(auth)/actions";
+import { resetPassword } from "@/app/(auth)/actions";
+import type { ActionResult } from "@/lib/action-result";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const router = useRouter();

@@ -108,7 +108,8 @@ type AccountKey = (typeof ACCOUNTS)[number]["key"];
 
 type TxSeed = {
   account: AccountKey;
-  category: string;
+  category?: string;
+  transferTo?: AccountKey;
   type: TransactionType;
   amount: number;
   date: Date;
@@ -139,7 +140,7 @@ function buildTransactions(today: Date): TxSeed[] {
       account: "checking",
       category: "Stipendio",
       type: "INCOME",
-      amount: 2150,
+      amount: 2350,
       date: d(27),
       description: "Stipendio Acme S.r.l.",
     });
@@ -345,6 +346,37 @@ function buildTransactions(today: Date): TxSeed[] {
     notes: "Riparazione rubinetto cucina",
   });
 
+  // Transfers: the checking account pays off last month's credit card statement on the 5th,
+  // and moves a fixed amount to savings after payday.
+  const categorized = [...txs];
+  for (let m = MONTHS_OF_HISTORY; m >= 0; m--) {
+    const year = today.getUTCFullYear();
+    const month = today.getUTCMonth() - m;
+    const prevStart = utcDate(year, month - 1, 1);
+    const monthStart = utcDate(year, month, 1);
+    const cardBalance = categorized
+      .filter((t) => t.account === "card" && t.date >= prevStart && t.date < monthStart)
+      .reduce((sum, t) => sum + (t.type === "INCOME" ? -t.amount : t.amount), 0);
+    if (cardBalance > 0) {
+      add({
+        account: "checking",
+        transferTo: "card",
+        type: "TRANSFER",
+        amount: Math.round(cardBalance * 100) / 100,
+        date: utcDate(year, month, 5),
+        description: "Saldo estratto conto carta",
+      });
+    }
+    add({
+      account: "checking",
+      transferTo: "savings",
+      type: "TRANSFER",
+      amount: 200,
+      date: utcDate(year, month, 28),
+      description: "Accantonamento mensile",
+    });
+  }
+
   return txs.sort((a, b) => a.date.getTime() - b.date.getTime());
 }
 
@@ -395,11 +427,12 @@ async function main() {
   const transactions = buildTransactions(today);
   await prisma.transaction.createMany({
     data: transactions.map((tx) => {
-      const categoryId = categoryIds.get(tx.category);
-      if (!categoryId) throw new Error(`Categoria sconosciuta: ${tx.category}`);
+      const categoryId = tx.category ? categoryIds.get(tx.category) : null;
+      if (tx.category && !categoryId) throw new Error(`Categoria sconosciuta: ${tx.category}`);
       return {
         userId: user.id,
         accountId: accountIds[tx.account],
+        transferAccountId: tx.transferTo ? accountIds[tx.transferTo] : null,
         categoryId,
         type: tx.type,
         amount: money(tx.amount),

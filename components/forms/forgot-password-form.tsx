@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { FormField, FormMessage } from "@/components/forms/form-field";
-import { requestPasswordReset, type ActionResult } from "@/app/(auth)/actions";
+import { requestPasswordReset } from "@/app/(auth)/actions";
+import type { ActionResult } from "@/lib/action-result";
 
 export function ForgotPasswordForm() {
   const [result, setResult] = useState<ActionResult | null>(null);

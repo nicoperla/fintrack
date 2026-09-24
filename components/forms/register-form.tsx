@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { FormField, FormMessage } from "@/components/forms/form-field";
-import { registerUser, type ActionResult } from "@/app/(auth)/actions";
+import { registerUser } from "@/app/(auth)/actions";
+import type { ActionResult } from "@/lib/action-result";
 
 export function RegisterForm() {
   const router = useRouter();

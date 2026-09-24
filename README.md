@@ -41,6 +41,16 @@ Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
 NextAuth v4 con provider email/password (bcrypt, 12 round) e sessioni JWT di 30 giorni.
 Le route in `middleware.ts` richiedono il login; il reset password usa token monouso validi 1 ora, salvati solo come hash SHA-256.
 
+## Funzionalità
+
+- **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
+- **Categorie** (`/categories`): categorie e sottocategorie di entrata/uscita con icona e colore.
+- **Transazioni** (`/transactions`): entrate, uscite e trasferimenti con importo, data, conto, categoria, note e tag.
+  Ricerca testuale (descrizione, note, tag) e filtri per tipo, conto, categoria (include le sottocategorie), date e importo; paginazione da 25.
+  I filtri stanno nell'URL, quindi una ricerca si può salvare o condividere.
+
+Gli importi si possono scrivere in formato italiano (`1.234,56`) o con il punto decimale (`1234.56`).
+
 ## Script disponibili
 
 | Script                    | Descrizione                       |
@@ -49,6 +59,7 @@ Le route in `middleware.ts` richiedono il login; il reset password usa token mon
 | `npm run build`           | Build di produzione               |
 | `npm run start`           | Avvia il build di produzione      |
 | `npm run lint`            | Esegue ESLint                     |
+| `npm test`                | Esegue i test (Vitest)            |
 | `npm run format`          | Formatta il codice con Prettier   |
 | `npm run format:check`    | Verifica la formattazione         |
 | `npm run prisma:generate` | Genera il Prisma Client           |
@@ -84,9 +95,15 @@ types/            tipi TypeScript condivisi
 PostgreSQL su [Neon](https://neon.tech) tramite Prisma. Schema in `prisma/schema.prisma`:
 
 - `User`, `PasswordResetToken`
-- `FinancialAccount`: i conti. Si chiama così perché NextAuth riserva il nome `Account` per l'OAuth. Il saldo non è salvato: è `initialBalance` + entrate − uscite.
-- `Category`: gerarchia categoria/sottocategoria tramite `parentId`
-- `Transaction`: importi `Decimal(14,2)`, sempre positivi; il segno lo dà `type` (INCOME/EXPENSE)
+- `FinancialAccount`: i conti. Si chiama così perché NextAuth riserva il nome `Account` per l'OAuth. Il saldo non è salvato: è `initialBalance` + entrate − uscite − trasferimenti in uscita + trasferimenti in entrata (`lib/finance/balances.ts`).
+- `Category`: gerarchia a due livelli (categoria/sottocategoria) tramite `parentId`; tipo INCOME o EXPENSE.
+- `Transaction`: importi `Decimal(14,2)`, sempre positivi; il segno lo dà `type`:
+  - `INCOME` / `EXPENSE`: movimento su `accountId`, con categoria opzionale dello stesso tipo
+  - `TRANSFER`: sposta denaro da `accountId` a `transferAccountId`, senza categoria; non conta né come entrata né come uscita
+
+Vincoli a livello di database (migrazione `transfers`): importo > 0, `transferAccountId` presente solo per i trasferimenti e diverso dal conto di origine.
+
+Eliminare un conto elimina tutti i suoi movimenti, compresi i trasferimenti da e verso quel conto. Eliminare una categoria elimina le sue sottocategorie; i movimenti restano, senza categoria.
 
 Dopo una modifica allo schema: `npx prisma migrate dev --name <descrizione>`.
 Per applicare le migrazioni al database di produzione: `npx prisma migrate deploy`.

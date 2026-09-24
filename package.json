@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
     "postinstall": "prisma generate",
     "db:seed": "prisma db seed",
     "format": "prettier --write .",
@@ -47,6 +48,7 @@
     "prisma": "^6.19.3",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

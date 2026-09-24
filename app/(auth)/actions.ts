@@ -2,18 +2,12 @@
 
 import { createHash, randomBytes } from "crypto";
 import { Prisma } from "@prisma/client";
-import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { hashPassword } from "@/lib/auth/password";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
+import { type ActionResult, validationError } from "@/lib/action-result";
 import { forgotPasswordSchema, registerSchema, resetPasswordSchema } from "@/lib/validations/auth";
-
-export type ActionResult = {
-  ok: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[] | undefined>;
-};
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
@@ -24,7 +18,7 @@ function hashToken(token: string) {
 export async function registerUser(input: unknown): Promise<ActionResult> {
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, fieldErrors: z.flattenError(parsed.error).fieldErrors };
+    return validationError(parsed.error);
   }
   const { name, email, password } = parsed.data;
 
@@ -44,7 +38,7 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
 export async function requestPasswordReset(input: unknown): Promise<ActionResult> {
   const parsed = forgotPasswordSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, fieldErrors: z.flattenError(parsed.error).fieldErrors };
+    return validationError(parsed.error);
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
@@ -80,7 +74,7 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
 export async function resetPassword(input: unknown): Promise<ActionResult> {
   const parsed = resetPasswordSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, fieldErrors: z.flattenError(parsed.error).fieldErrors };
+    return validationError(parsed.error);
   }
 
   const record = await prisma.passwordResetToken.findUnique({
