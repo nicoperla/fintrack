@@ -198,3 +198,13 @@
   --heat-3: #3987e5;
   --heat-4: #86b6ef;
 }
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}

@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight, ChevronRight, PiggyBank, Wallet } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
-import { EmptyState } from "@/components/empty-state";
+import { ArrowDownLeft, ArrowUpRight, ChevronRight, PiggyBank } from "lucide-react";
 import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
@@ -11,8 +9,12 @@ import { getDashboardData } from "@/lib/data/dashboard";
 import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getGoals } from "@/lib/data/goals";
 import { getInsights } from "@/lib/data/analytics";
+import { getGamification } from "@/lib/data/gamification";
+import { ProgressChips } from "@/components/gamification/progress-chips";
+import { BadgeCelebration } from "@/components/gamification/badge-celebration";
 import { InsightList } from "@/components/analytics/insight-list";
 import { QuickEntry } from "@/components/quick-entry/quick-entry";
+import { Onboarding } from "@/components/onboarding/onboarding";
 import { getQuickEntryContext } from "@/lib/data/intelligence";
 import { getAccountOptions } from "@/lib/data/accounts";
 import { getCategoryTree } from "@/lib/data/categories";
@@ -26,40 +28,38 @@ const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFracti
 export default async function DashboardPage() {
   const user = await requireUser();
   const firstName = user.name?.split(" ")[0];
-  const [data, budgets, goals, insights, quickContext, accountOptions, tree] = await Promise.all([
-    getDashboardData(user.id),
-    getBudgetsWithSpending(user.id),
-    getGoals(user.id),
-    getInsights(user.id),
-    getQuickEntryContext(user.id),
-    getAccountOptions(user.id),
-    getCategoryTree(user.id),
-  ]);
+  const [data, budgets, goals, insights, gamification, quickContext, accountOptions, tree] =
+    await Promise.all([
+      getDashboardData(user.id),
+      getBudgetsWithSpending(user.id),
+      getGoals(user.id),
+      getInsights(user.id),
+      getGamification(user.id),
+      getQuickEntryContext(user.id),
+      getAccountOptions(user.id),
+      getCategoryTree(user.id),
+    ]);
 
   const greeting = (
-    <div>
-      <h1 className="text-2xl font-semibold tracking-tight">
-        Ciao{firstName ? `, ${firstName}` : ""}
-      </h1>
-      <p className="text-muted-foreground text-sm">{data.monthLabel}</p>
+    <div className="flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Ciao{firstName ? `, ${firstName}` : ""}
+        </h1>
+        <p className="text-muted-foreground text-sm">{data.monthLabel}</p>
+      </div>
+      <ProgressChips data={gamification} />
+      <BadgeCelebration
+        unlocked={gamification.badges
+          .filter((b) => b.unlocked)
+          .map((b) => ({ id: b.id, name: b.name }))}
+      />
     </div>
   );
 
   if (data.accountCount === 0) {
     return (
-      <div className="grid grid-cols-1 gap-8">
-        {greeting}
-        <EmptyState
-          icon={Wallet}
-          title="Iniziamo dai tuoi conti"
-          description="Aggiungi il conto corrente, una carta o i contanti: da qui vedrai saldo, entrate, uscite e dove vanno i tuoi soldi."
-          action={
-            <Link href="/accounts" className={buttonVariants()}>
-              Aggiungi un conto
-            </Link>
-          }
-        />
-      </div>
+      <Onboarding name={user.name ?? null} hasCategories={quickContext.categories.length > 0} />
     );
   }
 

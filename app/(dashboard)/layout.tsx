@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { Settings } from "lucide-react";
 import { requireUser } from "@/lib/auth/session";
 import { SignOutButton } from "@/components/layout/sign-out-button";
 import { DesktopNav, MobileNav } from "@/components/layout/app-nav";
+import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -22,6 +24,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {user.email}
             </span>
             <ThemeToggle />
+            <Link
+              href="/settings"
+              aria-label="Impostazioni"
+              title="Impostazioni"
+              className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
+            >
+              <Settings />
+            </Link>
             <SignOutButton />
           </div>
         </div>

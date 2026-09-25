@@ -43,6 +43,8 @@ export type InsightInput = {
   weekdayAverage: number;
   weekendAverage: number;
   noSpendDays: number;
+  /** False when tracking started this month: a previous month at zero is no data, not a change. */
+  comparable?: boolean;
   /** Active subscriptions whose latest charge went up. */
   priceIncreases?: { name: string; from: number; to: number; pct: number }[];
 };
@@ -87,7 +89,7 @@ export function generateInsights(input: InsightInput): Insight[] {
   }
 
   const previousById = new Map(input.categoriesPrevious.map((c) => [c.id, c.amount]));
-  const changes = input.categoriesNow
+  const changes = (input.comparable === false ? [] : input.categoriesNow)
     .map((c) => ({ ...c, previous: previousById.get(c.id) ?? 0 }))
     .concat(
       input.categoriesPrevious

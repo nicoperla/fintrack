@@ -27,14 +27,15 @@ Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
 
 ## Variabili d'ambiente
 
-| Variabile         | Dove                         | Descrizione                                                               |
-| ----------------- | ---------------------------- | ------------------------------------------------------------------------- |
-| `DATABASE_URL`    | locale + Vercel              | Connessione Neon **pooled** (host con `-pooler`), usata dall'app          |
-| `DIRECT_URL`      | locale + Vercel              | Connessione Neon **diretta** (host senza `-pooler`), per le migrazioni    |
-| `NEXTAUTH_SECRET` | locale + Vercel              | Chiave per firmare le sessioni; usa valori diversi in locale e produzione |
-| `NEXTAUTH_URL`    | locale + Vercel (Production) | URL pubblico dell'app, usato per redirect e link nelle email              |
-| `RESEND_API_KEY`  | opzionale                    | Invio email di reset password; senza, il link viene stampato nei log      |
-| `EMAIL_FROM`      | opzionale                    | Mittente delle email, es. `FinTrack <onboarding@resend.dev>`              |
+| Variabile         | Dove                         | Descrizione                                                                                                            |
+| ----------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`    | locale + Vercel              | Connessione Neon **pooled** (host con `-pooler`), usata dall'app                                                       |
+| `DIRECT_URL`      | locale + Vercel              | Connessione Neon **diretta** (host senza `-pooler`), per le migrazioni                                                 |
+| `NEXTAUTH_SECRET` | locale + Vercel              | Chiave per firmare le sessioni; usa valori diversi in locale e produzione                                              |
+| `NEXTAUTH_URL`    | locale + Vercel (Production) | URL pubblico dell'app, usato per redirect e link nelle email                                                           |
+| `RESEND_API_KEY`  | opzionale                    | Invio email (reset password, riepilogo settimanale); senza, le email vengono stampate nei log                          |
+| `EMAIL_FROM`      | opzionale                    | Mittente delle email, es. `FinTrack <onboarding@resend.dev>`                                                           |
+| `CRON_SECRET`     | Vercel                       | Protegge `/api/cron/weekly-digest`; Vercel Cron lo invia come `Authorization: Bearer …`. Senza, il riepilogo non parte |
 
 ## Autenticazione
 
@@ -56,6 +57,12 @@ Il middleware richiede il login su tutte le pagine tranne quelle di autenticazio
 - **Abbonamenti e ricorrenti** (`/recurring`): rilevati in automatico da almeno 3 movimenti con la stessa descrizione normalizzata, cadenza regolare (settimanale → annuale) e importo stabile (le bollette sono ammesse come "importo variabile"). Mostra costo mensile/annuo, prossimi addebiti, aumenti di prezzo (che diventano anche un insight) e quelli forse disdetti.
 - **Simulatore** (`/simulator`): proiezione con capitalizzazione mensile a partire dal patrimonio attuale; confronta "continuando così" con un risparmio extra e mostra quando raggiungeresti i tuoi obiettivi.
 - **Piano debiti** (`/debts`): debiti con residuo, TAN e rata minima; simulazione mese per mese con strategia valanga (tasso più alto prima) e palla di neve (saldo più piccolo prima), data di estinzione, interessi totali, ordine di chiusura e grafico del residuo. Le rate dei debiti chiusi passano al successivo.
+- **Onboarding guidato**: al primo accesso (nessun conto) la dashboard propone 3 passi: conto principale con saldo, categorie di partenza con sottocategorie (si tolgono con un tocco), primo movimento scritto a parole con l'inserimento rapido.
+- **Traguardi** (`/achievements`): streak dei giorni in cui hai registrato qualcosa (calcolata sulla data di inserimento, fuso orario italiano; resta viva se ieri eri attivo), 9 badge con barra di avanzamento e 7 livelli a punti (movimenti, streak record, badge). In dashboard: streak e livello a colpo d'occhio, e un avviso quando sblocchi un badge. Logica pura in `lib/gamification/engine.ts`.
+- **Report PDF** (`/reports`): mensile o annuale, generato sul server con `@react-pdf/renderer` (`/api/reports?period=month&month=AAAA-MM` o `?period=year&year=AAAA`): KPI con confronto sul periodo precedente, spese ed entrate per categoria, andamento mese per mese (annuale), budget (mensile), spese più grandi e saldi dei conti.
+- **Riepilogo settimanale via email**: ogni lunedì alle 9 (07:00 UTC, `vercel.json`) Vercel Cron chiama `/api/cron/weekly-digest`, che invia a chi l'ha attivo il riepilogo della settimana precedente (lunedì–domenica): uscite ed entrate con confronto, categorie principali, budget a rischio, addebiti ricorrenti dei prossimi 7 giorni, streak e livello. Si attiva/disattiva in `/settings`, dove c'è anche l'anteprima; ogni email ha un link di disiscrizione firmato (HMAC con `NEXTAUTH_SECRET`) e l'header `List-Unsubscribe` one-click.
+- **Impostazioni** (`/settings`, icona ingranaggio): nome e riepilogo settimanale.
+- **Stati vuoti illustrati**: ogni pagina senza dati mostra un'illustrazione SVG (colori del tema, anche in dark mode) e l'azione per iniziare.
 - **Tema chiaro/scuro** con transizione circolare (View Transitions API), che segue il sistema finché l'utente non sceglie. Animazioni disattivate con `prefers-reduced-motion`.
 - **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
 - **Categorie** (`/categories`): categorie e sottocategorie di entrata/uscita con icona e colore.
@@ -125,3 +132,5 @@ Per applicare le migrazioni al database di produzione: `npx prisma migrate deplo
 ## Deploy
 
 Il progetto è pensato per essere deployato su [Vercel](https://vercel.com). Collega il repository, imposta `DATABASE_URL` nelle Environment Variables del progetto Vercel e il deploy parte automaticamente ad ogni push.
+
+Per il riepilogo settimanale servono anche `CRON_SECRET` (una stringa casuale lunga), `RESEND_API_KEY` ed `EMAIL_FROM`. Con il mittente di prova `onboarding@resend.dev` Resend consegna solo all'indirizzo del proprio account: per scrivere a qualunque utente serve un dominio verificato su Resend.

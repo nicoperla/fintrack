@@ -58,6 +58,15 @@ describe("generateInsights", () => {
     expect(insights[0].tone).toBe("negative");
   });
 
+  it("doesn't compare categories when tracking started this month", () => {
+    const insights = generateInsights({
+      ...base,
+      comparable: false,
+      categoriesNow: [cat("Trasporti", 35)],
+    });
+    expect(insights).toEqual([]);
+  });
+
   it("ignores small absolute changes even when the percentage is large", () => {
     const insights = generateInsights({
       ...base,

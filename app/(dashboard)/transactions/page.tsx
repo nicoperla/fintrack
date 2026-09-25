@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftRight, SearchX, Upload, Wallet } from "lucide-react";
+import { Upload } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { NewTransactionButton } from "@/components/transactions/new-transaction-button";
@@ -38,7 +38,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       <div className="grid grid-cols-1 gap-6">
         <h1 className="text-2xl font-semibold tracking-tight">Transazioni</h1>
         <EmptyState
-          icon={Wallet}
+          illustration="wallet"
           title="Prima crea un conto"
           description="Ogni movimento appartiene a un conto: crea il tuo conto corrente, una carta o i contanti per iniziare."
           action={
@@ -76,7 +76,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       {list.total === 0 ? (
         hasFilters ? (
           <EmptyState
-            icon={SearchX}
+            illustration="search"
             title="Nessun movimento trovato"
             description="Nessun movimento corrisponde ai filtri selezionati. Prova ad allargare la ricerca."
             action={
@@ -87,7 +87,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           />
         ) : (
           <EmptyState
-            icon={ArrowLeftRight}
+            illustration="receipts"
             title="Nessun movimento ancora"
             description="Registra la tua prima entrata o uscita: da qui vedrai tutto lo storico, con ricerca e filtri."
             action={<NewTransactionButton accounts={accounts} categories={categories} />}

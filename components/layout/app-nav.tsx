@@ -7,6 +7,7 @@ import {
   Calculator,
   ChevronDown,
   Ellipsis,
+  FileText,
   Flag,
   Landmark,
   LayoutDashboard,
@@ -14,6 +15,7 @@ import {
   Repeat,
   Tags,
   Target,
+  Trophy,
   Upload,
   Wallet,
   type LucideIcon,
@@ -43,6 +45,8 @@ const TOOLS: NavItem[] = [
   { href: "/debts", label: "Piano debiti", icon: Landmark },
   { href: "/categories", label: "Categorie", icon: Tags },
   { href: "/transactions/import", label: "Importa CSV", icon: Upload },
+  { href: "/achievements", label: "Traguardi", icon: Trophy },
+  { href: "/reports", label: "Report PDF", icon: FileText },
 ];
 
 const MOBILE_BAR = ["/dashboard", "/transactions", "/budgets", "/goals"];

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, Repeat, TrendingUp } from "lucide-react";
+import { CalendarClock, TrendingUp } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { requireUser } from "@/lib/auth/session";
@@ -128,7 +128,7 @@ export default async function RecurringPage() {
 
       {recurring.length === 0 ? (
         <EmptyState
-          icon={Repeat}
+          illustration="calendar"
           title="Nessun movimento ricorrente, per ora"
           description="Servono almeno tre addebiti simili a intervalli regolari (es. Netflix ogni mese). Continua a registrare o importa l'estratto conto."
           action={

@@ -42,7 +42,15 @@ async function checkOwnership(
   return null;
 }
 
-export async function saveTransaction(id: string | null, input: unknown): Promise<ActionResult> {
+/**
+ * `deferRevalidate` lets the onboarding keep its final step on screen: revalidating here would
+ * re-render the dashboard (now with an account) mid-flow. It then revalidates when it's done.
+ */
+export async function saveTransaction(
+  id: string | null,
+  input: unknown,
+  options?: { deferRevalidate?: boolean },
+): Promise<ActionResult> {
   const user = await requireUser();
   const parsed = transactionSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
@@ -60,7 +68,7 @@ export async function saveTransaction(id: string | null, input: unknown): Promis
     await prisma.transaction.create({ data: { ...parsed.data, userId: user.id } });
   }
 
-  revalidatePath("/", "layout");
+  if (!options?.deferRevalidate) revalidatePath("/", "layout");
 
   const { start, end } = currentMonth();
   const affectsCurrentBudgets =

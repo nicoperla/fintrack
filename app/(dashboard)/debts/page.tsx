@@ -1,4 +1,4 @@
-import { Landmark, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { DebtPlanner } from "@/components/planning/debt-planner";
@@ -23,7 +23,7 @@ export default async function DebtsPage() {
       </div>
       {debts.length === 0 ? (
         <EmptyState
-          icon={Landmark}
+          illustration="celebrate"
           title="Nessun debito da pianificare"
           description="Aggiungi prestiti, finanziamenti o carte revolving con tasso e rata minima: ti mostriamo la strada più veloce ed economica per chiuderli."
           action={

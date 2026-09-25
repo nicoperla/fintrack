@@ -1,4 +1,4 @@
-import { Plus, Wallet } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Prisma } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
@@ -42,7 +42,7 @@ export default async function AccountsPage() {
 
       {accounts.length === 0 ? (
         <EmptyState
-          icon={Wallet}
+          illustration="wallet"
           title="Aggiungi il tuo primo conto"
           description="Conto corrente, carta, contanti o risparmi: crea i conti che usi per iniziare a registrare i movimenti."
           action={<AccountFormDialog trigger={newAccountButton} />}

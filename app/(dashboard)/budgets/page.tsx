@@ -1,4 +1,4 @@
-import { Plus, Target } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { BudgetCard } from "@/components/planning/budget-card";
@@ -58,7 +58,7 @@ export default async function BudgetsPage() {
 
       {budgets.length === 0 ? (
         <EmptyState
-          icon={Target}
+          illustration="target"
           title="Dai un limite alle tue spese"
           description="Imposta un budget mensile per le categorie che vuoi tenere d'occhio: ti avvisiamo quando ti avvicini al limite."
           action={

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, Wallet } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { CsvImportWizard } from "@/components/import/csv-import-wizard";
@@ -31,7 +31,7 @@ export default async function ImportPage() {
 
       {accounts.length === 0 ? (
         <EmptyState
-          icon={Wallet}
+          illustration="wallet"
           title="Prima crea un conto"
           description="I movimenti importati vengono aggiunti a uno dei tuoi conti."
           action={

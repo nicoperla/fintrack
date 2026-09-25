@@ -1,0 +1,208 @@
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/db/prisma";
+import { getAccountsWithBalances } from "@/lib/data/accounts";
+import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
+import { budgetUsage } from "@/lib/finance/planning";
+import { formatMonthShort, formatMonthYear, todayInAppTimeZone, utcDate } from "@/lib/dates";
+import { ACCOUNT_TYPES } from "@/lib/account-types";
+
+export type ReportPeriod =
+  { kind: "month"; year: number; month: number } | { kind: "year"; year: number };
+
+/** Parses "?period=month&month=2026-08" or "?period=year&year=2026". */
+export function parseReportPeriod(params: URLSearchParams): ReportPeriod | null {
+  if (params.get("period") === "year") {
+    const year = Number(params.get("year"));
+    return Number.isInteger(year) && year >= 1970 && year <= 2100 ? { kind: "year", year } : null;
+  }
+  const match = params.get("month")?.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return null;
+  const month = Number(match[2]) - 1;
+  return month >= 0 && month < 12 ? { kind: "month", year: Number(match[1]), month } : null;
+}
+
+function range(period: ReportPeriod) {
+  return period.kind === "month"
+    ? {
+        start: utcDate(period.year, period.month, 1),
+        end: utcDate(period.year, period.month + 1, 1),
+        previousStart: utcDate(period.year, period.month - 1, 1),
+        label: formatMonthYear(utcDate(period.year, period.month, 1)),
+        previousLabel: formatMonthYear(utcDate(period.year, period.month - 1, 1)),
+        fileSuffix: `${period.year}-${String(period.month + 1).padStart(2, "0")}`,
+      }
+    : {
+        start: utcDate(period.year, 0, 1),
+        end: utcDate(period.year + 1, 0, 1),
+        previousStart: utcDate(period.year - 1, 0, 1),
+        label: String(period.year),
+        previousLabel: String(period.year - 1),
+        fileSuffix: String(period.year),
+      };
+}
+
+/** Months of `year` shown in the yearly report: all of them, except for the year in progress. */
+function monthsElapsed(year: number) {
+  const today = todayInAppTimeZone();
+  return year < today.year ? 12 : year === today.year ? today.month + 1 : 0;
+}
+
+const sumByType = (
+  rows: { type: string; _sum: { amount: Prisma.Decimal | null } }[],
+  type: string,
+) => Number(rows.find((r) => r.type === type)?._sum.amount ?? 0);
+
+export async function getReportData(userId: string, period: ReportPeriod) {
+  const r = range(period);
+  const inRange = { gte: r.start, lt: r.end };
+
+  const [
+    user,
+    totals,
+    previousTotals,
+    categories,
+    expenseSums,
+    incomeSums,
+    biggest,
+    monthly,
+    budgets,
+    accounts,
+  ] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, email: true } }),
+    prisma.transaction.groupBy({
+      by: ["type"],
+      where: { userId, type: { in: ["INCOME", "EXPENSE"] }, date: inRange },
+      _sum: { amount: true },
+      _count: { _all: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["type"],
+      where: {
+        userId,
+        type: { in: ["INCOME", "EXPENSE"] },
+        date: { gte: r.previousStart, lt: r.start },
+      },
+      _sum: { amount: true },
+    }),
+    prisma.category.findMany({
+      where: { userId },
+      select: { id: true, name: true, color: true, parentId: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: { userId, type: "EXPENSE", date: inRange },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: { userId, type: "INCOME", date: inRange },
+      _sum: { amount: true },
+    }),
+    prisma.transaction.findMany({
+      where: { userId, type: "EXPENSE", date: inRange },
+      orderBy: { amount: "desc" },
+      take: 8,
+      select: {
+        date: true,
+        description: true,
+        amount: true,
+        category: { select: { name: true } },
+        account: { select: { name: true } },
+      },
+    }),
+    period.kind === "year"
+      ? prisma.$queryRaw<
+          { month: Date; income: Prisma.Decimal | null; expense: Prisma.Decimal | null }[]
+        >`
+            SELECT date_trunc('month', "date")::date AS month,
+              SUM(CASE WHEN "type"::text = 'INCOME' THEN "amount" END) AS income,
+              SUM(CASE WHEN "type"::text = 'EXPENSE' THEN "amount" END) AS expense
+            FROM "transactions"
+            WHERE "user_id" = ${userId} AND "type"::text IN ('INCOME', 'EXPENSE')
+              AND "date" >= ${r.start}::date AND "date" < ${r.end}::date
+            GROUP BY 1 ORDER BY 1`
+      : Promise.resolve([]),
+    period.kind === "month"
+      ? prisma.budget.findMany({
+          where: { userId },
+          select: {
+            categoryId: true,
+            amount: true,
+            alertThreshold: true,
+            category: { select: { name: true, children: { select: { id: true } } } },
+          },
+        })
+      : Promise.resolve([]),
+    getAccountsWithBalances(userId),
+  ]);
+
+  const income = sumByType(totals, "INCOME");
+  const expense = sumByType(totals, "EXPENSE");
+  const count = totals.reduce((s, t) => s + t._count._all, 0);
+  const toSums = (rows: { categoryId: string | null; _sum: { amount: Prisma.Decimal | null } }[]) =>
+    rows.map((row) => ({ categoryId: row.categoryId, amount: Number(row._sum.amount ?? 0) }));
+
+  const spentByCategory = new Map(
+    expenseSums.map((s) => [s.categoryId, Number(s._sum.amount ?? 0)]),
+  );
+
+  return {
+    title: period.kind === "month" ? "Report mensile" : "Report annuale",
+    label: r.label,
+    previousLabel: r.previousLabel,
+    fileName: `fintrack-report-${r.fileSuffix}.pdf`,
+    kind: period.kind,
+    owner: user.name ?? user.email,
+    generatedAt: new Date(),
+    count,
+    income,
+    expense,
+    net: income - expense,
+    savingsRate: income > 0 ? (income - expense) / income : null,
+    previous: {
+      income: sumByType(previousTotals, "INCOME"),
+      expense: sumByType(previousTotals, "EXPENSE"),
+    },
+    expenseCategories: summarizeByTopCategory(toSums(expenseSums), categories, 10),
+    incomeCategories: summarizeByTopCategory(toSums(incomeSums), categories, 6),
+    biggest: biggest.map((b) => ({
+      date: b.date,
+      description: b.description,
+      amount: Number(b.amount),
+      category: b.category?.name ?? "Senza categoria",
+      account: b.account.name,
+    })),
+    months:
+      period.kind === "year"
+        ? Array.from({ length: monthsElapsed(period.year) }, (_, month) => {
+            const row = monthly.find((m) => m.month.getUTCMonth() === month);
+            const monthIncome = Number(row?.income ?? 0);
+            const monthExpense = Number(row?.expense ?? 0);
+            return {
+              label: formatMonthShort(utcDate(period.year, month, 1)),
+              income: monthIncome,
+              expense: monthExpense,
+              net: monthIncome - monthExpense,
+              hasData: row !== undefined,
+            };
+          })
+        : [],
+    budgets: budgets.map((b) => {
+      const ids = [b.categoryId, ...b.category.children.map((c) => c.id)];
+      const spent = ids.reduce((s, id) => s + (spentByCategory.get(id) ?? 0), 0);
+      return {
+        name: b.category.name,
+        spent,
+        amount: Number(b.amount),
+        ...budgetUsage(spent, Number(b.amount), b.alertThreshold),
+      };
+    }),
+    accounts: accounts.map((a) => ({
+      name: a.name,
+      type: ACCOUNT_TYPES[a.type].label,
+      balance: a.balance.toNumber(),
+    })),
+  };
+}
+
+export type ReportData = Awaited<ReturnType<typeof getReportData>>;

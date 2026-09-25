@@ -8,6 +8,6 @@ export default withAuth({
 // so new pages are protected by default.
 export const config = {
   matcher: [
-    "/((?!login|register|forgot-password|reset-password|api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/((?!login|register|forgot-password|reset-password|api/auth|api/cron|api/digest/unsubscribe|_next/static|_next/image|favicon.ico).*)",
   ],
 };

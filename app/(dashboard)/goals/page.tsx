@@ -1,4 +1,4 @@
-import { Flag, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { GoalCard } from "@/components/planning/goal-card";
@@ -49,7 +49,7 @@ export default async function GoalsPage() {
 
       {goals.length === 0 ? (
         <EmptyState
-          icon={Flag}
+          illustration="mountain"
           title="Per cosa stai risparmiando?"
           description="Una vacanza, un fondo emergenza, un nuovo computer: crea un obiettivo e ti diciamo quanto mettere da parte ogni mese."
           action={<GoalFormDialog trigger={newButton} />}

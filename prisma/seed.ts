@@ -1,5 +1,6 @@
 import { AccountType, PrismaClient, TransactionType } from "@prisma/client";
 import { hashPassword } from "../lib/auth/password";
+import { DEFAULT_CATEGORIES as CATEGORIES } from "../lib/defaults/categories";
 
 const prisma = new PrismaClient();
 
@@ -22,81 +23,6 @@ const between = (min: number, max: number) => min + random() * (max - min);
 const intBetween = (min: number, max: number) => Math.floor(between(min, max + 1));
 const pick = <T>(items: readonly T[]) => items[Math.floor(random() * items.length)];
 const money = (value: number) => value.toFixed(2);
-
-type CategorySeed = {
-  name: string;
-  type: TransactionType;
-  icon: string;
-  color: string;
-  children?: { name: string; icon: string }[];
-};
-
-const CATEGORIES: CategorySeed[] = [
-  {
-    name: "Casa",
-    type: "EXPENSE",
-    icon: "home",
-    color: "#6366f1",
-    children: [
-      { name: "Affitto", icon: "key-round" },
-      { name: "Bollette", icon: "zap" },
-      { name: "Manutenzione", icon: "wrench" },
-    ],
-  },
-  {
-    name: "Spesa",
-    type: "EXPENSE",
-    icon: "shopping-cart",
-    color: "#22c55e",
-    children: [{ name: "Supermercato", icon: "store" }],
-  },
-  {
-    name: "Trasporti",
-    type: "EXPENSE",
-    icon: "car",
-    color: "#f59e0b",
-    children: [
-      { name: "Carburante", icon: "fuel" },
-      { name: "Trasporto pubblico", icon: "train-front" },
-    ],
-  },
-  {
-    name: "Ristoranti e bar",
-    type: "EXPENSE",
-    icon: "utensils",
-    color: "#ef4444",
-    children: [
-      { name: "Ristoranti", icon: "utensils-crossed" },
-      { name: "Bar e caffè", icon: "coffee" },
-    ],
-  },
-  {
-    name: "Abbonamenti",
-    type: "EXPENSE",
-    icon: "repeat",
-    color: "#a855f7",
-    children: [
-      { name: "Streaming", icon: "tv" },
-      { name: "Palestra", icon: "dumbbell" },
-      { name: "Telefono e internet", icon: "wifi" },
-    ],
-  },
-  {
-    name: "Svago",
-    type: "EXPENSE",
-    icon: "gamepad-2",
-    color: "#ec4899",
-    children: [
-      { name: "Cinema e eventi", icon: "clapperboard" },
-      { name: "Hobby", icon: "palette" },
-    ],
-  },
-  { name: "Salute", type: "EXPENSE", icon: "heart-pulse", color: "#14b8a6" },
-  { name: "Shopping", type: "EXPENSE", icon: "shopping-bag", color: "#f97316" },
-  { name: "Stipendio", type: "INCOME", icon: "briefcase", color: "#16a34a" },
-  { name: "Rimborsi", type: "INCOME", icon: "undo-2", color: "#0ea5e9" },
-  { name: "Altre entrate", type: "INCOME", icon: "plus-circle", color: "#84cc16" },
-];
 
 const ACCOUNTS = [
   { key: "checking", name: "Conto corrente", type: AccountType.CHECKING, initialBalance: 2450 },
@@ -420,7 +346,29 @@ function buildTransactions(today: Date): TxSeed[] {
     });
   }
 
+  // A habit worth showing off: something recorded every day of the last two weeks (up to
+  // yesterday, so the demo also shows the "keep your streak alive today" nudge).
+  for (let back = 13; back >= 1; back--) {
+    const day = new Date(today.getTime() - back * 86_400_000);
+    if (!txs.some((t) => t.date.getTime() === day.getTime())) {
+      add({
+        account: "card",
+        category: "Bar e caffè",
+        type: "EXPENSE",
+        amount: 1.3,
+        date: day,
+        description: "Caffè al bar",
+      });
+    }
+  }
+
   return txs.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+/** Pretend each movement was recorded on its own day, in the evening, never in the future. */
+function recordedAt(date: Date, now: Date) {
+  const evening = new Date(date.getTime() + 19 * 3_600_000);
+  return evening < now ? evening : now;
 }
 
 async function main() {
@@ -483,6 +431,7 @@ async function main() {
         description: tx.description,
         notes: tx.notes,
         tags: tx.tags ?? [],
+        createdAt: recordedAt(tx.date, now),
       };
     }),
   });

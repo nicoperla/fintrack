@@ -1,4 +1,10 @@
-type Email = { to: string; subject: string; text: string; html: string };
+type Email = {
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+  headers?: Record<string, string>;
+};
 
 export async function sendEmail(email: Email) {
   const apiKey = process.env.RESEND_API_KEY;

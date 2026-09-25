@@ -185,6 +185,7 @@ export async function getInsights(userId: string) {
     lifestyle,
     spendDays,
     recurring,
+    first,
   ] = await Promise.all([
     categoryInfo(userId),
     sumsByCategory(userId, "EXPENSE", monthStart, tomorrow),
@@ -214,7 +215,16 @@ export async function getInsights(userId: string) {
       where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
     }),
     getRecurring(userId),
+    prisma.transaction.findFirst({
+      where: { userId },
+      orderBy: { date: "asc" },
+      select: { date: true },
+    }),
   ]);
+
+  // Days before the first recorded movement aren't "days without spending": nobody was tracking.
+  const trackedSince = first && first.date > monthStart ? first.date : monthStart;
+  const trackedDays = Math.round((tomorrow.getTime() - trackedSince.getTime()) / DAY_MS);
 
   const byId = new Map(categories.map((c) => [c.id, c]));
   const rollUp = (sums: { categoryId: string | null; amount: number }[]): CategoryTotal[] => {
@@ -273,7 +283,8 @@ export async function getInsights(userId: string) {
       : null,
     weekdayAverage: weekdayDays ? weekday / weekdayDays : 0,
     weekendAverage: weekendDays ? weekend / weekendDays : 0,
-    noSpendDays: today.day - spendDays.length,
+    noSpendDays: Math.max(0, trackedDays - spendDays.length),
+    comparable: first !== null && first.date < monthStart,
     priceIncreases: recurring
       .filter((r) => r.type === "EXPENSE" && r.active && r.priceChange)
       .map((r) => ({ name: r.name, ...r.priceChange! })),
