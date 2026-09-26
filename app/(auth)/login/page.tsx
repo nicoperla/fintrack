@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
           <p>
             Non hai un account?{" "}
             <Link
-              href="/register"
+              href={`/register?${new URLSearchParams({ callbackUrl })}`}
               className="text-foreground font-medium underline-offset-4 hover:underline"
             >
               Registrati

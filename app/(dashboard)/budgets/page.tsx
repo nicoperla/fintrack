@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/empty-state";
 import { BudgetCard } from "@/components/planning/budget-card";
 import { BudgetFormDialog } from "@/components/planning/budget-form-dialog";
 import { Meter } from "@/components/planning/meter";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getCategoryTree } from "@/lib/data/categories";
 import { currentMonth, formatMonthYear } from "@/lib/dates";
@@ -15,11 +15,11 @@ import { formatCurrency, toDateInputValue } from "@/lib/format";
 export const metadata = { title: "Budget · FinTrack" };
 
 export default async function BudgetsPage() {
-  const user = await requireUser();
+  const space = await requireSpace();
   const month = currentMonth();
   const [budgets, tree] = await Promise.all([
-    getBudgetsWithSpending(user.id),
-    getCategoryTree(user.id),
+    getBudgetsWithSpending(space.id),
+    getCategoryTree(space.id),
   ]);
   const categories = toCategoryOptions(tree.expense);
   const usedCategoryIds = budgets.map((b) => b.categoryId);
@@ -75,9 +75,10 @@ export default async function BudgetsPage() {
           >
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-sm">
-                Speso <span className="font-semibold">{formatCurrency(totalSpent)}</span>{" "}
+                Speso{" "}
+                <span className="font-semibold">{formatCurrency(totalSpent, space.currency)}</span>{" "}
                 <span className="text-muted-foreground">
-                  su {formatCurrency(totalBudget)} di budget
+                  su {formatCurrency(totalBudget, space.currency)} di budget
                 </span>
               </p>
               <p className="text-muted-foreground text-xs">

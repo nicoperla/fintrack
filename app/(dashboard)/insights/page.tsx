@@ -2,7 +2,7 @@ import { InsightList } from "@/components/analytics/insight-list";
 import { CashFlowSankey } from "@/components/analytics/cash-flow-sankey";
 import { NetWorthChart } from "@/components/analytics/net-worth-chart";
 import { SpendingHeatmap } from "@/components/analytics/spending-heatmap";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import {
   getCashFlow,
   getInsights,
@@ -19,17 +19,17 @@ type SearchParams = { month?: string | string[]; range?: string | string[] };
 const single = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
 
 export default async function InsightsPage({ searchParams }: { searchParams: SearchParams }) {
-  const user = await requireUser();
+  const space = await requireSpace();
   const monthParam = single(searchParams.month);
   const rangeParam = single(searchParams.range);
   const range: NetWorthRange =
     rangeParam && rangeParam in NET_WORTH_RANGES ? (rangeParam as NetWorthRange) : "3m";
 
   const [insights, flow, heatmap, netWorth] = await Promise.all([
-    getInsights(user.id),
-    getCashFlow(user.id, monthParam),
-    getSpendingHeatmap(user.id),
-    getNetWorth(user.id, range),
+    getInsights(space.id),
+    getCashFlow(space.id, monthParam),
+    getSpendingHeatmap(space.id),
+    getNetWorth(space.id, range),
   ]);
 
   return (

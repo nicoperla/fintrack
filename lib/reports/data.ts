@@ -48,16 +48,19 @@ function monthsElapsed(year: number) {
 }
 
 const sumByType = (
-  rows: { type: string; _sum: { amount: Prisma.Decimal | null } }[],
+  rows: { type: string; _sum: { baseAmount: Prisma.Decimal | null } }[],
   type: string,
-) => Number(rows.find((r) => r.type === type)?._sum.amount ?? 0);
+) => Number(rows.find((r) => r.type === type)?._sum.baseAmount ?? 0);
 
-export async function getReportData(userId: string, period: ReportPeriod) {
+export async function getReportData(
+  space: { id: string; name: string; currency: string },
+  period: ReportPeriod,
+) {
+  const householdId = space.id;
   const r = range(period);
   const inRange = { gte: r.start, lt: r.end };
 
   const [
-    user,
     totals,
     previousTotals,
     categories,
@@ -68,46 +71,46 @@ export async function getReportData(userId: string, period: ReportPeriod) {
     budgets,
     accounts,
   ] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true, email: true } }),
     prisma.transaction.groupBy({
       by: ["type"],
-      where: { userId, type: { in: ["INCOME", "EXPENSE"] }, date: inRange },
-      _sum: { amount: true },
+      where: { householdId, type: { in: ["INCOME", "EXPENSE"] }, date: inRange },
+      _sum: { baseAmount: true },
       _count: { _all: true },
     }),
     prisma.transaction.groupBy({
       by: ["type"],
       where: {
-        userId,
+        householdId,
         type: { in: ["INCOME", "EXPENSE"] },
         date: { gte: r.previousStart, lt: r.start },
       },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.category.findMany({
-      where: { userId },
+      where: { householdId },
       select: { id: true, name: true, color: true, parentId: true },
     }),
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { userId, type: "EXPENSE", date: inRange },
-      _sum: { amount: true },
+      where: { householdId, type: "EXPENSE", date: inRange },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { userId, type: "INCOME", date: inRange },
-      _sum: { amount: true },
+      where: { householdId, type: "INCOME", date: inRange },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.findMany({
-      where: { userId, type: "EXPENSE", date: inRange },
-      orderBy: { amount: "desc" },
+      where: { householdId, type: "EXPENSE", date: inRange },
+      orderBy: { baseAmount: "desc" },
       take: 8,
       select: {
         date: true,
         description: true,
         amount: true,
+        baseAmount: true,
         category: { select: { name: true } },
-        account: { select: { name: true } },
+        account: { select: { name: true, currency: true } },
       },
     }),
     period.kind === "year"
@@ -115,16 +118,16 @@ export async function getReportData(userId: string, period: ReportPeriod) {
           { month: Date; income: Prisma.Decimal | null; expense: Prisma.Decimal | null }[]
         >`
             SELECT date_trunc('month', "date")::date AS month,
-              SUM(CASE WHEN "type"::text = 'INCOME' THEN "amount" END) AS income,
-              SUM(CASE WHEN "type"::text = 'EXPENSE' THEN "amount" END) AS expense
+              SUM(CASE WHEN "type"::text = 'INCOME' THEN "base_amount" END) AS income,
+              SUM(CASE WHEN "type"::text = 'EXPENSE' THEN "base_amount" END) AS expense
             FROM "transactions"
-            WHERE "user_id" = ${userId} AND "type"::text IN ('INCOME', 'EXPENSE')
+            WHERE "household_id" = ${householdId} AND "type"::text IN ('INCOME', 'EXPENSE')
               AND "date" >= ${r.start}::date AND "date" < ${r.end}::date
             GROUP BY 1 ORDER BY 1`
       : Promise.resolve([]),
     period.kind === "month"
       ? prisma.budget.findMany({
-          where: { userId },
+          where: { householdId },
           select: {
             categoryId: true,
             amount: true,
@@ -133,17 +136,19 @@ export async function getReportData(userId: string, period: ReportPeriod) {
           },
         })
       : Promise.resolve([]),
-    getAccountsWithBalances(userId),
+    getAccountsWithBalances(householdId),
   ]);
 
   const income = sumByType(totals, "INCOME");
   const expense = sumByType(totals, "EXPENSE");
   const count = totals.reduce((s, t) => s + t._count._all, 0);
-  const toSums = (rows: { categoryId: string | null; _sum: { amount: Prisma.Decimal | null } }[]) =>
-    rows.map((row) => ({ categoryId: row.categoryId, amount: Number(row._sum.amount ?? 0) }));
+  const toSums = (
+    rows: { categoryId: string | null; _sum: { baseAmount: Prisma.Decimal | null } }[],
+  ) =>
+    rows.map((row) => ({ categoryId: row.categoryId, amount: Number(row._sum.baseAmount ?? 0) }));
 
   const spentByCategory = new Map(
-    expenseSums.map((s) => [s.categoryId, Number(s._sum.amount ?? 0)]),
+    expenseSums.map((s) => [s.categoryId, Number(s._sum.baseAmount ?? 0)]),
   );
 
   return {
@@ -152,7 +157,8 @@ export async function getReportData(userId: string, period: ReportPeriod) {
     previousLabel: r.previousLabel,
     fileName: `fintrack-report-${r.fileSuffix}.pdf`,
     kind: period.kind,
-    owner: user.name ?? user.email,
+    owner: space.name,
+    currency: space.currency,
     generatedAt: new Date(),
     count,
     income,
@@ -168,7 +174,12 @@ export async function getReportData(userId: string, period: ReportPeriod) {
     biggest: biggest.map((b) => ({
       date: b.date,
       description: b.description,
-      amount: Number(b.amount),
+      amount: Number(b.baseAmount),
+      /** Set when the expense was in another currency. */
+      original:
+        b.account.currency !== space.currency
+          ? { amount: Number(b.amount), currency: b.account.currency }
+          : null,
       category: b.category?.name ?? "Senza categoria",
       account: b.account.name,
     })),
@@ -201,6 +212,8 @@ export async function getReportData(userId: string, period: ReportPeriod) {
       name: a.name,
       type: ACCOUNT_TYPES[a.type].label,
       balance: a.balance.toNumber(),
+      currency: a.currency,
+      baseBalance: a.baseBalance,
     })),
   };
 }

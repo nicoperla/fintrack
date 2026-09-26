@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrencySymbol } from "@/components/currency-provider";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,7 @@ export function BudgetFormDialog({
   usedCategoryIds: string[];
   trigger: React.ReactElement;
 }) {
+  const symbol = useCurrencySymbol();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
@@ -106,7 +108,7 @@ export function BudgetFormDialog({
             </SelectField>
             <div className="grid grid-cols-2 gap-3">
               <FormField
-                label="Limite mensile (€)"
+                label={`Limite mensile (${symbol})`}
                 name="amount"
                 inputMode="decimal"
                 placeholder="250"

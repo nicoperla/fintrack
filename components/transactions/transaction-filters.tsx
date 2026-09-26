@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { currencySymbol } from "@/lib/format";
 import { Search, SlidersHorizontal } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +20,15 @@ export function TransactionFilters({
   filters,
   accounts,
   categories,
+  currency,
 }: {
   params: RawParams;
   filters: Filters;
   accounts: AccountOption[];
   categories: CategoryOption[];
+  currency: string;
 }) {
+  const symbol = currencySymbol(currency);
   const advancedCount = [
     filters.type,
     filters.accountId,
@@ -117,14 +121,14 @@ export function TransactionFilters({
           <FormField label="Dal" name="from" type="date" defaultValue={raw(params, "from")} />
           <FormField label="Al" name="to" type="date" defaultValue={raw(params, "to")} />
           <FormField
-            label="Importo min (€)"
+            label={`Importo min (${symbol})`}
             name="min"
             inputMode="decimal"
             placeholder="0,00"
             defaultValue={raw(params, "min")}
           />
           <FormField
-            label="Importo max (€)"
+            label={`Importo max (${symbol})`}
             name="max"
             inputMode="decimal"
             placeholder="0,00"

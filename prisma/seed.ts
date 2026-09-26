@@ -1,11 +1,14 @@
 import { AccountType, PrismaClient, TransactionType } from "@prisma/client";
 import { hashPassword } from "../lib/auth/password";
 import { DEFAULT_CATEGORIES as CATEGORIES } from "../lib/defaults/categories";
+import { createConverter } from "../lib/currency/rates";
 
 const prisma = new PrismaClient();
 
 const DEMO_EMAIL = "demo@fintrack.app";
 const DEMO_PASSWORD = "demo1234";
+// A second person sharing the demo space, to show shared budgets.
+const PARTNER_EMAIL = "sara@fintrack.app";
 const MONTHS_OF_HISTORY = 3;
 
 // Deterministic PRNG so every seed run produces the same dataset.
@@ -25,10 +28,36 @@ const pick = <T>(items: readonly T[]) => items[Math.floor(random() * items.lengt
 const money = (value: number) => value.toFixed(2);
 
 const ACCOUNTS = [
-  { key: "checking", name: "Conto corrente", type: AccountType.CHECKING, initialBalance: 2450 },
-  { key: "card", name: "Carta di credito", type: AccountType.CARD, initialBalance: 0 },
-  { key: "cash", name: "Contanti", type: AccountType.CASH, initialBalance: 200 },
-  { key: "savings", name: "Conto risparmio", type: AccountType.SAVINGS, initialBalance: 8000 },
+  {
+    key: "checking",
+    name: "Conto corrente",
+    type: AccountType.CHECKING,
+    initialBalance: 2450,
+    currency: "EUR",
+  },
+  {
+    key: "card",
+    name: "Carta di credito",
+    type: AccountType.CARD,
+    initialBalance: 0,
+    currency: "EUR",
+  },
+  { key: "cash", name: "Contanti", type: AccountType.CASH, initialBalance: 200, currency: "EUR" },
+  {
+    key: "savings",
+    name: "Conto risparmio",
+    type: AccountType.SAVINGS,
+    initialBalance: 8000,
+    currency: "EUR",
+  },
+  // Shows multi-currency: amounts in dollars, totals converted to euro at the ECB rate of the day.
+  {
+    key: "usd",
+    name: "Conto in dollari",
+    type: AccountType.CHECKING,
+    initialBalance: 300,
+    currency: "USD",
+  },
 ] as const;
 type AccountKey = (typeof ACCOUNTS)[number]["key"];
 
@@ -86,6 +115,13 @@ type TxSeed = {
   notes?: string;
   tags?: string[];
 };
+
+/** Sara records the cash spending and part of the groceries; the rest is the demo user's. */
+function recordedBySara(tx: TxSeed) {
+  return (
+    tx.account === "cash" || (tx.category === "Supermercato" && tx.date.getUTCDate() % 2 === 0)
+  );
+}
 
 function utcDate(year: number, month: number, day: number) {
   return new Date(Date.UTC(year, month, day));
@@ -315,6 +351,49 @@ function buildTransactions(today: Date): TxSeed[] {
     notes: "Riparazione rubinetto cucina",
   });
 
+  // A trip to New York, paid from the dollar account (topped up from the checking account).
+  const trip = (daysAgo: number) => new Date(today.getTime() - daysAgo * 86_400_000);
+  add({
+    account: "checking",
+    transferTo: "usd",
+    type: "TRANSFER",
+    amount: 900,
+    date: trip(40),
+    description: "Ricarica conto in dollari",
+  });
+  add({
+    account: "usd",
+    category: "Svago",
+    type: "EXPENSE",
+    amount: 540,
+    date: trip(35),
+    description: "Hotel New York",
+  });
+  add({
+    account: "usd",
+    category: "Ristoranti",
+    type: "EXPENSE",
+    amount: 86.4,
+    date: trip(34),
+    description: "Cena a Manhattan",
+  });
+  add({
+    account: "usd",
+    category: "Trasporto pubblico",
+    type: "EXPENSE",
+    amount: 34,
+    date: trip(34),
+    description: "MetroCard NYC",
+  });
+  add({
+    account: "usd",
+    category: "Cinema e eventi",
+    type: "EXPENSE",
+    amount: 129,
+    date: trip(33),
+    description: "Musical a Broadway",
+  });
+
   // Transfers: the checking account pays off last month's credit card statement on the 5th,
   // and moves a fixed amount to savings after payday.
   const categorized = [...txs];
@@ -350,7 +429,7 @@ function buildTransactions(today: Date): TxSeed[] {
   // yesterday, so the demo also shows the "keep your streak alive today" nudge).
   for (let back = 13; back >= 1; back--) {
     const day = new Date(today.getTime() - back * 86_400_000);
-    if (!txs.some((t) => t.date.getTime() === day.getTime())) {
+    if (!txs.some((t) => t.date.getTime() === day.getTime() && !recordedBySara(t))) {
       add({
         account: "card",
         category: "Bar e caffè",
@@ -375,19 +454,59 @@ async function main() {
   const now = new Date();
   const today = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 
-  await prisma.user.deleteMany({ where: { email: DEMO_EMAIL } });
+  // Deleting the owners cascades to their spaces and everything in them.
+  await prisma.user.deleteMany({ where: { email: { in: [DEMO_EMAIL, PARTNER_EMAIL] } } });
 
+  const passwordHash = await hashPassword(DEMO_PASSWORD);
   const user = await prisma.user.create({
-    data: { email: DEMO_EMAIL, name: "Demo", passwordHash: await hashPassword(DEMO_PASSWORD) },
+    data: { email: DEMO_EMAIL, name: "Demo", passwordHash },
   });
+  const partner = await prisma.user.create({
+    data: { email: PARTNER_EMAIL, name: "Sara", passwordHash },
+  });
+  // Personal spaces use the owner's id (see lib/households.ts); the demo one is shared with Sara.
+  const householdId = user.id;
+  await prisma.household.upsert({
+    where: { id: householdId },
+    create: { id: householdId, name: "Casa Demo", ownerId: user.id },
+    update: { name: "Casa Demo" },
+  });
+  await prisma.household.upsert({
+    where: { id: partner.id },
+    create: { id: partner.id, name: "Spazio di Sara", ownerId: partner.id },
+    update: {},
+  });
+  await prisma.householdMember.createMany({
+    data: [
+      { householdId, userId: user.id, role: "OWNER" },
+      { householdId: partner.id, userId: partner.id, role: "OWNER" },
+      { householdId, userId: partner.id, role: "MEMBER" },
+    ],
+    skipDuplicates: true,
+  });
+  await prisma.user.update({ where: { id: partner.id }, data: { activeHouseholdId: householdId } });
+
+  // Real ECB rates for the dollar account; without network the demo simply has no dollar account.
+  let converter: Awaited<ReturnType<typeof createConverter>> | null = null;
+  try {
+    const start = utcDate(today.getUTCFullYear(), today.getUTCMonth() - MONTHS_OF_HISTORY, 1);
+    converter = await createConverter(["USD"], start, today);
+    converter.convert(1, "USD", "EUR", today);
+  } catch (error) {
+    console.warn("Tassi di cambio non disponibili: salto il conto in dollari.", error);
+    converter = null;
+  }
+  const accounts = ACCOUNTS.filter((a) => converter || a.currency === "EUR");
 
   const accountIds = {} as Record<AccountKey, string>;
-  for (const acc of ACCOUNTS) {
+  for (const acc of accounts) {
     const created = await prisma.financialAccount.create({
       data: {
+        householdId,
         userId: user.id,
         name: acc.name,
         type: acc.type,
+        currency: acc.currency,
         initialBalance: money(acc.initialBalance),
       },
     });
@@ -397,12 +516,20 @@ async function main() {
   const categoryIds = new Map<string, string>();
   for (const cat of CATEGORIES) {
     const parent = await prisma.category.create({
-      data: { userId: user.id, name: cat.name, type: cat.type, icon: cat.icon, color: cat.color },
+      data: {
+        householdId,
+        userId: user.id,
+        name: cat.name,
+        type: cat.type,
+        icon: cat.icon,
+        color: cat.color,
+      },
     });
     categoryIds.set(cat.name, parent.id);
     for (const child of cat.children ?? []) {
       const created = await prisma.category.create({
         data: {
+          householdId,
           userId: user.id,
           name: child.name,
           type: cat.type,
@@ -415,13 +542,24 @@ async function main() {
     }
   }
 
-  const transactions = buildTransactions(today);
+  const currencyOf = (key: AccountKey) => ACCOUNTS.find((a) => a.key === key)!.currency;
+  const transactions = buildTransactions(today).filter(
+    (tx) => accountIds[tx.account] && (!tx.transferTo || accountIds[tx.transferTo]),
+  );
   await prisma.transaction.createMany({
     data: transactions.map((tx) => {
       const categoryId = tx.category ? categoryIds.get(tx.category) : null;
       if (tx.category && !categoryId) throw new Error(`Categoria sconosciuta: ${tx.category}`);
+      const from = currencyOf(tx.account);
+      const to = tx.transferTo ? currencyOf(tx.transferTo) : from;
+      const convert = (amount: number, a: string, b: string) =>
+        a === b ? amount : converter!.convert(amount, a, b, tx.date);
+      const bySara = recordedBySara(tx);
       return {
-        userId: user.id,
+        householdId,
+        userId: bySara ? partner.id : user.id,
+        baseAmount: money(convert(tx.amount, from, "EUR")),
+        transferAmount: to !== from ? money(convert(tx.amount, from, to)) : null,
         accountId: accountIds[tx.account],
         transferAccountId: tx.transferTo ? accountIds[tx.transferTo] : null,
         categoryId,
@@ -441,6 +579,7 @@ async function main() {
       const categoryId = categoryIds.get(b.category);
       if (!categoryId) throw new Error(`Categoria sconosciuta: ${b.category}`);
       return {
+        householdId,
         userId: user.id,
         categoryId,
         amount: money(b.amount),
@@ -451,6 +590,7 @@ async function main() {
 
   await prisma.goal.createMany({
     data: GOALS.map((g) => ({
+      householdId,
       userId: user.id,
       name: g.name,
       targetAmount: money(g.target),
@@ -472,6 +612,7 @@ async function main() {
   ];
   await prisma.debt.createMany({
     data: DEBTS.map((d) => ({
+      householdId,
       userId: user.id,
       name: d.name,
       balance: money(d.balance),
@@ -481,9 +622,12 @@ async function main() {
   });
 
   console.log(
-    `Seed completato: ${ACCOUNTS.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti.`,
+    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
+  console.log(
+    `Seconda persona dello spazio -> email: ${PARTNER_EMAIL}  password: ${DEMO_PASSWORD}`,
+  );
 }
 
 main()

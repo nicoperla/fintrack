@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 
 const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
 
@@ -37,11 +37,12 @@ export function useCountUp(target: number, durationMs = 1100) {
 }
 
 export function AnimatedCurrency({ value, className }: { value: number; className?: string }) {
+  const money = useMoney();
   const animated = useCountUp(value);
   return (
     <span className={className}>
-      <span aria-hidden>{formatCurrency(animated)}</span>
-      <span className="sr-only">{formatCurrency(value)}</span>
+      <span aria-hidden>{money(animated)}</span>
+      <span className="sr-only">{money(value)}</span>
     </span>
   );
 }

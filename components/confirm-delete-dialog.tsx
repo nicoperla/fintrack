@@ -22,6 +22,9 @@ type ConfirmDeleteDialogProps = {
   successMessage: string;
   onConfirm: () => Promise<ActionResult>;
   onDeleted?: () => void;
+  /** Button label for confirmations that aren't deletions. */
+  confirmLabel?: string;
+  destructive?: boolean;
 };
 
 export function ConfirmDeleteDialog({
@@ -32,6 +35,8 @@ export function ConfirmDeleteDialog({
   successMessage,
   onConfirm,
   onDeleted,
+  confirmLabel = "Elimina",
+  destructive = true,
 }: ConfirmDeleteDialogProps) {
   const [pending, setPending] = useState(false);
 
@@ -40,7 +45,7 @@ export function ConfirmDeleteDialog({
     const result = await onConfirm().catch(() => ({ ok: false, error: undefined }) as ActionResult);
     setPending(false);
     if (!result.ok) {
-      toast.error(result.error ?? "Eliminazione non riuscita. Riprova.");
+      toast.error(result.error ?? "Operazione non riuscita. Riprova.");
       return;
     }
     toast.success(successMessage);
@@ -57,8 +62,12 @@ export function ConfirmDeleteDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Annulla</AlertDialogCancel>
-          <AlertDialogAction variant="destructive" onClick={handleConfirm} disabled={pending}>
-            {pending ? "Eliminazione…" : "Elimina"}
+          <AlertDialogAction
+            variant={destructive ? "destructive" : "default"}
+            onClick={handleConfirm}
+            disabled={pending}
+          >
+            {pending ? "Un attimo…" : confirmLabel}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -6,7 +6,7 @@ import { NewTransactionButton } from "@/components/transactions/new-transaction-
 import { TransactionFilters } from "@/components/transactions/transaction-filters";
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { Pagination } from "@/components/transactions/pagination";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getAccountOptions } from "@/lib/data/accounts";
 import { getCategoryTree } from "@/lib/data/categories";
 import { listTransactions } from "@/lib/data/transactions";
@@ -21,14 +21,14 @@ export const metadata = { title: "Transazioni · FinTrack" };
 type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function TransactionsPage({ searchParams }: { searchParams: SearchParams }) {
-  const user = await requireUser();
+  const space = await requireSpace();
   const filters = transactionFiltersSchema.parse(searchParams);
 
   const [list, accounts, tree, quickContext] = await Promise.all([
-    listTransactions(user.id, filters),
-    getAccountOptions(user.id),
-    getCategoryTree(user.id),
-    getQuickEntryContext(user.id),
+    listTransactions(space.id, filters),
+    getAccountOptions(space.id),
+    getCategoryTree(space.id),
+    getQuickEntryContext(space.id),
   ]);
   const categories = toCategoryOptions([...tree.expense, ...tree.income]);
   const hasFilters = Object.entries(filters).some(([key, v]) => key !== "page" && v !== undefined);
@@ -67,6 +67,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
       <QuickEntry context={quickContext} accounts={accounts} categories={categories} />
 
       <TransactionFilters
+        currency={space.currency}
         params={searchParams}
         filters={filters}
         accounts={accounts}
@@ -100,13 +101,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <span>
               Entrate{" "}
               <span className="font-medium text-emerald-600 tabular-nums dark:text-emerald-400">
-                {formatCurrency(list.income)}
+                {formatCurrency(list.income, space.currency)}
               </span>
             </span>
             <span>
               Uscite{" "}
               <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(list.expense)}
+                {formatCurrency(list.expense, space.currency)}
               </span>
             </span>
           </div>

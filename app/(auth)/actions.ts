@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db/prisma";
 import { hashPassword } from "@/lib/auth/password";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
+import { ensurePersonalHousehold } from "@/lib/households";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { forgotPasswordSchema, registerSchema, resetPasswordSchema } from "@/lib/validations/auth";
 
@@ -23,9 +24,10 @@ export async function registerUser(input: unknown): Promise<ActionResult> {
   const { name, email, password } = parsed.data;
 
   try {
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: { name, email, passwordHash: await hashPassword(password) },
     });
+    await ensurePersonalHousehold(user);
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return { ok: false, fieldErrors: { email: ["Esiste già un account con questa email"] } };

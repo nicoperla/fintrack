@@ -18,6 +18,8 @@ import { todayDateInputValue } from "@/lib/format";
 import type { ActionResult } from "@/lib/action-result";
 import type { AccountOption, CategoryOption, TransactionDTO } from "@/lib/dto";
 import { cn } from "@/lib/utils";
+import { currencySymbol, useSpaceInfo } from "@/components/currency-provider";
+import { saveOrQueue } from "@/lib/offline/save";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
 
@@ -62,8 +64,18 @@ function TransactionForm({
   const initial = transaction ?? prefill;
   const [type, setType] = useState<TxType>(initial?.type ?? "EXPENSE");
   const [categoryId, setCategoryId] = useState(initial?.category?.id ?? "");
+  const [accountId, setAccountId] = useState(initial?.account.id ?? accounts[0]?.id ?? "");
+  const [destinationId, setDestinationId] = useState(
+    initial?.transferAccount?.id ?? accounts.find((a) => a.id !== accountId)?.id ?? "",
+  );
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
+  const { userId, spaceId } = useSpaceInfo();
+
+  const currencyOf = (id: string) => accounts.find((a) => a.id === id)?.currency ?? "EUR";
+  const sourceCurrency = currencyOf(accountId);
+  const destinationCurrency = currencyOf(destinationId);
+  const crossCurrency = type === "TRANSFER" && sourceCurrency !== destinationCurrency;
 
   const categoriesForType = categories.filter((c) => c.type === type);
 
@@ -80,32 +92,52 @@ function TransactionForm({
     event.preventDefault();
     setPending(true);
     const form = new FormData(event.currentTarget);
-    const res = await saveTransaction(transaction?.id ?? null, {
+    if (transaction && !navigator.onLine) {
+      setPending(false);
+      setResult({
+        ok: false,
+        error: "Sei offline: le modifiche si salvano solo con la connessione.",
+      });
+      return;
+    }
+    const text = (name: string) => String(form.get(name) ?? "");
+    const input = {
       type,
-      amount: form.get("amount"),
-      date: form.get("date"),
-      description: form.get("description"),
-      accountId: form.get("accountId"),
-      transferAccountId: form.get("transferAccountId") ?? "",
+      amount: text("amount"),
+      date: text("date"),
+      description: text("description"),
+      accountId,
+      transferAccountId: type === "TRANSFER" ? destinationId : "",
+      transferAmount: crossCurrency ? text("transferAmount") : "",
       categoryId: type === "TRANSFER" ? "" : categoryId,
-      notes: form.get("notes"),
-      tags: form.get("tags"),
-    }).catch((): ActionResult => ({ ok: false, error: "Salvataggio non riuscito. Riprova." }));
+      notes: text("notes"),
+      tags: text("tags"),
+    };
+    const failed = (): ActionResult => ({ ok: false, error: "Salvataggio non riuscito. Riprova." });
+    // New movements can be recorded offline too: they wait in the outbox until the next sync.
+    const res: ActionResult & { queued?: boolean } = transaction
+      ? await saveTransaction(transaction.id, input).catch(failed)
+      : await saveOrQueue(input, { userId, spaceId }, input.description || "Movimento").catch(
+          failed,
+        );
     setPending(false);
     if (!res.ok) {
       setResult(res);
       return;
     }
-    toast.success(transaction ? "Movimento aggiornato" : "Movimento registrato");
+    toast.success(
+      res.queued
+        ? "Salvato offline: lo sincronizzo appena torni online"
+        : transaction
+          ? "Movimento aggiornato"
+          : "Movimento registrato",
+    );
     res.warnings?.forEach((w) => toast.warning(w, { duration: 7000 }));
     onSaved?.();
     onOpenChange(false);
   }
 
   const errors = result?.fieldErrors;
-  const defaultAccount = initial?.account.id ?? accounts[0]?.id ?? "";
-  const defaultDestination =
-    initial?.transferAccount?.id ?? accounts.find((a) => a.id !== defaultAccount)?.id ?? "";
 
   return (
     <>
@@ -145,7 +177,7 @@ function TransactionForm({
 
         <div className="grid grid-cols-2 gap-3">
           <FormField
-            label="Importo (€)"
+            label={`Importo (${currencySymbol(sourceCurrency)})`}
             name="amount"
             inputMode="decimal"
             placeholder="0,00"
@@ -176,7 +208,8 @@ function TransactionForm({
           <SelectField
             label={type === "TRANSFER" ? "Dal conto" : "Conto"}
             name="accountId"
-            defaultValue={defaultAccount}
+            value={accountId}
+            onChange={(e) => setAccountId(e.target.value)}
             errors={errors?.accountId}
           >
             {accounts.map((a) => (
@@ -191,7 +224,8 @@ function TransactionForm({
               key="transferAccountId"
               label="Al conto"
               name="transferAccountId"
-              defaultValue={defaultDestination}
+              value={destinationId}
+              onChange={(e) => setDestinationId(e.target.value)}
               errors={errors?.transferAccountId}
             >
               {accounts.map((a) => (
@@ -223,6 +257,18 @@ function TransactionForm({
             </SelectField>
           )}
         </div>
+
+        {crossCurrency && (
+          <FormField
+            label={`Ricevuti sul conto di destinazione (${currencySymbol(destinationCurrency)})`}
+            name="transferAmount"
+            inputMode="decimal"
+            placeholder="Calcolato con il cambio del giorno"
+            defaultValue={initial?.transferAmount?.replace(".", ",") ?? ""}
+            hint="Lascialo vuoto per usare il cambio BCE della data; scrivi l'importo esatto se lo conosci (commissioni comprese)."
+            errors={errors?.transferAmount}
+          />
+        )}
 
         <FormField
           label="Tag"

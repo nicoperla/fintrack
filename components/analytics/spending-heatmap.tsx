@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { HeatCell } from "@/lib/finance/analytics";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { cn } from "@/lib/utils";
 
 type HeatmapData = {
@@ -33,6 +33,7 @@ const dayLong = new Intl.DateTimeFormat("it-IT", {
 const parse = (iso: string) => new Date(`${iso}T00:00:00Z`);
 
 export function SpendingHeatmap({ data }: { data: HeatmapData }) {
+  const money = useMoney();
   const [hover, setHover] = useState<{ cell: HeatCell; x: number; y: number } | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
 
@@ -70,7 +71,7 @@ export function SpendingHeatmap({ data }: { data: HeatmapData }) {
       <div ref={scroller} className="-mx-1 overflow-x-auto px-1 pb-1">
         <div
           role="img"
-          aria-label={`Calendario delle spese: ${formatCurrency(stats.total)} in ${stats.days} giorni, ${stats.noSpendDays} giorni senza spese.`}
+          aria-label={`Calendario delle spese: ${money(stats.total)} in ${stats.days} giorni, ${stats.noSpendDays} giorni senza spese.`}
           className="relative w-max"
           onMouseLeave={() => setHover(null)}
         >
@@ -137,7 +138,7 @@ export function SpendingHeatmap({ data }: { data: HeatmapData }) {
             {hover.cell.beforeTracking
               ? "Nessun dato: non usavi ancora FinTrack"
               : hover.cell.amount > 0
-                ? `${formatCurrency(hover.cell.amount)} · ${hover.cell.count} ${hover.cell.count === 1 ? "movimento" : "movimenti"}`
+                ? `${money(hover.cell.amount)} · ${hover.cell.count} ${hover.cell.count === 1 ? "movimento" : "movimenti"}`
                 : "Nessuna spesa"}
           </p>
         </div>
@@ -149,14 +150,14 @@ export function SpendingHeatmap({ data }: { data: HeatmapData }) {
         </div>
         <p className="text-muted-foreground text-xs">
           Le 4 tonalità dividono i giorni con spese in quarti: fino a{" "}
-          {data.thresholds.map((t) => formatCurrency(t)).join(", ")} e oltre.
+          {data.thresholds.map((t) => money(t)).join(", ")} e oltre.
         </p>
       </div>
 
       <dl className="grid grid-cols-2 gap-3 border-t pt-4 text-sm sm:grid-cols-4">
         <div>
           <dt className="text-muted-foreground text-xs">Media al giorno</dt>
-          <dd className="font-medium">{formatCurrency(stats.averagePerDay)}</dd>
+          <dd className="font-medium">{money(stats.averagePerDay)}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground text-xs">Giorni senza spese</dt>
@@ -168,7 +169,7 @@ export function SpendingHeatmap({ data }: { data: HeatmapData }) {
           <dt className="text-muted-foreground text-xs">Giorno più costoso</dt>
           <dd className="font-medium">
             {stats.maxDay
-              ? `${dayLong.format(parse(stats.maxDay.date))} · ${formatCurrency(stats.maxDay.amount)}`
+              ? `${dayLong.format(parse(stats.maxDay.date))} · ${money(stats.maxDay.amount)}`
               : "—"}
           </dd>
         </div>

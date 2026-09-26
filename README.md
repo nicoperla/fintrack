@@ -19,7 +19,7 @@ npm run db:seed          # dati demo
 npm run dev
 ```
 
-Apri [http://localhost:3000](http://localhost:3000) e accedi con l'utente demo: `demo@fintrack.app` / `demo1234`.
+Apri [http://localhost:3000](http://localhost:3000) e accedi con l'utente demo: `demo@fintrack.app` / `demo1234`. Lo spazio demo «Casa Demo» è condiviso con `sara@fintrack.app` (stessa password) e ha un conto in dollari.
 Il seed è rieseguibile: cancella e ricrea solo l'utente demo.
 
 Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
@@ -61,7 +61,10 @@ Il middleware richiede il login su tutte le pagine tranne quelle di autenticazio
 - **Traguardi** (`/achievements`): streak dei giorni in cui hai registrato qualcosa (calcolata sulla data di inserimento, fuso orario italiano; resta viva se ieri eri attivo), 9 badge con barra di avanzamento e 7 livelli a punti (movimenti, streak record, badge). In dashboard: streak e livello a colpo d'occhio, e un avviso quando sblocchi un badge. Logica pura in `lib/gamification/engine.ts`.
 - **Report PDF** (`/reports`): mensile o annuale, generato sul server con `@react-pdf/renderer` (`/api/reports?period=month&month=AAAA-MM` o `?period=year&year=AAAA`): KPI con confronto sul periodo precedente, spese ed entrate per categoria, andamento mese per mese (annuale), budget (mensile), spese più grandi e saldi dei conti.
 - **Riepilogo settimanale via email**: ogni lunedì alle 9 (07:00 UTC, `vercel.json`) Vercel Cron chiama `/api/cron/weekly-digest`, che invia a chi l'ha attivo il riepilogo della settimana precedente (lunedì–domenica): uscite ed entrate con confronto, categorie principali, budget a rischio, addebiti ricorrenti dei prossimi 7 giorni, streak e livello. Si attiva/disattiva in `/settings`, dove c'è anche l'anteprima; ogni email ha un link di disiscrizione firmato (HMAC con `NEXTAUTH_SECRET`) e l'header `List-Unsubscribe` one-click.
-- **Impostazioni** (`/settings`, icona ingranaggio): nome e riepilogo settimanale.
+- **Impostazioni** (`/settings`, icona ingranaggio): nome, spazio condiviso e riepilogo settimanale.
+- **Spazi condivisi (coppia/famiglia)**: ogni utente ha uno spazio personale e può invitare altre persone (fino a 10) da `/settings`. Chi entra vede e modifica gli stessi conti, movimenti, budget, obiettivi e debiti; accanto a ogni movimento compare chi l'ha registrato. L'invito è un link monouso valido 7 giorni e legato all'email invitata (salvato solo come hash SHA-256), inviato via email e copiabile. Chi è invitato può uscire, il proprietario può rimuovere persone; i movimenti registrati restano nello spazio. Con più spazi, il selettore in alto permette di passare dall'uno all'altro. Streak e badge di costanza restano personali; quelli su budget e obiettivi sono dello spazio.
+- **Multi-valuta**: ogni conto ha la sua valuta (30 valute con cambio BCE) e lo spazio una valuta principale. Ogni movimento salva l'importo nella valuta del conto e il controvalore nella valuta principale al cambio BCE del suo giorno (`base_amount`): totali, budget, grafici, report e insight sommano quello. Saldi e patrimonio convertono al cambio di oggi. Nei trasferimenti tra valute si può indicare l'importo effettivamente ricevuto (commissioni comprese), altrimenti lo calcola il cambio del giorno. I tassi vengono da [Frankfurter](https://frankfurter.dev) (gratuito, senza chiave) e sono salvati nella tabella `exchange_rates`: l'API viene chiamata solo per giorni mancanti e solo se c'è una valuta diversa dall'euro. Cambiando la valuta principale, i movimenti vengono ricalcolati al cambio del loro giorno e budget/obiettivi/debiti al cambio di oggi.
+- **PWA installabile e offline**: manifest, icone generate (`/icons/*`) e service worker (`public/sw.js`, attivo solo nella build di produzione). Le pagine già visitate restano consultabili offline (rete prima, poi copia salvata; `/offline.html` per le altre). I movimenti registrati offline (inserimento rapido o modulo) restano in una coda sul dispositivo, legata a utente e spazio, e vengono inviati al ritorno della connessione; un banner mostra lo stato. All'uscita le pagine salvate vengono cancellate.
 - **Stati vuoti illustrati**: ogni pagina senza dati mostra un'illustrazione SVG (colori del tema, anche in dark mode) e l'azione per iniziare.
 - **Tema chiaro/scuro** con transizione circolare (View Transitions API), che segue il sistema finché l'utente non sceglie. Animazioni disattivate con `prefers-reduced-motion`.
 - **Conti** (`/accounts`): creazione, modifica, eliminazione; saldo calcolato in automatico.
@@ -116,9 +119,11 @@ types/            tipi TypeScript condivisi
 PostgreSQL su [Neon](https://neon.tech) tramite Prisma. Schema in `prisma/schema.prisma`:
 
 - `User`, `PasswordResetToken`
+- `Household` (spazio): nome, valuta principale e proprietario; `HouseholdMember` (ruolo OWNER/MEMBER) e `HouseholdInvite`. Tutti i dati finanziari hanno `householdId`; `userId` indica solo chi li ha creati. Lo spazio personale di un utente ha lo stesso id dell'utente.
+- `ExchangeRate`: tassi BCE giornalieri (unità di valuta per 1 €).
 - `FinancialAccount`: i conti. Si chiama così perché NextAuth riserva il nome `Account` per l'OAuth. Il saldo non è salvato: è `initialBalance` + entrate − uscite − trasferimenti in uscita + trasferimenti in entrata (`lib/finance/balances.ts`).
 - `Category`: gerarchia a due livelli (categoria/sottocategoria) tramite `parentId`; tipo INCOME o EXPENSE.
-- `Transaction`: importi `Decimal(14,2)`, sempre positivi; il segno lo dà `type`:
+- `Transaction`: importi `Decimal(14,2)`, sempre positivi, nella valuta del conto (`amount`) e nella valuta dello spazio (`baseAmount`); il segno lo dà `type`:
   - `INCOME` / `EXPENSE`: movimento su `accountId`, con categoria opzionale dello stesso tipo
   - `TRANSFER`: sposta denaro da `accountId` a `transferAccountId`, senza categoria; non conta né come entrata né come uscita
 

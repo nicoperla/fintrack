@@ -10,7 +10,7 @@ import { BudgetStatusBadge } from "@/components/planning/budget-status";
 import { BudgetFormDialog } from "@/components/planning/budget-form-dialog";
 import { deleteBudget } from "@/app/(dashboard)/budgets/actions";
 import { CategoryIcon } from "@/lib/category-style";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import type { BudgetStatus } from "@/lib/finance/planning";
 import type { CategoryOption } from "@/lib/dto";
 
@@ -41,6 +41,7 @@ export function BudgetCard({
   usedCategoryIds: string[];
   monthRange: { from: string; to: string };
 }) {
+  const money = useMoney();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const title = budget.parentName
     ? `${budget.parentName} › ${budget.categoryName}`
@@ -80,8 +81,8 @@ export function BudgetCard({
       </div>
 
       <div className="flex items-baseline justify-between gap-2">
-        <p className="text-lg font-semibold tracking-tight">{formatCurrency(budget.spent)}</p>
-        <p className="text-muted-foreground text-sm">di {formatCurrency(budget.amount)}</p>
+        <p className="text-lg font-semibold tracking-tight">{money(budget.spent)}</p>
+        <p className="text-muted-foreground text-sm">di {money(budget.amount)}</p>
       </div>
       <Meter
         value={budget.ratio}
@@ -90,8 +91,8 @@ export function BudgetCard({
       />
       <p className="text-muted-foreground text-xs">
         {budget.status === "over"
-          ? `Superato di ${formatCurrency(-budget.remaining)}`
-          : `Restano ${formatCurrency(budget.remaining)} · circa ${formatCurrency(budget.dailyAllowance)} al giorno`}
+          ? `Superato di ${money(-budget.remaining)}`
+          : `Restano ${money(budget.remaining)} · circa ${money(budget.dailyAllowance)} al giorno`}
       </p>
 
       <ConfirmDeleteDialog

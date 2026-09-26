@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { parseAmount } from "@/lib/finance/money";
 
@@ -34,26 +34,28 @@ const debtSchema = z.object({
 const NOT_FOUND: ActionResult = { ok: false, error: "Debito non trovato." };
 
 export async function saveDebt(id: string | null, input: unknown): Promise<ActionResult> {
-  const user = await requireUser();
+  const space = await requireSpace();
   const parsed = debtSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
 
   if (id) {
     const { count } = await prisma.debt.updateMany({
-      where: { id, userId: user.id },
+      where: { id, householdId: space.id },
       data: parsed.data,
     });
     if (count === 0) return NOT_FOUND;
   } else {
-    await prisma.debt.create({ data: { ...parsed.data, userId: user.id } });
+    await prisma.debt.create({
+      data: { ...parsed.data, householdId: space.id, userId: space.user.id },
+    });
   }
   revalidatePath("/debts");
   return { ok: true };
 }
 
 export async function deleteDebt(id: string): Promise<ActionResult> {
-  const user = await requireUser();
-  const { count } = await prisma.debt.deleteMany({ where: { id, userId: user.id } });
+  const space = await requireSpace();
+  const { count } = await prisma.debt.deleteMany({ where: { id, householdId: space.id } });
   if (count === 0) return NOT_FOUND;
   revalidatePath("/debts");
   return { ok: true };

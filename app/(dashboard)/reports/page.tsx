@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { EmptyState } from "@/components/empty-state";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { currentMonth, formatMonthYear } from "@/lib/dates";
 
@@ -12,11 +12,11 @@ export const metadata = { title: "Report · FinTrack" };
 const monthKey = (d: Date) =>
   `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 
-async function getReportMonths(userId: string) {
+async function getReportMonths(householdId: string) {
   const rows = await prisma.$queryRaw<{ month: Date }[]>`
     SELECT DISTINCT date_trunc('month', "date")::date AS month
     FROM "transactions"
-    WHERE "user_id" = ${userId} AND "type"::text IN ('INCOME', 'EXPENSE')
+    WHERE "household_id" = ${householdId} AND "type"::text IN ('INCOME', 'EXPENSE')
     ORDER BY 1 DESC`;
   return rows.map((r) => r.month);
 }
@@ -49,8 +49,8 @@ function ReportCard({
 }
 
 export default async function ReportsPage() {
-  const user = await requireUser();
-  const months = await getReportMonths(user.id);
+  const space = await requireSpace();
+  const months = await getReportMonths(space.id);
   const years = Array.from(new Set(months.map((m) => m.getUTCFullYear())));
   const { start } = currentMonth();
   // Default to the last complete month when there is one: it's the report people usually want.

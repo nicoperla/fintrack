@@ -12,9 +12,9 @@ export type CategoryNode = {
   children: CategoryNode[];
 };
 
-export async function getCategoryTree(userId: string) {
+export async function getCategoryTree(householdId: string) {
   const rows = await prisma.category.findMany({
-    where: { userId },
+    where: { householdId },
     orderBy: { name: "asc" },
     include: { _count: { select: { transactions: true } } },
   });

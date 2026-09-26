@@ -3,15 +3,15 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { GoalCard } from "@/components/planning/goal-card";
 import { GoalFormDialog } from "@/components/planning/goal-dialogs";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getGoals } from "@/lib/data/goals";
 import { formatCurrency } from "@/lib/format";
 
 export const metadata = { title: "Obiettivi · FinTrack" };
 
 export default async function GoalsPage() {
-  const user = await requireUser();
-  const goals = await getGoals(user.id);
+  const space = await requireSpace();
+  const goals = await getGoals(space.id);
 
   const active = goals.filter((g) => !g.completed);
   const saved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
@@ -32,13 +32,17 @@ export default async function GoalsPage() {
           {goals.length > 0 && (
             <p className="text-muted-foreground text-sm">
               Hai messo da parte{" "}
-              <span className="text-foreground font-medium">{formatCurrency(saved)}</span>
+              <span className="text-foreground font-medium">
+                {formatCurrency(saved, space.currency)}
+              </span>
               {monthly > 0 && (
                 <>
                   {" "}
                   · per restare nei tempi servono{" "}
-                  <span className="text-foreground font-medium">{formatCurrency(monthly)}</span> al
-                  mese
+                  <span className="text-foreground font-medium">
+                    {formatCurrency(monthly, space.currency)}
+                  </span>{" "}
+                  al mese
                 </>
               )}
             </p>

@@ -19,7 +19,10 @@ export async function GET(request: Request) {
   }
 
   const users = await prisma.user.findMany({
-    where: { weeklyDigest: true, accounts: { some: {} } },
+    where: {
+      weeklyDigest: true,
+      memberships: { some: { household: { accounts: { some: {} } } } },
+    },
     select: { id: true, email: true },
   });
 

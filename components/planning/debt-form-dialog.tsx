@@ -1,5 +1,6 @@
 "use client";
 
+import { useCurrencySymbol } from "@/components/currency-provider";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export function DebtFormDialog({
   debt?: DebtInput;
   trigger: React.ReactElement;
 }) {
+  const symbol = useCurrencySymbol();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
@@ -78,7 +80,7 @@ export function DebtFormDialog({
             errors={errors?.name}
           />
           <FormField
-            label="Debito residuo (€)"
+            label={`Debito residuo (${symbol})`}
             name="balance"
             inputMode="decimal"
             placeholder="6.200"

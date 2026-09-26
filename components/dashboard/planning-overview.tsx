@@ -1,9 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Meter } from "@/components/planning/meter";
 import { BudgetStatusBadge } from "@/components/planning/budget-status";
 import { CategoryIcon } from "@/lib/category-style";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import type { BudgetWithSpending } from "@/lib/data/budgets";
 import type { GoalWithProgress } from "@/lib/data/goals";
 
@@ -31,6 +33,7 @@ function CardHeader({
 }
 
 export function BudgetsOverview({ budgets }: { budgets: BudgetWithSpending[] }) {
+  const money = useMoney();
   return (
     <section className="bg-card flex h-full flex-col gap-4 rounded-xl border p-4">
       <CardHeader
@@ -59,7 +62,7 @@ export function BudgetsOverview({ budgets }: { budgets: BudgetWithSpending[] }) 
                 label={`${b.categoryName}: ${Math.round(b.ratio * 100)}%`}
               />
               <p className="text-muted-foreground text-xs">
-                {formatCurrency(b.spent)} di {formatCurrency(b.amount)}
+                {money(b.spent)} di {money(b.amount)}
               </p>
             </li>
           ))}
@@ -70,6 +73,7 @@ export function BudgetsOverview({ budgets }: { budgets: BudgetWithSpending[] }) 
 }
 
 export function GoalsOverview({ goals }: { goals: GoalWithProgress[] }) {
+  const money = useMoney();
   const active = goals.filter((g) => !g.completed);
   return (
     <section className="bg-card flex h-full flex-col gap-4 rounded-xl border p-4">
@@ -97,10 +101,10 @@ export function GoalsOverview({ goals }: { goals: GoalWithProgress[] }) {
                 label={`${g.name}: ${Math.round(g.progress * 100)}%`}
               />
               <p className="text-muted-foreground text-xs">
-                {formatCurrency(g.currentAmount)} di {formatCurrency(g.targetAmount)}
+                {money(g.currentAmount)} di {money(g.targetAmount)}
                 {g.suggestedMonthly !== null &&
                   !g.overdue &&
-                  ` · ${formatCurrency(g.suggestedMonthly)}/mese`}
+                  ` · ${money(g.suggestedMonthly)}/mese`}
               </p>
             </li>
           ))}

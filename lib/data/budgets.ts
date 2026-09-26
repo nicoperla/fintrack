@@ -1,14 +1,15 @@
 import { prisma } from "@/lib/db/prisma";
+import { getHouseholdCurrency } from "@/lib/households";
 import { budgetUsage } from "@/lib/finance/planning";
 import { currentMonth } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
 import { alPct } from "@/lib/finance/insights";
 
-export async function getBudgetsWithSpending(userId: string) {
+export async function getBudgetsWithSpending(householdId: string) {
   const { start, end } = currentMonth();
   const [budgets, sums] = await Promise.all([
     prisma.budget.findMany({
-      where: { userId },
+      where: { householdId },
       include: {
         category: {
           select: {
@@ -24,12 +25,17 @@ export async function getBudgetsWithSpending(userId: string) {
     }),
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { userId, type: "EXPENSE", date: { gte: start, lt: end }, categoryId: { not: null } },
-      _sum: { amount: true },
+      where: {
+        householdId,
+        type: "EXPENSE",
+        date: { gte: start, lt: end },
+        categoryId: { not: null },
+      },
+      _sum: { baseAmount: true },
     }),
   ]);
 
-  const spentByCategory = new Map(sums.map((s) => [s.categoryId, Number(s._sum.amount ?? 0)]));
+  const spentByCategory = new Map(sums.map((s) => [s.categoryId, Number(s._sum.baseAmount ?? 0)]));
 
   return budgets
     .map((b) => {
@@ -56,20 +62,24 @@ export async function getBudgetsWithSpending(userId: string) {
 export type BudgetWithSpending = Awaited<ReturnType<typeof getBudgetsWithSpending>>[number];
 
 /** Messages for budgets touched by an expense in `categoryId` that are now at or over their threshold. */
-export async function getBudgetWarnings(userId: string, categoryId: string) {
+export async function getBudgetWarnings(householdId: string, categoryId: string) {
   const category = await prisma.category.findFirst({
-    where: { id: categoryId, userId },
+    where: { id: categoryId, householdId },
     select: { parentId: true },
   });
   if (!category) return [];
   const relevantIds = new Set([categoryId, category.parentId].filter((v): v is string => !!v));
 
-  const budgets = await getBudgetsWithSpending(userId);
+  const [budgets, currency] = await Promise.all([
+    getBudgetsWithSpending(householdId),
+    getHouseholdCurrency(householdId),
+  ]);
+  const money = (value: number) => formatCurrency(value, currency);
   return budgets
     .filter((b) => relevantIds.has(b.categoryId) && b.status !== "ok")
     .map((b) =>
       b.status === "over"
-        ? `Budget "${b.categoryName}" superato: ${formatCurrency(b.spent)} su ${formatCurrency(b.amount)}`
-        : `Budget "${b.categoryName}" ${alPct(b.ratio * 100)}: restano ${formatCurrency(b.remaining)}`,
+        ? `Budget "${b.categoryName}" superato: ${money(b.spent)} su ${money(b.amount)}`
+        : `Budget "${b.categoryName}" ${alPct(b.ratio * 100)}: restano ${money(b.remaining)}`,
     );
 }

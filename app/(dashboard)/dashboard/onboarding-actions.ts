@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { accountSchema } from "@/lib/validations/finance";
 import { DEFAULT_CATEGORIES } from "@/lib/defaults/categories";
@@ -27,26 +27,41 @@ export type OnboardingResult = ActionResult & {
  * Idempotent: a double submit won't create a second account.
  */
 export async function completeOnboarding(input: unknown): Promise<OnboardingResult> {
-  const user = await requireUser();
+  const space = await requireSpace();
   const parsed = onboardingSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
   const chosen = DEFAULT_CATEGORIES.filter((c) => parsed.data.categories.includes(c.name));
 
   await prisma.$transaction(async (tx) => {
-    const hasAccount = await tx.financialAccount.count({ where: { userId: user.id } });
+    const hasAccount = await tx.financialAccount.count({ where: { householdId: space.id } });
     if (!hasAccount) {
-      await tx.financialAccount.create({ data: { ...parsed.data.account, userId: user.id } });
+      await tx.financialAccount.create({
+        data: {
+          ...parsed.data.account,
+          currency: parsed.data.account.currency ?? space.currency,
+          householdId: space.id,
+          userId: space.user.id,
+        },
+      });
     }
-    const hasCategories = await tx.category.count({ where: { userId: user.id } });
+    const hasCategories = await tx.category.count({ where: { householdId: space.id } });
     if (hasCategories) return;
     for (const cat of chosen) {
       const parent = await tx.category.create({
-        data: { userId: user.id, name: cat.name, type: cat.type, icon: cat.icon, color: cat.color },
+        data: {
+          householdId: space.id,
+          userId: space.user.id,
+          name: cat.name,
+          type: cat.type,
+          icon: cat.icon,
+          color: cat.color,
+        },
       });
       if (cat.children?.length) {
         await tx.category.createMany({
           data: cat.children.map((child) => ({
-            userId: user.id,
+            householdId: space.id,
+            userId: space.user.id,
             name: child.name,
             type: cat.type,
             icon: child.icon,
@@ -60,12 +75,12 @@ export async function completeOnboarding(input: unknown): Promise<OnboardingResu
 
   const [account, categories] = await Promise.all([
     prisma.financialAccount.findFirstOrThrow({
-      where: { userId: user.id },
+      where: { householdId: space.id },
       orderBy: { createdAt: "asc" },
       select: { id: true, name: true, type: true },
     }),
     prisma.category.findMany({
-      where: { userId: user.id },
+      where: { householdId: space.id },
       select: { id: true, name: true, type: true },
     }),
   ]);

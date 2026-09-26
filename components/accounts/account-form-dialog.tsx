@@ -18,6 +18,8 @@ import { saveAccount } from "@/app/(dashboard)/accounts/actions";
 import { ACCOUNT_TYPE_OPTIONS } from "@/lib/account-types";
 import type { ActionResult } from "@/lib/action-result";
 import type { AccountDTO } from "@/lib/dto";
+import { CURRENCY_OPTIONS } from "@/lib/currency/currencies";
+import { currencySymbol, useCurrency } from "@/components/currency-provider";
 
 export function AccountFormDialog({
   account,
@@ -27,13 +29,18 @@ export function AccountFormDialog({
   trigger: React.ReactElement;
 }) {
   const [open, setOpen] = useState(false);
+  const baseCurrency = useCurrency();
+  const [currency, setCurrency] = useState(account?.currency ?? baseCurrency);
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
 
   function handleOpenChange(next: boolean) {
     if (pending) return;
     setOpen(next);
-    if (next) setResult(null);
+    if (next) {
+      setResult(null);
+      setCurrency(account?.currency ?? baseCurrency);
+    }
   }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -44,6 +51,7 @@ export function AccountFormDialog({
       name: form.get("name"),
       type: form.get("type"),
       initialBalance: form.get("initialBalance"),
+      currency,
     }).catch((): ActionResult => ({ ok: false, error: "Salvataggio non riuscito. Riprova." }));
     setPending(false);
     if (!res.ok) {
@@ -88,8 +96,29 @@ export function AccountFormDialog({
               </NativeSelectOption>
             ))}
           </SelectField>
+          <SelectField
+            label="Valuta"
+            name="currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            disabled={!!account && account.transactionCount > 0}
+            hint={
+              account && account.transactionCount > 0
+                ? "La valuta non si può cambiare dopo aver registrato dei movimenti."
+                : currency !== baseCurrency
+                  ? `I totali la convertono in ${baseCurrency} con il cambio BCE del giorno.`
+                  : undefined
+            }
+            errors={errors?.currency}
+          >
+            {CURRENCY_OPTIONS.map((o) => (
+              <NativeSelectOption key={o.value} value={o.value}>
+                {o.label}
+              </NativeSelectOption>
+            ))}
+          </SelectField>
           <FormField
-            label="Saldo iniziale (€)"
+            label={`Saldo iniziale (${currencySymbol(currency)})`}
             name="initialBalance"
             inputMode="decimal"
             defaultValue={account ? account.initialBalance.replace(".", ",") : ""}

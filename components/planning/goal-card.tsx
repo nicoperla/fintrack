@@ -8,7 +8,7 @@ import { Meter } from "@/components/planning/meter";
 import { ContributionDialog, GoalFormDialog } from "@/components/planning/goal-dialogs";
 import { deleteGoal } from "@/app/(dashboard)/goals/actions";
 import { CategoryIcon, DEFAULT_CATEGORY_COLOR } from "@/lib/category-style";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { cn } from "@/lib/utils";
 
 export type GoalDTO = {
@@ -33,6 +33,7 @@ const monthYear = new Intl.DateTimeFormat("it-IT", {
 const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFractionDigits: 0 });
 
 export function GoalCard({ goal }: { goal: GoalDTO }) {
+  const money = useMoney();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const color = goal.color ?? DEFAULT_CATEGORY_COLOR;
   const remaining = goal.targetAmount - goal.currentAmount;
@@ -95,11 +96,9 @@ export function GoalCard({ goal }: { goal: GoalDTO }) {
 
       <div>
         <div className="mb-2 flex items-baseline justify-between gap-2">
-          <p className="text-xl font-semibold tracking-tight">
-            {formatCurrency(goal.currentAmount)}
-          </p>
+          <p className="text-xl font-semibold tracking-tight">{money(goal.currentAmount)}</p>
           <p className="text-muted-foreground text-sm">
-            {percent.format(goal.progress)} di {formatCurrency(goal.targetAmount)}
+            {percent.format(goal.progress)} di {money(goal.targetAmount)}
           </p>
         </div>
         <Meter
@@ -116,9 +115,9 @@ export function GoalCard({ goal }: { goal: GoalDTO }) {
             ? "Complimenti, ce l'hai fatta!"
             : goal.suggestedMonthly !== null
               ? goal.overdue
-                ? `Mancano ${formatCurrency(remaining)}`
-                : `Metti da parte ${formatCurrency(goal.suggestedMonthly)} al mese`
-              : `Mancano ${formatCurrency(remaining)}`}
+                ? `Mancano ${money(remaining)}`
+                : `Metti da parte ${money(goal.suggestedMonthly)} al mese`
+              : `Mancano ${money(remaining)}`}
         </p>
         <ContributionDialog
           goal={goal}

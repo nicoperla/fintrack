@@ -12,7 +12,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from "recharts";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -51,12 +51,13 @@ const axisNumber = new Intl.NumberFormat("it-IT", {
 const percent = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 1 });
 
 function NetWorthTooltip({ active, payload }: TooltipContentProps) {
+  const money = useMoney();
   const point = payload?.[0]?.payload as { date: string; value: number } | undefined;
   if (!active || !point) return null;
   return (
     <div className="bg-popover text-popover-foreground ring-foreground/10 rounded-lg px-3 py-2 text-xs shadow-md ring-1">
       <p className="text-muted-foreground">{fullDate.format(parse(point.date))}</p>
-      <p className="font-medium tabular-nums">{formatCurrency(point.value)}</p>
+      <p className="font-medium tabular-nums">{money(point.value)}</p>
     </div>
   );
 }
@@ -70,6 +71,7 @@ export function NetWorthChart({
   range: (typeof RANGES)[number][0];
   query: Record<string, string>;
 }) {
+  const money = useMoney();
   const reduceMotion = usePrefersReducedMotion();
   const up = data.change >= 0;
   const DeltaIcon = up ? ArrowUpRight : ArrowDownRight;
@@ -90,9 +92,7 @@ export function NetWorthChart({
           <h2 id="networth-title" className="font-medium">
             Patrimonio netto nel tempo
           </h2>
-          <p className="mt-1 text-2xl font-semibold tracking-tight">
-            {formatCurrency(data.current)}
-          </p>
+          <p className="mt-1 text-2xl font-semibold tracking-tight">{money(data.current)}</p>
           <p className="text-muted-foreground flex items-center gap-1 text-xs">
             <span
               className={cn(
@@ -102,7 +102,7 @@ export function NetWorthChart({
             >
               <DeltaIcon className="size-3.5" aria-hidden />
               {up ? "+" : "−"}
-              {formatCurrency(Math.abs(data.change))}
+              {money(Math.abs(data.change))}
               {data.changePct !== null &&
                 ` (${up ? "+" : "−"}${percent.format(Math.abs(data.changePct))}%)`}
             </span>
@@ -192,11 +192,11 @@ export function NetWorthChart({
       <dl className="grid grid-cols-2 gap-3 border-t pt-4 text-sm">
         <div>
           <dt className="text-muted-foreground text-xs">Attività (conti in positivo)</dt>
-          <dd className="font-medium">{formatCurrency(data.assets)}</dd>
+          <dd className="font-medium">{money(data.assets)}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground text-xs">Passività (es. carte di credito)</dt>
-          <dd className="font-medium">{formatCurrency(data.liabilities)}</dd>
+          <dd className="font-medium">{money(data.liabilities)}</dd>
         </div>
       </dl>
     </section>

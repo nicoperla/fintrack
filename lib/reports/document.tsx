@@ -58,7 +58,10 @@ const s = StyleSheet.create({
   empty: { color: C.muted, padding: 12, backgroundColor: C.soft, borderRadius: 6 },
 });
 
-const eur = (n: number) => formatCurrency(n).replace(/\u202f/g, " ");
+// The built-in PDF fonts lack U+202F (narrow no-break space) that Intl puts in some currencies.
+const moneyIn = (currency: string) => (n: number, other?: string) =>
+  formatCurrency(n, other ?? currency).replace(/\u202f/g, " ");
+type Money = ReturnType<typeof moneyIn>;
 const pct = (n: number) => (n > 0 && n < 0.005 ? "<1%" : `${Math.round(n * 100)}%`);
 
 function delta(current: number, previous: number, goodWhenUp: boolean) {
@@ -97,10 +100,12 @@ function CategoryTable({
   slices,
   color,
   total,
+  eur,
 }: {
   slices: ReportData["expenseCategories"];
   color: string;
   total: number;
+  eur: Money;
 }) {
   const max = Math.max(...slices.map((x) => x.value), 1);
   return (
@@ -132,7 +137,8 @@ export function ReportDocument({ data }: { data: ReportData }) {
     timeStyle: "short",
     timeZone: "Europe/Rome",
   }).format(data.generatedAt);
-  const netWorth = data.accounts.reduce((sum, a) => sum + a.balance, 0);
+  const eur = moneyIn(data.currency);
+  const netWorth = data.accounts.reduce((sum, a) => sum + a.baseBalance, 0);
   const maxMonth = Math.max(...data.months.map((m) => Math.max(m.income, m.expense)), 1);
   const expenseDelta = delta(data.expense, data.previous.expense, false);
   const incomeDelta = delta(data.income, data.previous.income, true);
@@ -257,7 +263,12 @@ export function ReportDocument({ data }: { data: ReportData }) {
         <View style={s.section}>
           <Text style={s.h2}>Dove sono andati i soldi</Text>
           {data.expenseCategories.length ? (
-            <CategoryTable slices={data.expenseCategories} color={C.expense} total={data.expense} />
+            <CategoryTable
+              eur={eur}
+              slices={data.expenseCategories}
+              color={C.expense}
+              total={data.expense}
+            />
           ) : (
             <Text style={s.empty}>Nessuna uscita nel periodo.</Text>
           )}
@@ -266,7 +277,12 @@ export function ReportDocument({ data }: { data: ReportData }) {
         {data.incomeCategories.length > 0 && (
           <View style={s.section} wrap={false}>
             <Text style={s.h2}>Da dove sono arrivati</Text>
-            <CategoryTable slices={data.incomeCategories} color={C.income} total={data.income} />
+            <CategoryTable
+              eur={eur}
+              slices={data.incomeCategories}
+              color={C.income}
+              total={data.income}
+            />
           </View>
         )}
 
@@ -316,7 +332,14 @@ export function ReportDocument({ data }: { data: ReportData }) {
                 <Text style={[s.small, { width: 70 }]}>{formatDate(t.date)}</Text>
                 <Text style={{ flex: 1 }}>{t.description}</Text>
                 <Text style={[s.small, { width: 110 }]}>{t.category}</Text>
-                <Text style={[s.right, { width: 80 }]}>{eur(t.amount)}</Text>
+                <View style={{ width: 80 }}>
+                  <Text style={s.right}>{eur(t.amount)}</Text>
+                  {t.original && (
+                    <Text style={[s.small, s.right]}>
+                      {eur(t.original.amount, t.original.currency)}
+                    </Text>
+                  )}
+                </View>
               </View>
             ))}
           </View>
@@ -329,8 +352,11 @@ export function ReportDocument({ data }: { data: ReportData }) {
               <Text style={{ flex: 1 }}>{a.name}</Text>
               <Text style={[s.small, { width: 110 }]}>{a.type}</Text>
               <Text style={[s.right, { width: 90, color: a.balance < 0 ? C.bad : C.ink }]}>
-                {eur(a.balance)}
+                {eur(a.balance, a.currency)}
               </Text>
+              {a.currency !== data.currency && (
+                <Text style={[s.small, s.right, { width: 90 }]}>circa {eur(a.baseBalance)}</Text>
+              )}
             </View>
           ))}
         </View>

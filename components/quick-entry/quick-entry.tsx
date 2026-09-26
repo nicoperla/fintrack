@@ -6,10 +6,10 @@ import { CalendarDays, CornerDownLeft, Pencil, Wallet, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import dynamic from "next/dynamic";
-import { saveTransaction } from "@/app/(dashboard)/transactions/actions";
+import { saveOrQueue } from "@/lib/offline/save";
 import { parseQuickEntry, type QuickEntryContext } from "@/lib/quick-entry/parse";
 import { CategoryIcon } from "@/lib/category-style";
-import { formatCurrency } from "@/lib/format";
+import { useMoney, useSpaceInfo } from "@/components/currency-provider";
 import type { AccountOption, CategoryOption, TransactionDTO } from "@/lib/dto";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +63,8 @@ export function QuickEntry({
   accounts: AccountOption[];
   categories: CategoryOption[];
 }) {
+  const money = useMoney();
+  const { userId, spaceId } = useSpaceInfo();
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -102,12 +104,15 @@ export function QuickEntry({
       id: "",
       type: parsed.type,
       amount: parsed.amount ?? "",
+      baseAmount: parsed.amount ?? "",
+      transferAmount: null,
       date: parsed.date,
       description: parsed.description,
       notes: null,
       tags: parsed.tags,
-      account: { id: account.id, name: account.name },
+      account: { id: account.id, name: account.name, currency: account.currency },
       transferAccount: null,
+      author: null,
       category: category
         ? {
             id: category.id,
@@ -128,25 +133,31 @@ export function QuickEntry({
       return;
     }
     setPending(true);
-    const res = await saveTransaction(null, {
-      type: parsed.type,
-      amount: parsed.amount,
-      date: parsed.date,
-      description: parsed.description,
-      accountId: parsed.accountId,
-      transferAccountId: "",
-      categoryId: parsed.categoryId ?? "",
-      notes: "",
-      tags: parsed.tags.join(", "),
-    }).catch(() => null);
+    const sign = parsed.type === "INCOME" ? "+" : "−";
+    const label = `${parsed.description} ${sign}${money(parsed.amount, account?.currency)}`;
+    const res = await saveOrQueue(
+      {
+        type: parsed.type,
+        amount: parsed.amount,
+        date: parsed.date,
+        description: parsed.description,
+        accountId: parsed.accountId,
+        transferAccountId: "",
+        categoryId: parsed.categoryId ?? "",
+        notes: "",
+        tags: parsed.tags.join(", "),
+      },
+      { userId, spaceId },
+      label,
+    ).catch(() => null);
     setPending(false);
     if (!res?.ok) {
       toast.error("Non sono riuscito a registrarlo: completa i dati nel modulo.");
       openFullForm();
       return;
     }
-    const sign = parsed.type === "INCOME" ? "+" : "−";
-    toast.success(`Registrato: ${parsed.description} ${sign}${formatCurrency(parsed.amount)}`);
+    if (res.queued) toast.success(`Salvato offline: ${label}. Lo sincronizzo appena torni online.`);
+    else toast.success(`Registrato: ${label}`);
     res.warnings?.forEach((w) => toast.warning(w, { duration: 7000 }));
     setText("");
   }
@@ -188,7 +199,7 @@ export function QuickEntry({
           </Chip>
           <Chip muted={!parsed.amount}>
             {parsed.amount ? (
-              <span className="font-medium">{formatCurrency(parsed.amount)}</span>
+              <span className="font-medium">{money(parsed.amount, account?.currency)}</span>
             ) : (
               "Manca l'importo"
             )}

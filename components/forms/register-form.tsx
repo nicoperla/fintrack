@@ -8,7 +8,14 @@ import { FormField, FormMessage } from "@/components/forms/form-field";
 import { registerUser } from "@/app/(auth)/actions";
 import type { ActionResult } from "@/lib/action-result";
 
-export function RegisterForm() {
+export function RegisterForm({
+  callbackUrl = "/dashboard",
+  email,
+}: {
+  callbackUrl?: string;
+  /** Prefilled from an invitation. */
+  email?: string;
+}) {
   const router = useRouter();
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
@@ -38,7 +45,7 @@ export function RegisterForm() {
       router.replace("/login");
       return;
     }
-    router.replace("/dashboard");
+    router.replace(callbackUrl);
     router.refresh();
   }
 
@@ -58,6 +65,7 @@ export function RegisterForm() {
         name="email"
         type="email"
         autoComplete="email"
+        defaultValue={email}
         required
         errors={errors?.email}
       />

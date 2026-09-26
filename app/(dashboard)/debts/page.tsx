@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { DebtPlanner } from "@/components/planning/debt-planner";
 import { DebtFormDialog } from "@/components/planning/debt-form-dialog";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getDebts } from "@/lib/data/intelligence";
 
 export const metadata = { title: "Piano debiti · FinTrack" };
 
 export default async function DebtsPage() {
-  const user = await requireUser();
-  const debts = await getDebts(user.id);
+  const space = await requireSpace();
+  const debts = await getDebts(space.id);
 
   return (
     <div className="grid grid-cols-1 gap-6">

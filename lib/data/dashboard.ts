@@ -15,7 +15,7 @@ const TREND_MONTHS = 6;
 
 type MonthlyRow = { month: Date; type: "INCOME" | "EXPENSE"; total: Prisma.Decimal };
 
-export async function getDashboardData(userId: string) {
+export async function getDashboardData(householdId: string) {
   const { year, month, day } = todayInAppTimeZone();
   const trendStart = utcDate(year, month - (TREND_MONTHS - 1), 1);
   const monthStart = utcDate(year, month, 1);
@@ -26,37 +26,37 @@ export async function getDashboardData(userId: string) {
   const previousSamePeriodEnd = utcDate(year, month - 1, Math.min(day, previousMonthDays));
 
   const [accounts, monthlyRows, categorySums, categories, previousSamePeriod] = await Promise.all([
-    getAccountsWithBalances(userId),
+    getAccountsWithBalances(householdId),
     prisma.$queryRaw<MonthlyRow[]>`
-      SELECT date_trunc('month', "date")::date AS month, "type"::text AS type, SUM("amount") AS total
+      SELECT date_trunc('month', "date")::date AS month, "type"::text AS type, SUM("base_amount") AS total
       FROM "transactions"
-      WHERE "user_id" = ${userId}
+      WHERE "household_id" = ${householdId}
         AND "type"::text IN ('INCOME', 'EXPENSE')
         AND "date" >= ${trendStart}::date
         AND "date" < ${nextMonthStart}::date
       GROUP BY 1, 2`,
     prisma.transaction.groupBy({
       by: ["categoryId"],
-      where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: nextMonthStart } },
-      _sum: { amount: true },
+      where: { householdId, type: "EXPENSE", date: { gte: monthStart, lt: nextMonthStart } },
+      _sum: { baseAmount: true },
     }),
     prisma.category.findMany({
-      where: { userId },
+      where: { householdId },
       select: { id: true, name: true, color: true, parentId: true },
     }),
     prisma.transaction.groupBy({
       by: ["type"],
       where: {
-        userId,
+        householdId,
         type: { in: ["INCOME", "EXPENSE"] },
         date: { gte: previousMonthStart, lte: previousSamePeriodEnd },
       },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
   ]);
 
   const previousSum = (type: "INCOME" | "EXPENSE") =>
-    Number(previousSamePeriod.find((r) => r.type === type)?._sum.amount ?? 0);
+    Number(previousSamePeriod.find((r) => r.type === type)?._sum.baseAmount ?? 0);
 
   const totals = new Map<string, { income: number; expense: number }>();
   for (const row of monthlyRows) {
@@ -78,12 +78,12 @@ export async function getDashboardData(userId: string) {
   });
 
   const current = trend[trend.length - 1];
-  const netWorth = accounts.reduce((sum, a) => sum.plus(a.balance), new Prisma.Decimal(0));
+  const netWorth = accounts.reduce((sum, a) => sum + a.baseBalance, 0);
   const monthEnd = utcDate(year, month + 1, 0);
 
   return {
     accountCount: accounts.length,
-    netWorth: netWorth.toNumber(),
+    netWorth,
     monthName: formatMonth(monthStart),
     monthLabel: formatMonthYear(monthStart),
     previousMonthName: formatMonth(previousMonthStart),
@@ -92,7 +92,10 @@ export async function getDashboardData(userId: string) {
     previousSamePeriod: { income: previousSum("INCOME"), expense: previousSum("EXPENSE") },
     trend,
     categories: summarizeByTopCategory(
-      categorySums.map((s) => ({ categoryId: s.categoryId, amount: Number(s._sum.amount ?? 0) })),
+      categorySums.map((s) => ({
+        categoryId: s.categoryId,
+        amount: Number(s._sum.baseAmount ?? 0),
+      })),
       categories,
     ),
   };

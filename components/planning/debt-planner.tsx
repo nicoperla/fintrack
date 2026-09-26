@@ -18,7 +18,7 @@ import { DebtFormDialog } from "@/components/planning/debt-form-dialog";
 import { SliderField } from "@/components/planning/slider-field";
 import { deleteDebt } from "@/app/(dashboard)/debts/actions";
 import { simulatePayoff, type DebtInput, type Strategy } from "@/lib/finance/debts";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -84,13 +84,14 @@ function BalanceTooltip({ active, payload }: TooltipContentProps) {
 }
 
 function DebtRow({ debt }: { debt: DebtInput }) {
+  const money = useMoney();
   const [confirm, setConfirm] = useState(false);
   return (
     <tr className="border-b last:border-0">
       <td className="py-2 pr-2 font-medium">{debt.name}</td>
-      <td className="py-2 pr-2 text-right tabular-nums">{formatCurrency(debt.balance)}</td>
+      <td className="py-2 pr-2 text-right tabular-nums">{money(debt.balance)}</td>
       <td className="py-2 pr-2 text-right tabular-nums">{debt.apr.toLocaleString("it-IT")}%</td>
-      <td className="py-2 pr-2 text-right tabular-nums">{formatCurrency(debt.minPayment)}</td>
+      <td className="py-2 pr-2 text-right tabular-nums">{money(debt.minPayment)}</td>
       <td className="py-2 text-right whitespace-nowrap">
         <DebtFormDialog
           debt={debt}
@@ -122,6 +123,7 @@ function DebtRow({ debt }: { debt: DebtInput }) {
 }
 
 export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
+  const money = useMoney();
   const reduceMotion = usePrefersReducedMotion();
   const [extra, setExtra] = useState(100);
   const [strategy, setStrategy] = useState<Strategy>("avalanche");
@@ -161,7 +163,7 @@ export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
           <div>
             <h2 className="font-medium">I tuoi debiti</h2>
             <p className="text-muted-foreground text-sm">
-              Totale {formatCurrency(totalDebt)} · rate minime {formatCurrency(minimums)}/mese
+              Totale {money(totalDebt)} · rate minime {money(minimums)}/mese
             </p>
           </div>
           <DebtFormDialog trigger={addButton} />
@@ -239,9 +241,7 @@ export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
                     <span className="text-muted-foreground"> · {duration(r.months)}</span>
                     <br />
                     Interessi totali{" "}
-                    <span className="font-semibold tabular-nums">
-                      {formatCurrency(r.totalInterest)}
-                    </span>
+                    <span className="font-semibold tabular-nums">{money(r.totalInterest)}</span>
                   </span>
                 ) : (
                   <span className="flex items-center gap-1 text-sm text-(--delta-bad)">
@@ -255,8 +255,7 @@ export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
         </div>
         {chosen.feasible && interestSaved > 1 && (
           <p className="text-muted-foreground -mt-2 text-xs">
-            Con la valanga risparmi {formatCurrency(interestSaved)} di interessi rispetto alla palla
-            di neve.
+            Con la valanga risparmi {money(interestSaved)} di interessi rispetto alla palla di neve.
           </p>
         )}
       </section>
@@ -357,15 +356,15 @@ export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
                     />
                   </div>
                   <span className="text-muted-foreground text-xs">
-                    {duration(p.month)} · interessi {formatCurrency(p.interest)}
+                    {duration(p.month)} · interessi {money(p.interest)}
                   </span>
                 </li>
               ))}
             </ol>
             <p className="flex items-center gap-2 border-t pt-3 text-sm">
               <Trophy className="size-4 text-(--delta-good)" aria-hidden />
-              Totale pagato {formatCurrency(chosen.totalPaid)}, di cui{" "}
-              {formatCurrency(chosen.totalInterest)} di interessi.
+              Totale pagato {money(chosen.totalPaid)}, di cui {money(chosen.totalInterest)} di
+              interessi.
             </p>
           </section>
         </div>

@@ -4,7 +4,7 @@ import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getGoals } from "@/lib/data/goals";
@@ -26,18 +26,19 @@ export const metadata = { title: "Dashboard · FinTrack" };
 const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFractionDigits: 0 });
 
 export default async function DashboardPage() {
-  const user = await requireUser();
+  const space = await requireSpace();
+  const { user } = space;
   const firstName = user.name?.split(" ")[0];
   const [data, budgets, goals, insights, gamification, quickContext, accountOptions, tree] =
     await Promise.all([
-      getDashboardData(user.id),
-      getBudgetsWithSpending(user.id),
-      getGoals(user.id),
-      getInsights(user.id),
-      getGamification(user.id),
-      getQuickEntryContext(user.id),
-      getAccountOptions(user.id),
-      getCategoryTree(user.id),
+      getDashboardData(space.id),
+      getBudgetsWithSpending(space.id),
+      getGoals(space.id),
+      getInsights(space.id),
+      getGamification(space.user.id, space.id),
+      getQuickEntryContext(space.id),
+      getAccountOptions(space.id),
+      getCategoryTree(space.id),
     ]);
 
   const greeting = (

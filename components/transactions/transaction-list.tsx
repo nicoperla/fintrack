@@ -6,7 +6,8 @@ import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
 import { deleteTransaction } from "@/app/(dashboard)/transactions/actions";
 import { CategoryIcon } from "@/lib/category-style";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useCurrency, useMoney, useSharedSpace } from "@/components/currency-provider";
 import type { AccountOption, CategoryOption, TransactionDTO } from "@/lib/dto";
 import { cn } from "@/lib/utils";
 
@@ -21,15 +22,46 @@ function groupByDate(items: TransactionDTO[]) {
 }
 
 function AmountText({ tx }: { tx: TransactionDTO }) {
-  const value = formatCurrency(tx.amount);
+  const money = useMoney();
+  const base = useCurrency();
+  // Shown in the account's currency; the space-currency equivalent underneath when different.
+  const value = money(tx.amount, tx.account.currency);
+  const converted =
+    tx.account.currency !== base ? (
+      <span className="text-muted-foreground block text-right text-[11px] font-normal">
+        {money(tx.baseAmount)}
+      </span>
+    ) : null;
   if (tx.type === "INCOME") {
-    return <span className="text-emerald-600 dark:text-emerald-400">+{value}</span>;
+    return (
+      <>
+        <span className="text-emerald-600 dark:text-emerald-400">+{value}</span>
+        {converted}
+      </>
+    );
   }
-  if (tx.type === "EXPENSE") return <span>−{value}</span>;
-  return <span className="text-muted-foreground">{value}</span>;
+  if (tx.type === "EXPENSE") {
+    return (
+      <>
+        <span>−{value}</span>
+        {converted}
+      </>
+    );
+  }
+  return (
+    <>
+      <span className="text-muted-foreground">{value}</span>
+      {tx.transferAmount && tx.transferAccount && (
+        <span className="text-muted-foreground block text-right text-[11px] font-normal">
+          → {money(tx.transferAmount, tx.transferAccount.currency)}
+        </span>
+      )}
+    </>
+  );
 }
 
 function TransactionRow({ tx, onSelect }: { tx: TransactionDTO; onSelect: () => void }) {
+  const shared = useSharedSpace();
   const subtitle =
     tx.type === "TRANSFER"
       ? `${tx.account.name} → ${tx.transferAccount?.name ?? "?"}`
@@ -40,7 +72,10 @@ function TransactionRow({ tx, onSelect }: { tx: TransactionDTO; onSelect: () => 
               : tx.category.name
             : "Senza categoria",
           tx.account.name,
-        ].join(" · ");
+          shared && tx.author ? tx.author : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
   return (
     <li>
@@ -67,7 +102,7 @@ function TransactionRow({ tx, onSelect }: { tx: TransactionDTO; onSelect: () => 
             ))}
           </span>
         </span>
-        <span className="shrink-0 text-sm font-medium tabular-nums">
+        <span className="shrink-0 text-right text-sm font-medium tabular-nums">
           <AmountText tx={tx} />
         </span>
       </button>
@@ -84,6 +119,7 @@ export function TransactionList({
   accounts: AccountOption[];
   categories: CategoryOption[];
 }) {
+  const money = useMoney();
   const [editing, setEditing] = useState<TransactionDTO | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleting, setDeleting] = useState<TransactionDTO | null>(null);
@@ -130,7 +166,7 @@ export function TransactionList({
         title="Eliminare questo movimento?"
         description={
           deleting
-            ? `"${deleting.description}" di ${formatCurrency(deleting.amount)} verrà eliminato. L'operazione non è reversibile.`
+            ? `"${deleting.description}" di ${money(deleting.amount, deleting.account.currency)} verrà eliminato. L'operazione non è reversibile.`
             : ""
         }
         successMessage="Movimento eliminato"

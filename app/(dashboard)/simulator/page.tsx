@@ -1,12 +1,12 @@
 import { SavingsSimulator } from "@/components/planning/savings-simulator";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getSimulatorDefaults } from "@/lib/data/intelligence";
 
 export const metadata = { title: "Simulatore · FinTrack" };
 
 export default async function SimulatorPage() {
-  const user = await requireUser();
-  const defaults = await getSimulatorDefaults(user.id);
+  const space = await requireSpace();
+  const defaults = await getSimulatorDefaults(space.id);
 
   return (
     <div className="grid grid-cols-1 gap-6">

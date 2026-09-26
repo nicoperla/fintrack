@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarClock, TrendingUp } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getRecurring, type RecurringWithCategory } from "@/lib/data/intelligence";
 import { CategoryIcon } from "@/lib/category-style";
 import { FREQUENCY_LABELS } from "@/lib/finance/recurring";
@@ -31,7 +31,16 @@ function whenLabel(date: string, today: Date) {
   return `tra ${days} giorni · ${dayMonth.format(new Date(`${date}T00:00:00Z`))}`;
 }
 
-function RecurringRow({ item, today }: { item: RecurringWithCategory; today: Date }) {
+function RecurringRow({
+  item,
+  today,
+  currency,
+}: {
+  item: RecurringWithCategory;
+  today: Date;
+  currency: string;
+}) {
+  const money = (value: number) => formatCurrency(value, currency);
   return (
     <li className="flex items-center gap-3 py-3">
       <CategoryIcon name={item.category?.icon} color={item.category?.color} />
@@ -52,19 +61,19 @@ function RecurringRow({ item, today }: { item: RecurringWithCategory; today: Dat
         {item.priceChange && (
           <p className="mt-1 flex items-center gap-1 text-xs font-medium text-(--delta-bad)">
             <TrendingUp className="size-3.5" aria-hidden />
-            Aumentato {delPct(item.priceChange.pct)}: da {formatCurrency(item.priceChange.from)} a{" "}
-            {formatCurrency(item.priceChange.to)}
+            Aumentato {delPct(item.priceChange.pct)}: da {money(item.priceChange.from)} a{" "}
+            {money(item.priceChange.to)}
           </p>
         )}
       </div>
       <div className="text-right">
         <p className="font-medium tabular-nums">
           {item.variableAmount && "~"}
-          {formatCurrency(item.averageAmount)}
+          {money(item.averageAmount)}
         </p>
         {item.frequency !== "monthly" && (
           <p className="text-muted-foreground text-xs tabular-nums">
-            {formatCurrency(item.monthlyCost)}/mese
+            {money(item.monthlyCost)}/mese
           </p>
         )}
       </div>
@@ -77,11 +86,13 @@ function Section({
   description,
   items,
   today,
+  currency,
 }: {
   title: string;
   description?: string;
   items: RecurringWithCategory[];
   today: Date;
+  currency: string;
 }) {
   if (items.length === 0) return null;
   return (
@@ -90,7 +101,7 @@ function Section({
       {description && <p className="text-muted-foreground text-sm">{description}</p>}
       <ul className="divide-y">
         {items.map((item) => (
-          <RecurringRow key={item.key} item={item} today={today} />
+          <RecurringRow key={item.key} item={item} today={today} currency={currency} />
         ))}
       </ul>
     </section>
@@ -98,8 +109,8 @@ function Section({
 }
 
 export default async function RecurringPage() {
-  const user = await requireUser();
-  const recurring = await getRecurring(user.id);
+  const space = await requireSpace();
+  const recurring = await getRecurring(space.id);
   const t = todayInAppTimeZone();
   const today = utcDate(t.year, t.month, t.day);
 
@@ -143,13 +154,13 @@ export default async function RecurringPage() {
             <div className="bg-card rounded-xl border p-4">
               <p className="text-muted-foreground text-sm">Spesa ricorrente al mese</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {formatCurrency(monthly)}
+                {formatCurrency(monthly, space.currency)}
               </p>
             </div>
             <div className="bg-card rounded-xl border p-4">
               <p className="text-muted-foreground text-sm">In un anno</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {formatCurrency(monthly * 12)}
+                {formatCurrency(monthly * 12, space.currency)}
               </p>
             </div>
             <div className="bg-card rounded-xl border p-4">
@@ -163,7 +174,7 @@ export default async function RecurringPage() {
               <TrendingUp className="mt-0.5 size-4 shrink-0 text-(--delta-bad)" aria-hidden />
               <p>
                 {increases.length === 1
-                  ? `${increases[0].name} ha aumentato il prezzo: ora costa ${formatCurrency(increases[0].priceChange!.to)} invece di ${formatCurrency(increases[0].priceChange!.from)}.`
+                  ? `${increases[0].name} ha aumentato il prezzo: ora costa ${formatCurrency(increases[0].priceChange!.to, space.currency)} invece di ${formatCurrency(increases[0].priceChange!.from, space.currency)}.`
                   : `${increases.length} abbonamenti hanno aumentato il prezzo: ${increases.map((i) => i.name).join(", ")}.`}{" "}
                 È un buon momento per chiederti se ti serve ancora.
               </p>
@@ -188,7 +199,7 @@ export default async function RecurringPage() {
                       {dayMonth.format(new Date(`${r.nextDate}T00:00:00Z`))}
                     </span>
                     <span className="shrink-0 font-medium tabular-nums">
-                      {formatCurrency(r.averageAmount)}
+                      {formatCurrency(r.averageAmount, space.currency)}
                     </span>
                   </li>
                 ))}
@@ -196,14 +207,25 @@ export default async function RecurringPage() {
             </section>
           )}
 
-          <Section title="Uscite ricorrenti" items={active} today={today} />
           <Section
+            currency={space.currency}
+            title="Uscite ricorrenti"
+            items={active}
+            today={today}
+          />
+          <Section
+            currency={space.currency}
             title="Forse disdetti"
             description="Non vediamo addebiti da più tempo del solito."
             items={inactive}
             today={today}
           />
-          <Section title="Entrate ricorrenti" items={income} today={today} />
+          <Section
+            currency={space.currency}
+            title="Entrate ricorrenti"
+            items={income}
+            today={today}
+          />
         </>
       )}
     </div>

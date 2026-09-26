@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { getHouseholdCurrency } from "@/lib/households";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { buildCashFlow, buildHeatmap, netWorthSeries, weekdayIndex } from "@/lib/finance/analytics";
@@ -15,20 +16,25 @@ function todayUtc() {
   return { ...t, date: utcDate(t.year, t.month, t.day) };
 }
 
-async function categoryInfo(userId: string) {
+async function categoryInfo(householdId: string) {
   return prisma.category.findMany({
-    where: { userId },
+    where: { householdId },
     select: { id: true, name: true, color: true, icon: true, parentId: true },
   });
 }
 
-async function sumsByCategory(userId: string, type: "INCOME" | "EXPENSE", gte: Date, lt: Date) {
+async function sumsByCategory(
+  householdId: string,
+  type: "INCOME" | "EXPENSE",
+  gte: Date,
+  lt: Date,
+) {
   const rows = await prisma.transaction.groupBy({
     by: ["categoryId"],
-    where: { userId, type, date: { gte, lt } },
-    _sum: { amount: true },
+    where: { householdId, type, date: { gte, lt } },
+    _sum: { baseAmount: true },
   });
-  return rows.map((r) => ({ categoryId: r.categoryId, amount: Number(r._sum.amount ?? 0) }));
+  return rows.map((r) => ({ categoryId: r.categoryId, amount: Number(r._sum.baseAmount ?? 0) }));
 }
 
 // ---------- Cash flow ----------
@@ -46,9 +52,9 @@ export function resolveFlowMonth(param: string | undefined, earliest: Date | nul
   return { month, min, latest };
 }
 
-export async function getCashFlow(userId: string, monthParam: string | undefined) {
+export async function getCashFlow(householdId: string, monthParam: string | undefined) {
   const first = await prisma.transaction.findFirst({
-    where: { userId },
+    where: { householdId },
     orderBy: { date: "asc" },
     select: { date: true },
   });
@@ -56,9 +62,9 @@ export async function getCashFlow(userId: string, monthParam: string | undefined
   const next = utcDate(month.getUTCFullYear(), month.getUTCMonth() + 1, 1);
 
   const [categories, income, expense] = await Promise.all([
-    categoryInfo(userId),
-    sumsByCategory(userId, "INCOME", month, next),
-    sumsByCategory(userId, "EXPENSE", month, next),
+    categoryInfo(householdId),
+    sumsByCategory(householdId, "INCOME", month, next),
+    sumsByCategory(householdId, "EXPENSE", month, next),
   ]);
 
   const key = (d: Date) => toDateInputValue(d).slice(0, 7);
@@ -78,18 +84,18 @@ export async function getCashFlow(userId: string, monthParam: string | undefined
 
 // ---------- Heatmap ----------
 
-export async function getSpendingHeatmap(userId: string, weeks = 26) {
+export async function getSpendingHeatmap(householdId: string, weeks = 26) {
   const today = todayUtc().date;
   const start = new Date(today.getTime() - (weekdayIndex(today) + (weeks - 1) * 7) * DAY_MS);
   const [rows, first] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["date"],
-      where: { userId, type: "EXPENSE", date: { gte: start, lte: today } },
-      _sum: { amount: true },
+      where: { householdId, type: "EXPENSE", date: { gte: start, lte: today } },
+      _sum: { baseAmount: true },
       _count: { _all: true },
     }),
     prisma.transaction.findFirst({
-      where: { userId },
+      where: { householdId },
       orderBy: { date: "asc" },
       select: { date: true },
     }),
@@ -97,7 +103,7 @@ export async function getSpendingHeatmap(userId: string, weeks = 26) {
   return buildHeatmap(
     rows.map((r) => ({
       date: toDateInputValue(r.date),
-      amount: Number(r._sum.amount ?? 0),
+      amount: Number(r._sum.baseAmount ?? 0),
       count: r._count._all,
     })),
     today,
@@ -111,23 +117,24 @@ export async function getSpendingHeatmap(userId: string, weeks = 26) {
 export const NET_WORTH_RANGES = { "3m": 3, "6m": 6, "1a": 12, tutto: null } as const;
 export type NetWorthRange = keyof typeof NET_WORTH_RANGES;
 
-export async function getNetWorth(userId: string, range: NetWorthRange) {
+export async function getNetWorth(householdId: string, range: NetWorthRange) {
   const today = todayUtc();
   const [accounts, flows, first] = await Promise.all([
-    getAccountsWithBalances(userId),
+    getAccountsWithBalances(householdId),
     prisma.$queryRaw<{ date: Date; net: Prisma.Decimal }[]>`
-      SELECT "date", SUM(CASE WHEN "type"::text = 'INCOME' THEN "amount" ELSE -"amount" END) AS net
+      SELECT "date", SUM(CASE WHEN "type"::text = 'INCOME' THEN "base_amount" ELSE -"base_amount" END) AS net
       FROM "transactions"
-      WHERE "user_id" = ${userId} AND "type"::text IN ('INCOME', 'EXPENSE')
+      WHERE "household_id" = ${householdId} AND "type"::text IN ('INCOME', 'EXPENSE')
       GROUP BY "date"`,
     prisma.transaction.findFirst({
-      where: { userId },
+      where: { householdId },
       orderBy: { date: "asc" },
       select: { date: true },
     }),
   ]);
 
-  const opening = accounts.reduce((sum, a) => sum + Number(a.initialBalance), 0);
+  // Opening balances in other currencies are valued at today's rate.
+  const opening = accounts.reduce((sum, a) => sum + a.baseInitialBalance, 0);
   const months = NET_WORTH_RANGES[range];
   const rangeStart = months === null ? null : utcDate(today.year, today.month - months, today.day);
   // Start the day before the first transaction so the chart shows the opening balance.
@@ -141,12 +148,10 @@ export async function getNetWorth(userId: string, range: NetWorthRange) {
     today.date,
   );
 
-  const assets = accounts
-    .filter((a) => a.balance.gt(0))
-    .reduce((s, a) => s + a.balance.toNumber(), 0);
+  const assets = accounts.filter((a) => a.baseBalance > 0).reduce((s, a) => s + a.baseBalance, 0);
   const liabilities = accounts
-    .filter((a) => a.balance.lt(0))
-    .reduce((s, a) => s - a.balance.toNumber(), 0);
+    .filter((a) => a.baseBalance < 0)
+    .reduce((s, a) => s - a.baseBalance, 0);
   const firstValue = series[0]?.value ?? 0;
   const lastValue = series.at(-1)?.value ?? 0;
 
@@ -166,7 +171,7 @@ const LIFESTYLE_WINDOW_DAYS = 56;
 /** One-off large payments (rent, insurance) would drown out day-to-day habits. */
 const LIFESTYLE_MAX_AMOUNT = 300;
 
-export async function getInsights(userId: string) {
+export async function getInsights(householdId: string) {
   const today = todayUtc();
   const monthStart = utcDate(today.year, today.month, 1);
   const tomorrow = new Date(today.date.getTime() + DAY_MS);
@@ -187,36 +192,36 @@ export async function getInsights(userId: string) {
     recurring,
     first,
   ] = await Promise.all([
-    categoryInfo(userId),
-    sumsByCategory(userId, "EXPENSE", monthStart, tomorrow),
-    sumsByCategory(userId, "EXPENSE", prevStart, prevSameEnd),
-    sumsByCategory(userId, "INCOME", prevStart, monthStart),
-    sumsByCategory(userId, "EXPENSE", prevStart, monthStart),
+    categoryInfo(householdId),
+    sumsByCategory(householdId, "EXPENSE", monthStart, tomorrow),
+    sumsByCategory(householdId, "EXPENSE", prevStart, prevSameEnd),
+    sumsByCategory(householdId, "INCOME", prevStart, monthStart),
+    sumsByCategory(householdId, "EXPENSE", prevStart, monthStart),
     prisma.transaction.groupBy({
       by: ["description"],
-      where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
+      where: { householdId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
       _count: { _all: true },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
       orderBy: { _count: { description: "desc" } },
       take: 1,
     }),
     prisma.transaction.groupBy({
       by: ["date"],
       where: {
-        userId,
+        householdId,
         type: "EXPENSE",
-        amount: { lt: LIFESTYLE_MAX_AMOUNT },
+        baseAmount: { lt: LIFESTYLE_MAX_AMOUNT },
         date: { gte: lifestyleStart, lt: today.date },
       },
-      _sum: { amount: true },
+      _sum: { baseAmount: true },
     }),
     prisma.transaction.groupBy({
       by: ["date"],
-      where: { userId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
+      where: { householdId, type: "EXPENSE", date: { gte: monthStart, lt: tomorrow } },
     }),
-    getRecurring(userId),
+    getRecurring(householdId),
     prisma.transaction.findFirst({
-      where: { userId },
+      where: { householdId },
       orderBy: { date: "asc" },
       select: { date: true },
     }),
@@ -247,7 +252,7 @@ export async function getInsights(userId: string) {
   let weekdayDays = 0;
   let weekendDays = 0;
   const lifestyleByDate = new Map(
-    lifestyle.map((l) => [toDateInputValue(l.date), Number(l._sum.amount ?? 0)]),
+    lifestyle.map((l) => [toDateInputValue(l.date), Number(l._sum.baseAmount ?? 0)]),
   );
   for (let t = lifestyleStart.getTime(); t < today.date.getTime(); t += DAY_MS) {
     const d = new Date(t);
@@ -263,6 +268,7 @@ export async function getInsights(userId: string) {
 
   const merchant = merchants[0];
   return generateInsights({
+    currency: await getHouseholdCurrency(householdId),
     monthName: formatMonth(monthStart),
     previousMonthName: formatMonth(prevStart),
     categoriesNow: rollUp(now),
@@ -278,7 +284,7 @@ export async function getInsights(userId: string) {
       ? {
           name: merchant.description,
           count: merchant._count._all,
-          amount: Number(merchant._sum.amount ?? 0),
+          amount: Number(merchant._sum.baseAmount ?? 0),
         }
       : null,
     weekdayAverage: weekdayDays ? weekday / weekdayDays : 0,

@@ -16,7 +16,7 @@ import { FormField, FormMessage } from "@/components/forms/form-field";
 import { ColorPicker, IconPicker } from "@/components/forms/icon-color-picker";
 import { contributeToGoal, saveGoal } from "@/app/(dashboard)/goals/actions";
 import { CATEGORY_COLORS, CategoryIcon, type CategoryIconName } from "@/lib/category-style";
-import { formatCurrency } from "@/lib/format";
+import { useMoney, useCurrencySymbol } from "@/components/currency-provider";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 
@@ -88,6 +88,7 @@ export function GoalFormDialog({
   goal?: EditableGoal;
   trigger: React.ReactElement;
 }) {
+  const symbol = useCurrencySymbol();
   const dialog = useDialogAction();
   const [icon, setIcon] = useState(goal?.icon ?? "piggy-bank");
   const [color, setColor] = useState(goal?.color ?? CATEGORY_COLORS[10]);
@@ -142,7 +143,7 @@ export function GoalFormDialog({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <FormField
-              label="Obiettivo (€)"
+              label={`Obiettivo (${symbol})`}
               name="targetAmount"
               inputMode="decimal"
               placeholder="3.000"
@@ -150,7 +151,7 @@ export function GoalFormDialog({
               errors={errors?.targetAmount}
             />
             <FormField
-              label="Già messo da parte (€)"
+              label={`Già messo da parte (${symbol})`}
               name="currentAmount"
               inputMode="decimal"
               placeholder="0"
@@ -195,6 +196,8 @@ export function ContributionDialog({
   goal: EditableGoal;
   trigger: React.ReactElement;
 }) {
+  const symbol = useCurrencySymbol();
+  const money = useMoney();
   const dialog = useDialogAction();
   const [direction, setDirection] = useState<"deposit" | "withdraw">("deposit");
 
@@ -219,8 +222,7 @@ export function ContributionDialog({
         <DialogHeader>
           <DialogTitle>{goal.name}</DialogTitle>
           <DialogDescription>
-            Hai messo da parte {formatCurrency(goal.currentAmount)} su{" "}
-            {formatCurrency(goal.targetAmount)}.
+            Hai messo da parte {money(goal.currentAmount)} su {money(goal.targetAmount)}.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -258,7 +260,7 @@ export function ContributionDialog({
             ))}
           </div>
           <FormField
-            label="Importo (€)"
+            label={`Importo (${symbol})`}
             name="amount"
             inputMode="decimal"
             placeholder="100"

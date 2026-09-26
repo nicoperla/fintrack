@@ -8,11 +8,13 @@ import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
 import { AccountFormDialog } from "@/components/accounts/account-form-dialog";
 import { deleteAccount } from "@/app/(dashboard)/accounts/actions";
 import { ACCOUNT_TYPES } from "@/lib/account-types";
-import { formatCurrency } from "@/lib/format";
+import { useCurrency, useMoney } from "@/components/currency-provider";
 import { cn } from "@/lib/utils";
 import type { AccountDTO } from "@/lib/dto";
 
 export function AccountCard({ account }: { account: AccountDTO }) {
+  const money = useMoney();
+  const baseCurrency = useCurrency();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const meta = ACCOUNT_TYPES[account.type];
   const Icon = meta.icon;
@@ -26,7 +28,10 @@ export function AccountCard({ account }: { account: AccountDTO }) {
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{account.name}</p>
-          <p className="text-muted-foreground text-xs">{meta.label}</p>
+          <p className="text-muted-foreground text-xs">
+            {meta.label}
+            {account.currency !== baseCurrency && ` · ${account.currency}`}
+          </p>
         </div>
         <div className="-mt-1 -mr-1 flex">
           <AccountFormDialog
@@ -48,9 +53,16 @@ export function AccountCard({ account }: { account: AccountDTO }) {
         </div>
       </div>
 
-      <p className={cn("text-2xl font-semibold tabular-nums", negative && "text-destructive")}>
-        {formatCurrency(account.balance)}
-      </p>
+      <div>
+        <p className={cn("text-2xl font-semibold tabular-nums", negative && "text-destructive")}>
+          {money(account.balance, account.currency)}
+        </p>
+        {account.currency !== baseCurrency && (
+          <p className="text-muted-foreground text-sm tabular-nums">
+            ≈ {money(account.baseBalance)} al cambio di oggi
+          </p>
+        )}
+      </div>
 
       <Link
         href={`/transactions?accountId=${account.id}`}

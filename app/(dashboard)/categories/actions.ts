@@ -2,21 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { categorySchema } from "@/lib/validations/finance";
 
 const NOT_FOUND: ActionResult = { ok: false, error: "Categoria non trovata." };
 
 export async function saveCategory(id: string | null, input: unknown): Promise<ActionResult> {
-  const user = await requireUser();
+  const space = await requireSpace();
   const parsed = categorySchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
   const data = parsed.data;
 
   if (data.parentId) {
     const parent = await prisma.category.findFirst({
-      where: { id: data.parentId, userId: user.id },
+      where: { id: data.parentId, householdId: space.id },
       select: { id: true, parentId: true, type: true },
     });
     if (!parent || parent.id === id) {
@@ -39,13 +39,15 @@ export async function saveCategory(id: string | null, input: unknown): Promise<A
   }
 
   if (!id) {
-    await prisma.category.create({ data: { ...data, userId: user.id } });
+    await prisma.category.create({
+      data: { ...data, householdId: space.id, userId: space.user.id },
+    });
     revalidatePath("/", "layout");
     return { ok: true };
   }
 
   const existing = await prisma.category.findFirst({
-    where: { id, userId: user.id },
+    where: { id, householdId: space.id },
     select: { type: true, _count: { select: { children: true, transactions: true } } },
   });
   if (!existing) return NOT_FOUND;
@@ -78,9 +80,9 @@ export async function saveCategory(id: string | null, input: unknown): Promise<A
 }
 
 export async function deleteCategory(id: string): Promise<ActionResult> {
-  const user = await requireUser();
+  const space = await requireSpace();
   // Subcategories are deleted too; their transactions stay, uncategorized.
-  const { count } = await prisma.category.deleteMany({ where: { id, userId: user.id } });
+  const { count } = await prisma.category.deleteMany({ where: { id, householdId: space.id } });
   if (count === 0) return NOT_FOUND;
 
   revalidatePath("/", "layout");

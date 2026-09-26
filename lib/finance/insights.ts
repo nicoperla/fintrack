@@ -43,6 +43,8 @@ export type InsightInput = {
   weekdayAverage: number;
   weekendAverage: number;
   noSpendDays: number;
+  /** Currency of every amount above (default EUR). */
+  currency?: string;
   /** False when tracking started this month: a previous month at zero is no data, not a change. */
   comparable?: boolean;
   /** Active subscriptions whose latest charge went up. */
@@ -70,12 +72,13 @@ export const delPct = (n: number) => (startsWithVowelSound(n) ? `dell'${pct(n)}`
 export const inMonth = (month: string) => (/^a/i.test(month) ? `ad ${month}` : `a ${month}`);
 
 export function generateInsights(input: InsightInput): Insight[] {
+  const money = (value: number) => formatCurrency(value, input.currency);
   const insights: (Insight & { score: number })[] = [];
   const since = `rispetto allo stesso periodo di ${input.previousMonthName}`;
 
   if (input.spentPrevious > 0) {
     const change = ((input.spentNow - input.spentPrevious) / input.spentPrevious) * 100;
-    const base = `Finora ${inMonth(input.monthName)} hai speso ${formatCurrency(input.spentNow)}`;
+    const base = `Finora ${inMonth(input.monthName)} hai speso ${money(input.spentNow)}`;
     insights.push({
       id: "pace",
       kind: "pace",
@@ -114,7 +117,7 @@ export function generateInsights(input: InsightInput): Insight[] {
             id: `new-${c.id}`,
             kind: "category-new",
             tone: "neutral",
-            text: `Questo mese hai speso ${formatCurrency(c.amount)} in ${c.name}, che nello stesso periodo di ${input.previousMonthName} era a zero.`,
+            text: `Questo mese hai speso ${money(c.amount)} in ${c.name}, che nello stesso periodo di ${input.previousMonthName} era a zero.`,
             category,
             score: 650 + c.delta,
           }
@@ -122,7 +125,7 @@ export function generateInsights(input: InsightInput): Insight[] {
             id: `up-${c.id}`,
             kind: "category-up",
             tone: "negative",
-            text: `In ${c.name} hai speso ${ilPct((c.delta / c.previous) * 100)} in più ${since} (+${formatCurrency(c.delta)}).`,
+            text: `In ${c.name} hai speso ${ilPct((c.delta / c.previous) * 100)} in più ${since} (+${money(c.delta)}).`,
             category,
             score: 700 + c.delta,
           },
@@ -142,7 +145,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       id: `down-${decrease.id}`,
       kind: "category-down",
       tone: "positive",
-      text: `Bene su ${decrease.name}: ${ilPct((decrease.delta / decrease.previous) * 100)} in meno ${since} (${formatCurrency(-decrease.delta)} risparmiati).`,
+      text: `Bene su ${decrease.name}: ${ilPct((decrease.delta / decrease.previous) * 100)} in meno ${since} (${money(-decrease.delta)} risparmiati).`,
       category: { name: decrease.name, icon: decrease.icon, color: decrease.color },
       score: 600 - decrease.delta,
     });
@@ -158,8 +161,8 @@ export function generateInsights(input: InsightInput): Insight[] {
       tone: rate >= 20 ? "positive" : rate < 0 ? "negative" : "neutral",
       text:
         saved < 0
-          ? `${capitalize(inMonth(name))} hai speso ${formatCurrency(-saved)} più di quanto è entrato.`
-          : `${capitalize(inMonth(name))} hai messo da parte ${ilPct(rate)} delle entrate (${formatCurrency(saved)})${rate >= 20 ? ": ottimo lavoro." : "."}`,
+          ? `${capitalize(inMonth(name))} hai speso ${money(-saved)} più di quanto è entrato.`
+          : `${capitalize(inMonth(name))} hai messo da parte ${ilPct(rate)} delle entrate (${money(saved)})${rate >= 20 ? ": ottimo lavoro." : "."}`,
       score: 500,
     });
   }
@@ -170,7 +173,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       id: "merchant",
       kind: "merchant",
       tone: "neutral",
-      text: `Il posto dove spendi più spesso questo mese è ${m.name}: ${m.count} volte, per ${formatCurrency(m.amount)} in totale.`,
+      text: `Il posto dove spendi più spesso questo mese è ${m.name}: ${m.count} volte, per ${money(m.amount)} in totale.`,
       score: 120,
     });
   }
@@ -181,7 +184,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       id: "weekend",
       kind: "weekend",
       tone: "neutral",
-      text: `Nel weekend spendi in media ${formatCurrency(input.weekendAverage)} al giorno, ${ilPct(extra)} in più che in settimana (${formatCurrency(input.weekdayAverage)}).`,
+      text: `Nel weekend spendi in media ${money(input.weekendAverage)} al giorno, ${ilPct(extra)} in più che in settimana (${money(input.weekdayAverage)}).`,
       score: 100,
     });
   }
@@ -201,7 +204,7 @@ export function generateInsights(input: InsightInput): Insight[] {
       id: `price-${p.name}`,
       kind: "price-up",
       tone: "negative",
-      text: `${p.name} è aumentato ${delPct(p.pct)}: da ${formatCurrency(p.from)} a ${formatCurrency(p.to)}. Vale ancora la pena?`,
+      text: `${p.name} è aumentato ${delPct(p.pct)}: da ${money(p.from)} a ${money(p.to)}. Vale ancora la pena?`,
       score: 900 + p.pct,
     });
   }

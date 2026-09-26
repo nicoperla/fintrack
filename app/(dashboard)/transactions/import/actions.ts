@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { importRowSchema, importSchema } from "@/lib/validations/planning";
 import { MAX_IMPORT_ROWS } from "@/lib/import/csv";
+import { CurrencyError } from "@/lib/currency/convert";
+import { createConverter } from "@/lib/currency/rates";
 
 const duplicatesSchema = z.object({
   accountId: z.string().trim().min(1).max(40),
@@ -21,7 +23,7 @@ const rowKey = (date: Date, amount: string, type: string) =>
  * Descriptions are ignored on purpose — bank wording rarely matches what was typed by hand.
  */
 export async function findDuplicates(input: unknown): Promise<boolean[] | null> {
-  const user = await requireUser();
+  const space = await requireSpace();
   const parsed = duplicatesSchema.safeParse(input);
   if (!parsed.success || parsed.data.rows.length === 0) return null;
   const { accountId, rows } = parsed.data;
@@ -29,7 +31,7 @@ export async function findDuplicates(input: unknown): Promise<boolean[] | null> 
   const dates = rows.map((r) => r.date.getTime());
   const existing = await prisma.transaction.findMany({
     where: {
-      userId: user.id,
+      householdId: space.id,
       accountId,
       type: { in: ["INCOME", "EXPENSE"] },
       date: { gte: new Date(Math.min(...dates)), lte: new Date(Math.max(...dates)) },
@@ -55,32 +57,58 @@ export async function findDuplicates(input: unknown): Promise<boolean[] | null> 
 type ImportResult = ActionResult & { imported?: number; categorized?: number };
 
 export async function importTransactions(input: unknown): Promise<ImportResult> {
-  const user = await requireUser();
+  const space = await requireSpace();
   const parsed = importSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
   const { accountId, rows } = parsed.data;
 
-  const account = await prisma.financialAccount.count({
-    where: { id: accountId, userId: user.id },
+  const account = await prisma.financialAccount.findFirst({
+    where: { id: accountId, householdId: space.id },
+    select: { currency: true },
   });
   if (!account) return { ok: false, error: "Conto non valido." };
+
+  // Amounts are in the account's currency: convert each row at the rate of its own day.
+  let baseAmounts: string[];
+  try {
+    const times = rows.map((r) => r.date.getTime());
+    const converter = await createConverter(
+      [account.currency, space.currency],
+      new Date(Math.min(...times)),
+      new Date(Math.max(...times)),
+    );
+    baseAmounts = rows.map((r) =>
+      converter.convert(Number(r.amount), account.currency, space.currency, r.date).toFixed(2),
+    );
+  } catch (error) {
+    if (error instanceof CurrencyError) return { ok: false, error: error.message };
+    throw error;
+  }
 
   // Reuse the category of the most recent transaction with the same description and type.
   const descriptions = Array.from(new Set(rows.map((r) => r.description.toLowerCase())));
   const learned = await prisma.$queryRaw<{ key: string; type: string; category_id: string }[]>`
     SELECT DISTINCT ON (lower(t."description"), t."type") lower(t."description") AS key, t."type"::text AS type, t."category_id"
     FROM "transactions" t
-    WHERE t."user_id" = ${user.id}
+    WHERE t."household_id" = ${space.id}
       AND t."category_id" IS NOT NULL
       AND lower(t."description") = ANY(${descriptions})
     ORDER BY lower(t."description"), t."type", t."date" DESC`;
   const categoryFor = new Map(learned.map((l) => [`${l.key}|${l.type}`, l.category_id]));
 
   let categorized = 0;
-  const data = rows.map((r) => {
+  const data = rows.map((r, i) => {
     const categoryId = categoryFor.get(`${r.description.toLowerCase()}|${r.type}`) ?? null;
     if (categoryId) categorized++;
-    return { ...r, userId: user.id, accountId, categoryId, tags: ["importato"] };
+    return {
+      ...r,
+      baseAmount: baseAmounts[i],
+      householdId: space.id,
+      userId: space.user.id,
+      accountId,
+      categoryId,
+      tags: ["importato"],
+    };
   });
 
   const { count } = await prisma.transaction.createMany({ data });

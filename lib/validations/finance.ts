@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { parseAmount, parseSignedAmount } from "@/lib/finance/money";
 import { CATEGORY_ICON_NAMES } from "@/lib/category-style";
+import { isCurrency } from "@/lib/currency/currencies";
+
+export const currencySchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .refine(isCurrency, "Valuta non supportata");
 
 const id = z.string().trim().min(1).max(40);
 const optionalId = z
@@ -31,6 +38,8 @@ export const accountSchema = z.object({
     }
     return parsed;
   }),
+  /** Omitted: the space's base currency. */
+  currency: currencySchema.optional(),
 });
 
 export const categorySchema = z.object({
@@ -78,6 +87,19 @@ export const transactionSchema = z
     description: z.string().trim().max(120, "Massimo 120 caratteri"),
     accountId: z.string().trim().min(1, "Scegli un conto").max(40),
     transferAccountId: optionalId,
+    /** TRANSFER between accounts in different currencies: what the destination receives. */
+    transferAmount: z
+      .string()
+      .optional()
+      .transform((v, ctx) => {
+        if (!v?.trim()) return null;
+        const parsed = parseAmount(v);
+        if (parsed === null || Number(parsed) <= 0) {
+          ctx.addIssue({ code: "custom", message: "Importo ricevuto non valido (es. 108,40)" });
+          return z.NEVER;
+        }
+        return parsed;
+      }),
     categoryId: optionalId,
     notes: z
       .string()
@@ -109,7 +131,7 @@ export const transactionSchema = z
   .transform((data) =>
     data.type === "TRANSFER"
       ? { ...data, categoryId: null, description: data.description || "Trasferimento" }
-      : { ...data, transferAccountId: null },
+      : { ...data, transferAccountId: null, transferAmount: null },
   );
 
 export type TransactionInput = z.output<typeof transactionSchema>;

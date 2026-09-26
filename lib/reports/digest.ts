@@ -2,6 +2,10 @@ import { formatCurrency } from "@/lib/format";
 
 export type DigestInput = {
   name: string | null;
+  /** Base currency of the space: every amount below is in it. */
+  currency?: string;
+  /** Shown when the space is shared, so members know whose finances these are. */
+  spaceName?: string | null;
   /** e.g. "dal 15 al 21 settembre", see weekRangeLabel() */
   weekLabel: string;
   income: number;
@@ -20,7 +24,10 @@ export type DigestInput = {
 
 export type DigestEmail = { subject: string; text: string; html: string };
 
-const eur = (n: number) => formatCurrency(n).replace(/[\u00a0\u202f]/g, " ");
+const moneyIn =
+  (currency = "EUR") =>
+  (n: number) =>
+    formatCurrency(n, currency).replace(/[\u00a0\u202f]/g, " ");
 
 const dayFormatter = new Intl.DateTimeFormat("it-IT", {
   weekday: "short",
@@ -65,6 +72,7 @@ export function spendingTrend(expense: number, previousExpense: number) {
 
 function subjectFor(input: DigestInput) {
   if (input.count === 0) return "La tua settimana su FinTrack: tutto tranquillo?";
+  const eur = moneyIn(input.currency);
   const trend = spendingTrend(input.expense, input.previousExpense);
   const base = `La tua settimana: ${eur(input.expense)} spesi`;
   return trend && trend.pct !== 0 ? `${base} (${trend.pct > 0 ? "+" : ""}${trend.pct}%)` : base;
@@ -79,12 +87,19 @@ function streakLine({ current, longest }: DigestInput["streak"]) {
 }
 
 export function buildWeeklyDigest(input: DigestInput): DigestEmail {
+  const eur = moneyIn(input.currency);
+  const where = input.spaceName ? ` in «${input.spaceName}»` : "";
   const greeting = `Ciao${input.name ? ` ${input.name.split(" ")[0]}` : ""},`;
   const trend = spendingTrend(input.expense, input.previousExpense);
   const net = input.income - input.expense;
 
   // ---------- Plain text ----------
-  const lines: string[] = [greeting, "", `ecco com'è andata la settimana ${input.weekLabel}.`, ""];
+  const lines: string[] = [
+    greeting,
+    "",
+    `ecco com'è andata la settimana ${input.weekLabel}${where}.`,
+    "",
+  ];
   if (input.count === 0) {
     lines.push(
       "Non hai registrato movimenti: se hai speso qualcosa, bastano pochi secondi per aggiungerlo.",
@@ -206,7 +221,7 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #eeeeee;border-radius:16px;padding:24px;">
 <tr><td><p style="margin:0;font-weight:700;font-size:15px;">FinTrack<span style="color:#2a78d6;">.</span></p>
 <h1 style="margin:16px 0 4px;font-size:22px;">La tua settimana</h1>
-<p style="margin:0 0 16px;${muted}font-size:14px;">${e(greeting)} ecco com'è andata la settimana ${e(input.weekLabel)}.</p></td></tr>
+<p style="margin:0 0 16px;${muted}font-size:14px;">${e(greeting)} ecco com'è andata la settimana ${e(input.weekLabel)}${e(where)}.</p></td></tr>
 ${parts.join("\n")}
 </table>
 <p style="max-width:560px;margin:16px auto 0;font-size:12px;${muted}">Ricevi questa email perché hai attivato il riepilogo settimanale. <a href="${e(input.unsubscribeUrl)}" style="color:#737373;">Disattivalo</a> quando vuoi, anche dalle impostazioni.</p>

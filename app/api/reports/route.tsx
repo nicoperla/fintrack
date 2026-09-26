@@ -1,5 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getSession } from "@/lib/auth/session";
+import { getActiveSpace } from "@/lib/households";
 import { getReportData, parseReportPeriod } from "@/lib/reports/data";
 import { ReportDocument } from "@/lib/reports/document";
 
@@ -14,7 +15,8 @@ export async function GET(request: Request) {
   const period = parseReportPeriod(new URL(request.url).searchParams);
   if (!period) return new Response("Periodo non valido", { status: 400 });
 
-  const data = await getReportData(session.user.id, period);
+  const space = await getActiveSpace(session.user);
+  const data = await getReportData(space, period);
   const pdf = await renderToBuffer(<ReportDocument data={data} />);
 
   return new Response(new Uint8Array(pdf), {

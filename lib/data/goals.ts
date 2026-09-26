@@ -3,11 +3,11 @@ import { suggestedMonthlyContribution } from "@/lib/finance/planning";
 import { todayInAppTimeZone } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
 
-export async function getGoals(userId: string) {
+export async function getGoals(householdId: string) {
   const today = todayInAppTimeZone();
   const todayIso = toDateInputValue(new Date(Date.UTC(today.year, today.month, today.day)));
   const goals = await prisma.goal.findMany({
-    where: { userId },
+    where: { householdId },
     orderBy: [{ targetDate: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
   });
 

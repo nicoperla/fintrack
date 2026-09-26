@@ -18,7 +18,8 @@ import { ACCOUNT_TYPE_OPTIONS } from "@/lib/account-types";
 import { CategoryIcon } from "@/lib/category-style";
 import { DEFAULT_CATEGORIES } from "@/lib/defaults/categories";
 import { parseQuickEntry } from "@/lib/quick-entry/parse";
-import { formatCurrency, todayDateInputValue } from "@/lib/format";
+import { todayDateInputValue } from "@/lib/format";
+import { useMoney, useCurrencySymbol } from "@/components/currency-provider";
 import { cn } from "@/lib/utils";
 
 type Step = 1 | 2 | 3 | "done";
@@ -73,6 +74,8 @@ export function Onboarding({
   name: string | null;
   hasCategories: boolean;
 }) {
+  const symbol = useCurrencySymbol();
+  const money = useMoney();
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
   const [account, setAccount] = useState({
@@ -142,7 +145,7 @@ export function Onboarding({
     ).catch(() => null);
     setPending(false);
     if (res?.ok) {
-      setSaved(`${parsed.description} · ${formatCurrency(parsed.amount)}`);
+      setSaved(`${parsed.description} · ${money(parsed.amount)}`);
       setStep("done");
     }
   }
@@ -206,7 +209,7 @@ export function Onboarding({
                 ))}
               </SelectField>
               <FormField
-                label="Saldo di oggi (€)"
+                label={`Saldo di oggi (${symbol})`}
                 name="initialBalance"
                 inputMode="decimal"
                 placeholder="0,00"
@@ -299,10 +302,8 @@ export function Onboarding({
                 {parsed.amount ? (
                   <>
                     {parsed.type === "INCOME" ? "Entrata" : "Uscita"} di{" "}
-                    <span className="text-foreground font-medium">
-                      {formatCurrency(parsed.amount)}
-                    </span>{" "}
-                    · {parsed.description}
+                    <span className="text-foreground font-medium">{money(parsed.amount)}</span> ·{" "}
+                    {parsed.description}
                     {category && <> · {category.name}</>}
                   </>
                 ) : (

@@ -19,7 +19,8 @@ import {
 } from "@/lib/import/csv";
 import { detectHeaderRow, MAX_FILE_BYTES, parseCsv, readTextFile } from "@/lib/import/read-file";
 
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatDate } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import type { AccountOption } from "@/lib/dto";
 import { cn } from "@/lib/utils";
 
@@ -221,6 +222,7 @@ export function CsvImportWizard({ accounts }: { accounts: AccountOption[] }) {
 
   const sample = dataRecords[0] ?? [];
   const accountName = accounts.find((a) => a.id === accountId)?.name ?? "";
+  const currency = accounts.find((a) => a.id === accountId)?.currency;
   const selectedRows = built.rows.filter((r) => selected.has(r.line));
   const duplicateCount = duplicates.filter(Boolean).length;
 
@@ -464,7 +466,7 @@ export function CsvImportWizard({ accounts }: { accounts: AccountOption[] }) {
                 {built.errors.length > 0 && ` · ${built.errors.length} scartate`}
               </p>
             </div>
-            <PreviewTable rows={built.rows.slice(0, 6)} />
+            <PreviewTable rows={built.rows.slice(0, 6)} currency={currency} />
             {built.errors.length > 0 && (
               <details className="text-muted-foreground text-xs">
                 <summary className="cursor-pointer">Mostra le righe scartate</summary>
@@ -551,7 +553,7 @@ export function CsvImportWizard({ accounts }: { accounts: AccountOption[] }) {
                       )}
                     </td>
                     <td className="p-2 text-right whitespace-nowrap tabular-nums">
-                      <AmountCell row={row} />
+                      <AmountCell row={row} currency={currency} />
                     </td>
                   </tr>
                 ))}
@@ -574,15 +576,16 @@ export function CsvImportWizard({ accounts }: { accounts: AccountOption[] }) {
   );
 }
 
-function AmountCell({ row }: { row: ImportRow }) {
+function AmountCell({ row, currency }: { row: ImportRow; currency?: string }) {
+  const money = useMoney();
   return row.type === "INCOME" ? (
-    <span className="text-emerald-600 dark:text-emerald-400">+{formatCurrency(row.amount)}</span>
+    <span className="text-emerald-600 dark:text-emerald-400">+{money(row.amount, currency)}</span>
   ) : (
-    <span>−{formatCurrency(row.amount)}</span>
+    <span>−{money(row.amount, currency)}</span>
   );
 }
 
-function PreviewTable({ rows }: { rows: ImportRow[] }) {
+function PreviewTable({ rows, currency }: { rows: ImportRow[]; currency?: string }) {
   if (rows.length === 0) {
     return (
       <p className="bg-card text-muted-foreground rounded-xl border p-6 text-center text-sm">
@@ -608,7 +611,7 @@ function PreviewTable({ rows }: { rows: ImportRow[] }) {
                 <span className="block truncate">{row.description}</span>
               </td>
               <td className="p-2 text-right whitespace-nowrap tabular-nums">
-                <AmountCell row={row} />
+                <AmountCell row={row} currency={currency} />
               </td>
             </tr>
           ))}

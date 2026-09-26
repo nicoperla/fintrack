@@ -1,10 +1,9 @@
 import { Plus } from "lucide-react";
-import { Prisma } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { AccountCard } from "@/components/accounts/account-card";
 import { AccountFormDialog } from "@/components/accounts/account-form-dialog";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { toAccountDTO } from "@/lib/dto";
 import { formatCurrency } from "@/lib/format";
@@ -12,9 +11,9 @@ import { formatCurrency } from "@/lib/format";
 export const metadata = { title: "Conti · FinTrack" };
 
 export default async function AccountsPage() {
-  const user = await requireUser();
-  const accounts = await getAccountsWithBalances(user.id);
-  const total = accounts.reduce((sum, a) => sum.plus(a.balance), new Prisma.Decimal(0));
+  const space = await requireSpace();
+  const accounts = await getAccountsWithBalances(space.id);
+  const total = accounts.reduce((sum, a) => sum + a.baseBalance, 0);
 
   const newAccountButton = (
     <Button>
@@ -32,7 +31,7 @@ export default async function AccountsPage() {
             <p className="text-muted-foreground text-sm">
               Saldo complessivo{" "}
               <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(total)}
+                {formatCurrency(total, space.currency)}
               </span>
             </p>
           )}

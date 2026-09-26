@@ -1,7 +1,7 @@
 import { Flame, Sparkles } from "lucide-react";
 import { BadgeMedal } from "@/components/gamification/badges";
 import { Meter } from "@/components/planning/meter";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getGamification } from "@/lib/data/gamification";
 import { cn } from "@/lib/utils";
 
@@ -16,8 +16,8 @@ const fullDay = new Intl.DateTimeFormat("it-IT", {
 });
 
 export default async function AchievementsPage() {
-  const user = await requireUser();
-  const { streak, badges, level, unlocked } = await getGamification(user.id);
+  const space = await requireSpace();
+  const { streak, badges, level, unlocked } = await getGamification(space.user.id, space.id);
   const toNext = level.nextMin !== null ? level.nextMin - level.xp : 0;
 
   return (

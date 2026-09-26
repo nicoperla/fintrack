@@ -3,14 +3,14 @@ import { ChevronLeft } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { CsvImportWizard } from "@/components/import/csv-import-wizard";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getAccountOptions } from "@/lib/data/accounts";
 
 export const metadata = { title: "Importa CSV · FinTrack" };
 
 export default async function ImportPage() {
-  const user = await requireUser();
-  const accounts = await getAccountOptions(user.id);
+  const space = await requireSpace();
+  const accounts = await getAccountOptions(space.id);
 
   return (
     <div className="grid grid-cols-1 gap-6">

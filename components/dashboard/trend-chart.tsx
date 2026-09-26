@@ -11,7 +11,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from "recharts";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,7 @@ function Swatch({ color }: { color: string }) {
 }
 
 function TrendTooltip({ active, payload }: TooltipContentProps) {
+  const money = useMoney();
   const point = payload?.[0]?.payload as Point | undefined;
   if (!active || !point) return null;
   const net = point.income - point.expense;
@@ -44,14 +45,14 @@ function TrendTooltip({ active, payload }: TooltipContentProps) {
         <div key={s.key} className="flex items-center gap-2">
           <Swatch color={s.color} />
           <span className="text-muted-foreground">{s.name}</span>
-          <span className="ml-auto font-medium tabular-nums">{formatCurrency(point[s.key])}</span>
+          <span className="ml-auto font-medium tabular-nums">{money(point[s.key])}</span>
         </div>
       ))}
       <div className="flex items-center gap-2 border-t pt-1.5">
         <span className="text-muted-foreground">Differenza</span>
         <span className="ml-auto font-medium tabular-nums">
           {net > 0 ? "+" : ""}
-          {formatCurrency(net)}
+          {money(net)}
         </span>
       </div>
     </div>
@@ -59,6 +60,7 @@ function TrendTooltip({ active, payload }: TooltipContentProps) {
 }
 
 export function TrendChart({ data }: { data: Point[] }) {
+  const money = useMoney();
   const [view, setView] = useState<"chart" | "table">("chart");
   const reduceMotion = usePrefersReducedMotion();
 
@@ -164,11 +166,11 @@ export function TrendChart({ data }: { data: Point[] }) {
               {data.map((p) => (
                 <tr key={p.key} className="border-b last:border-0">
                   <td className="py-2">{p.label}</td>
-                  <td className="py-2 text-right">{formatCurrency(p.income)}</td>
-                  <td className="py-2 text-right">{formatCurrency(p.expense)}</td>
+                  <td className="py-2 text-right">{money(p.income)}</td>
+                  <td className="py-2 text-right">{money(p.expense)}</td>
                   <td className="py-2 text-right font-medium">
                     {p.income - p.expense > 0 ? "+" : ""}
-                    {formatCurrency(p.income - p.expense)}
+                    {money(p.income - p.expense)}
                   </td>
                 </tr>
               ))}

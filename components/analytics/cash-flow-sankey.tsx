@@ -11,7 +11,7 @@ import {
   type TooltipContentProps,
 } from "recharts";
 import type { FlowLink, FlowNode } from "@/lib/finance/analytics";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { inMonth } from "@/lib/finance/insights";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,7 @@ type NodeRenderProps = {
 };
 
 function FlowNodeShape({ x, y, width, height, payload }: NodeRenderProps) {
+  const money = useMoney();
   const isHub = payload.kind === "hub";
   const isSource = payload.kind === "income" || payload.kind === "deficit";
   const textX = isHub ? x + width / 2 : isSource ? x - 8 : x + width + 8;
@@ -77,7 +78,7 @@ function FlowNodeShape({ x, y, width, height, payload }: NodeRenderProps) {
         textAnchor={anchor}
         className="fill-muted-foreground text-[11px]"
       >
-        {formatCurrency(payload.value)}
+        {money(payload.value)}
       </text>
     </Layer>
   );
@@ -112,6 +113,7 @@ function FlowLinkShape(props: LinkRenderProps) {
 }
 
 function FlowTooltip({ active, payload }: TooltipContentProps) {
+  const money = useMoney();
   const item = payload?.[0]?.payload as
     { source?: FlowNode; target?: FlowNode; value: number; name?: string } | undefined;
   if (!active || !item) return null;
@@ -120,7 +122,7 @@ function FlowTooltip({ active, payload }: TooltipContentProps) {
   return (
     <div className="bg-popover text-popover-foreground ring-foreground/10 rounded-lg px-3 py-2 text-xs shadow-md ring-1">
       <p className="font-medium">{title}</p>
-      <p className="text-muted-foreground tabular-nums">{formatCurrency(item.value)}</p>
+      <p className="text-muted-foreground tabular-nums">{money(item.value)}</p>
     </div>
   );
 }
@@ -133,6 +135,7 @@ export function CashFlowSankey({
   /** Other search params of the page, kept when changing month. */
   query: Record<string, string>;
 }) {
+  const money = useMoney();
   const buildHref = (month: string) => `/insights?${new URLSearchParams({ ...query, month })}`;
   const rightCount = flow.nodes.filter((n) => n.kind === "expense" || n.kind === "savings").length;
   const height = Math.max(280, rightCount * 52);
@@ -202,17 +205,17 @@ export function CashFlowSankey({
           <dl className="grid grid-cols-3 gap-3 border-t pt-4 text-sm">
             <div>
               <dt className="text-muted-foreground text-xs">Entrate</dt>
-              <dd className="font-medium">{formatCurrency(flow.totalIncome)}</dd>
+              <dd className="font-medium">{money(flow.totalIncome)}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground text-xs">Uscite</dt>
-              <dd className="font-medium">{formatCurrency(flow.totalExpense)}</dd>
+              <dd className="font-medium">{money(flow.totalExpense)}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground text-xs">
                 {flow.net >= 0 ? "Risparmiato" : "Speso oltre le entrate"}
               </dt>
-              <dd className="font-medium">{formatCurrency(Math.abs(flow.net))}</dd>
+              <dd className="font-medium">{money(Math.abs(flow.net))}</dd>
             </div>
           </dl>
           {flow.isCurrentMonth && (

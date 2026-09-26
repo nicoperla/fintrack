@@ -1,12 +1,12 @@
 import { CategoryList } from "@/components/categories/category-list";
-import { requireUser } from "@/lib/auth/session";
+import { requireSpace } from "@/lib/auth/session";
 import { getCategoryTree } from "@/lib/data/categories";
 
 export const metadata = { title: "Categorie · FinTrack" };
 
 export default async function CategoriesPage() {
-  const user = await requireUser();
-  const tree = await getCategoryTree(user.id);
+  const space = await requireSpace();
+  const tree = await getCategoryTree(space.id);
 
   const parents = [...tree.expense, ...tree.income].map((c) => ({
     id: c.id,

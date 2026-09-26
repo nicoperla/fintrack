@@ -5,8 +5,12 @@ import { computeGamification } from "@/lib/gamification/engine";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
 
-/** Deduplicated per request: the layout badge and the page share one computation. */
-export const getGamification = cache(async (userId: string) => {
+/**
+ * Habits (streak, movements recorded, imports) are personal: they count what the user recorded,
+ * in any space. Achievements about money (budgets, goals, savings) belong to the current space.
+ * Deduplicated per request: the layout badge and the page share one computation.
+ */
+export const getGamification = cache(async (userId: string, householdId: string) => {
   const t = todayInAppTimeZone();
   const today = toDateInputValue(utcDate(t.year, t.month, t.day));
   const lastMonthStart = utcDate(t.year, t.month - 1, 1);
@@ -22,7 +26,7 @@ export const getGamification = cache(async (userId: string) => {
       prisma.transaction.count({ where: { userId } }),
       prisma.transaction.count({ where: { userId, tags: { has: "importato" } } }),
       prisma.budget.findMany({
-        where: { userId },
+        where: { householdId },
         select: {
           categoryId: true,
           amount: true,
@@ -30,26 +34,26 @@ export const getGamification = cache(async (userId: string) => {
         },
       }),
       prisma.goal.findMany({
-        where: { userId },
+        where: { householdId },
         select: { targetAmount: true, currentAmount: true },
       }),
       prisma.$queryRaw<
         { month: Date; income: Prisma.Decimal | null; expense: Prisma.Decimal | null }[]
       >`
         SELECT date_trunc('month', "date")::date AS month,
-          SUM(CASE WHEN "type"::text = 'INCOME' THEN "amount" END) AS income,
-          SUM(CASE WHEN "type"::text = 'EXPENSE' THEN "amount" END) AS expense
+          SUM(CASE WHEN "type"::text = 'INCOME' THEN "base_amount" END) AS income,
+          SUM(CASE WHEN "type"::text = 'EXPENSE' THEN "base_amount" END) AS expense
         FROM "transactions"
-        WHERE "user_id" = ${userId} AND "date" >= ${yearAgo}::date AND "date" < ${monthStart}::date
+        WHERE "household_id" = ${householdId} AND "date" >= ${yearAgo}::date AND "date" < ${monthStart}::date
         GROUP BY 1`,
       prisma.transaction.groupBy({
         by: ["categoryId"],
-        where: { userId, type: "EXPENSE", date: { gte: lastMonthStart, lt: monthStart } },
-        _sum: { amount: true },
+        where: { householdId, type: "EXPENSE", date: { gte: lastMonthStart, lt: monthStart } },
+        _sum: { baseAmount: true },
       }),
     ]);
 
-  const spent = new Map(lastMonthSpend.map((s) => [s.categoryId, Number(s._sum.amount ?? 0)]));
+  const spent = new Map(lastMonthSpend.map((s) => [s.categoryId, Number(s._sum.baseAmount ?? 0)]));
   const lastMonthWithinBudget =
     budgets.length === 0
       ? null

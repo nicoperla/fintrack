@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
 import type { Slice } from "@/lib/finance/dashboard-math";
-import { formatCurrency } from "@/lib/format";
+import { useMoney } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFracti
 const sliceColor = (s: Slice) => s.color ?? "var(--viz-other)";
 
 function DonutTooltip({ active, payload }: TooltipContentProps) {
+  const money = useMoney();
   const slice = payload?.[0]?.payload as Slice | undefined;
   if (!active || !slice) return null;
   return (
@@ -32,7 +33,7 @@ function DonutTooltip({ active, payload }: TooltipContentProps) {
       />
       <span className="font-medium">{slice.name}</span>
       <span className="text-muted-foreground tabular-nums">
-        {formatCurrency(slice.value)} · {percent.format(slice.share)}
+        {money(slice.value)} · {percent.format(slice.share)}
       </span>
     </div>
   );
@@ -47,6 +48,7 @@ export function CategoryDonut({
   monthName: string;
   range: { from: string; to: string };
 }) {
+  const money = useMoney();
   const [active, setActive] = useState<number | null>(null);
   const reduceMotion = usePrefersReducedMotion();
   const total = slices.reduce((sum, s) => sum + s.value, 0);
@@ -135,9 +137,7 @@ export function CategoryDonut({
                   <span className="text-muted-foreground w-10 text-right text-xs tabular-nums">
                     {percent.format(s.share)}
                   </span>
-                  <span className="w-24 text-right font-medium tabular-nums">
-                    {formatCurrency(s.value)}
-                  </span>
+                  <span className="w-24 text-right font-medium tabular-nums">{money(s.value)}</span>
                 </Link>
               </li>
             ))}

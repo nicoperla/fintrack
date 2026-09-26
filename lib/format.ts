@@ -38,3 +38,12 @@ export function todayDateInputValue() {
   const local = new Date(now.getTime() - now.getTimezoneOffset() * 60_000);
   return local.toISOString().slice(0, 10);
 }
+
+/** "€", "USD", "CHF"… as Intl writes the currency in Italian, for form labels. */
+export function currencySymbol(currency: string) {
+  return (
+    new Intl.NumberFormat("it-IT", { style: "currency", currency })
+      .formatToParts(0)
+      .find((p) => p.type === "currency")?.value ?? currency
+  );
+}
