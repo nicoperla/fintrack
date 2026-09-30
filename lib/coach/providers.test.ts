@@ -39,7 +39,7 @@ describe("coachProvider", () => {
 
   it("uses the free Groq tier when it's the only key", () => {
     vi.stubEnv("GROQ_API_KEY", "gsk_test");
-    expect(coachProvider()).toMatchObject({ id: "groq", model: "llama-3.3-70b-versatile" });
+    expect(coachProvider()).toMatchObject({ id: "groq", model: "openai/gpt-oss-120b" });
   });
 
   it("prefers Anthropic when both are set", () => {
@@ -73,6 +73,7 @@ describe("streamCoachReply with Groq", () => {
 
     const body = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(body.stream).toBe(true);
+    expect(body.reasoning_effort).toBe("low");
     expect(body.messages[0]).toEqual({ role: "system", content: "istruzioni\n\ndati" });
     expect(fetchMock.mock.calls[0][1].headers.Authorization).toBe("Bearer gsk_test");
   });

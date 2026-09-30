@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildCoachContext } from "./context";
+import { buildCoachContext, purchaseCheck } from "./context";
 import { buildCoachReport, type CoachInput } from "@/lib/finance/coach";
 import { DEFAULT_COACH_PROFILE } from "@/lib/finance/coach-profile";
 import type { CoachData } from "@/lib/data/coach";
@@ -60,5 +60,29 @@ describe("buildCoachContext", () => {
     expect(text).toMatch(
       /2026-10-02 | uscita | 6,20s€ | Tabaccheria | Tabacchi › Sigarette | Contanti/,
     );
+  });
+});
+
+describe("purchaseCheck", () => {
+  const withForecast = {
+    ...data,
+    goals: [],
+    forecast: {
+      points: [
+        { date: "2026-10-03", balance: 400 },
+        { date: "2026-10-04", balance: 380 },
+      ],
+      events: [],
+      dailySpend: 20,
+    },
+  } as unknown as CoachData;
+
+  it("gives the model the app's verdict on a purchase", () => {
+    const check = purchaseCheck("Posso permettermi un weekend da 300 €?", withForecast)!;
+    expect(check).toContain("Verdetto: Sì, ma con giudizio.");
+  });
+
+  it("stays out of other questions", () => {
+    expect(purchaseCheck("Come sto andando?", withForecast)).toBeNull();
   });
 });

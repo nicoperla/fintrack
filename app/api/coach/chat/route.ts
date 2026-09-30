@@ -43,11 +43,16 @@ export async function POST(request: Request) {
     getCoachData(session.user.id, space.id),
     getRecentMovements(space.id, provider.movementDays, provider.movementLimit),
   ]);
-  const context = buildCoachContext(data, movements, {
-    name: session.user.name,
-    spaceName: space.name,
-    today: toDateInputValue(utcDate(t.year, t.month, t.day)),
-  });
+  const context = buildCoachContext(
+    data,
+    movements,
+    {
+      name: session.user.name,
+      spaceName: space.name,
+      today: toDateInputValue(utcDate(t.year, t.month, t.day)),
+    },
+    body.data.messages[body.data.messages.length - 1].content,
+  );
 
   const encoder = new TextEncoder();
   const abort = new AbortController();

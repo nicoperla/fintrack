@@ -1,4 +1,7 @@
 import { COACH_METHODS, COACH_PRIORITIES, COACH_TONES } from "@/lib/finance/coach-profile";
+import { formatWorkTime } from "@/lib/finance/work-time";
+import { checkAffordability } from "@/lib/finance/affordability";
+import { readPurchaseQuestion } from "@/lib/finance/coach-answers";
 import type { CoachData } from "@/lib/data/coach";
 import type { getRecentMovements } from "@/lib/data/coach";
 
@@ -15,6 +18,7 @@ Come lavori:
 - Se i dati non bastano per rispondere, dillo e spiega cosa registrare. Non inventare movimenti o cifre.
 - Sei un coach di budget, non un consulente finanziario abilitato: non consigliare titoli, fondi o prodotti specifici. Per gli investimenti suggerisci di confrontarsi con un consulente.
 - Nessun giudizio morale su fumo o gioco: fai vedere i numeri e proponi un'alternativa, con rispetto.
+- Le cifre derivate (totali annui, tempo di lavoro, tagli, percentuali) sono già calcolate nei dati: usa quelle, non rifare i conti. Se ti serve un numero che non c'è, fai solo operazioni semplici e ricontrollale.
 - Rispondi in modo breve: di norma 80-180 parole, al massimo 5 punti elenco. Più lungo solo se l'utente chiede un piano dettagliato.
 - Formattazione: solo paragrafi brevi, elenchi con "- " e **grassetto** per le cifre chiave. Niente titoli, tabelle o emoji.`;
 
@@ -22,13 +26,48 @@ const money = (n: number, currency: string) =>
   new Intl.NumberFormat("it-IT", { style: "currency", currency, useGrouping: "always" }).format(n);
 
 /** The user's numbers, as compact text for the model. */
+/**
+ * For "can I afford X?" the app's own check (forecast, savings, goals) is exact: the model gets
+ * its verdict instead of improvising sums.
+ */
+export function purchaseCheck(question: string, data: CoachData) {
+  const purchase = readPurchaseQuestion(question);
+  if (!purchase?.amount || !data.forecast) return null;
+  const m = (n: number) => money(n, data.input.currency);
+  const result = checkAffordability(
+    {
+      amount: purchase.amount,
+      monthly: purchase.monthly,
+      points: data.forecast.points,
+      events: data.forecast.events,
+      dailySpend: data.forecast.dailySpend,
+      savingsBalance: data.input.savingsBalance,
+      monthlySaved: data.report.averages.saved,
+      goals: data.goals,
+      budget: null,
+      workRate: data.input.workRate,
+    },
+    m,
+  );
+  if (!result) return null;
+  return [
+    `\n# Verifica dell'app per questa domanda: ${m(purchase.amount)}${purchase.monthly ? " al mese" : " una tantum"}`,
+    `Verdetto: ${result.title}.`,
+    ...result.reasons.map((r) => `- ${r.text}`),
+    `Basa la risposta su questo verdetto e su questi motivi; puoi aggiungere come rendere l'acquisto più sostenibile.`,
+  ].join("\n");
+}
+
 export function buildCoachContext(
   data: CoachData,
   movements: Movements,
   user: { name?: string | null; spaceName: string; today: string },
+  question?: string,
 ) {
   const { input, report, profile } = data;
   const m = (n: number) => money(n, input.currency);
+  const work = (n: number) =>
+    input.workRate ? `, pari a ${formatWorkTime(n, input.workRate)} di lavoro` : "";
   const lines: string[] = [];
 
   lines.push(`# Utente`);
@@ -124,7 +163,7 @@ export function buildCoachContext(
   }
   if (input.vices.average > 0) {
     lines.push(
-      `\nTabacchi/giochi (${input.vices.names.join(", ")}): media ${m(input.vices.average)} al mese.`,
+      `\nTabacchi/giochi (${input.vices.names.join(", ")}): media ${m(input.vices.average)} al mese${work(input.vices.average)}; ${m(input.vices.average * 12)} all'anno${work(input.vices.average * 12)}. Per i totali di un periodo usa questi valori o le categorie, non sommare i singoli movimenti.`,
     );
   }
 
@@ -132,7 +171,11 @@ export function buildCoachContext(
   for (const tip of report.tips) lines.push(`- ${tip.title}: ${tip.body}`);
   if (report.cuts.length) {
     lines.push(
-      `Tagli proposti: ${report.cuts.map((c) => `${c.name} −${m(c.cut)}/mese`).join("; ")}.`,
+      `Tagli proposti: ${report.cuts
+        .map((c) => `${c.name} −${m(c.cut)}/mese (−${m(c.cut * 12)}/anno${work(c.cut * 12)})`)
+        .join(
+          "; ",
+        )}. Totale −${m(report.cutsTotal)}/mese, −${m(report.cutsTotal * 12)}/anno${work(report.cutsTotal * 12)}.`,
     );
   }
 
@@ -144,6 +187,12 @@ export function buildCoachContext(
       `${t.date} | ${t.type === "EXPENSE" ? "uscita" : t.type === "INCOME" ? "entrata" : "trasferimento"} | ${m(t.amount)} | ${t.description} | ${t.category ?? "senza categoria"} | ${t.account}${t.tags.length ? ` | ${t.tags.join(", ")}` : ""}`,
     );
   }
+
+  const check = question ? purchaseCheck(question, data) : null;
+  if (check) lines.push(check);
+
+  // With this much context, models drift towards long answers: remind them at the end.
+  lines.push(`\nRicorda: rispondi in 80-180 parole, con le cifre qui sopra, senza rifare i conti.`);
 
   return lines.join("\n");
 }

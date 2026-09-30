@@ -29,16 +29,25 @@ function parseAmount(text: string) {
 
 const bullet = (lines: string[]) => lines.map((l) => `- ${l}`).join("\n");
 
+/** "Posso permettermi un weekend da 300 €?": the amount asked about, or null if it isn't that. */
+export function readPurchaseQuestion(question: string) {
+  const q = strip(question);
+  if (!/permett|posso (comprare|prendere|spendere)|conviene comprare|me lo posso/.test(q)) {
+    return null;
+  }
+  return { amount: parseAmount(question), monthly: /al mese|mensil|abbonament|rata/.test(q) };
+}
+
 export function answerLocally(question: string, ctx: Context): string {
   const q = strip(question);
   const { report, input, money } = ctx;
 
-  if (/permett|posso (comprare|prendere|spendere)|conviene comprare|me lo posso/.test(q)) {
-    const amount = parseAmount(question);
+  const purchase = readPurchaseQuestion(question);
+  if (purchase) {
+    const { amount, monthly } = purchase;
     if (!amount) {
       return "Dimmi anche la cifra, per esempio: «Posso permettermi un weekend da 300 €?». Oppure usa il riquadro **Posso permettermelo?** qui sopra.";
     }
-    const monthly = /al mese|mensil|abbonament|rata/.test(q);
     const result = ctx.afford(amount, monthly);
     if (!result)
       return "Per rispondere mi serve almeno un conto di tutti i giorni (corrente, carta o contanti).";

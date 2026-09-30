@@ -31,11 +31,12 @@ export function coachProvider(): CoachProvider | null {
     return {
       id: "groq",
       label: "Groq",
-      model: process.env.COACH_MODEL || "llama-3.3-70b-versatile",
-      // The free tier allows about 12,000 tokens a minute: keep each request well below.
-      movementLimit: 80,
-      movementDays: 45,
-      maxTokens: 900,
+      model: process.env.COACH_MODEL || "openai/gpt-oss-120b",
+      // The free tier allows 8,000 tokens a minute for this model: a question with this much
+      // context takes about 4,500, leaving room for the next one.
+      movementLimit: 50,
+      movementDays: 30,
+      maxTokens: 1000,
     };
   }
   return null;
@@ -84,6 +85,10 @@ export async function* streamCoachReply(
       max_tokens: provider.maxTokens,
       temperature: 0.4,
       stream: true,
+      // GPT-OSS reasons before answering: keep it short and out of the reply.
+      ...(provider.model.startsWith("openai/gpt-oss")
+        ? { reasoning_effort: "low", include_reasoning: false }
+        : {}),
       messages: [
         { role: "system", content: `${input.instructions}\n\n${input.context}` },
         ...input.messages,
