@@ -1,14 +1,9 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { getSession } from "@/lib/auth/session";
 import { getActiveSpace } from "@/lib/households";
 import { getCoachData, getRecentMovements } from "@/lib/data/coach";
-import {
-  aiCoachAvailable,
-  buildCoachContext,
-  COACH_INSTRUCTIONS,
-  COACH_MODEL,
-} from "@/lib/coach/context";
+import { buildCoachContext, COACH_INSTRUCTIONS } from "@/lib/coach/context";
+import { coachProvider, CoachRateLimitError, streamCoachReply } from "@/lib/coach/providers";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
 
@@ -30,15 +25,14 @@ const bodySchema = z.object({
 });
 
 /**
- * The AI coach: answers with the user's own numbers, streamed as plain text. Without an API key
+ * The AI coach: answers with the user's own numbers, streamed as plain text. Without an AI key
  * it answers 503 and the page falls back to the built-in answers.
  */
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return Response.json({ error: "Non autorizzato" }, { status: 401 });
-  if (!aiCoachAvailable()) {
-    return Response.json({ error: "Coach AI non configurato" }, { status: 503 });
-  }
+  const provider = coachProvider();
+  if (!provider) return Response.json({ error: "Coach AI non configurato" }, { status: 503 });
 
   const body = bodySchema.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "Richiesta non valida" }, { status: 400 });
@@ -47,7 +41,7 @@ export async function POST(request: Request) {
   const t = todayInAppTimeZone();
   const [data, movements] = await Promise.all([
     getCoachData(session.user.id, space.id),
-    getRecentMovements(space.id),
+    getRecentMovements(space.id, provider.movementDays, provider.movementLimit),
   ]);
   const context = buildCoachContext(data, movements, {
     name: session.user.name,
@@ -55,38 +49,36 @@ export async function POST(request: Request) {
     today: toDateInputValue(utcDate(t.year, t.month, t.day)),
   });
 
-  const client = new Anthropic();
-  const stream = client.messages.stream({
-    model: COACH_MODEL,
-    max_tokens: 1500,
-    system: [
-      { type: "text", text: COACH_INSTRUCTIONS },
-      // The data changes with every movement; within a conversation it's reused from the cache.
-      { type: "text", text: context, cache_control: { type: "ephemeral" } },
-    ],
-    messages: body.data.messages,
-  });
-
   const encoder = new TextEncoder();
+  const abort = new AbortController();
   const readable = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
-        for await (const event of stream) {
-          if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
-            controller.enqueue(encoder.encode(event.delta.text));
-          }
+        for await (const text of streamCoachReply(provider, {
+          instructions: COACH_INSTRUCTIONS,
+          context,
+          messages: body.data.messages,
+          signal: abort.signal,
+        })) {
+          controller.enqueue(encoder.encode(text));
         }
       } catch (error) {
-        console.error("Coach AI:", error);
-        controller.enqueue(
-          encoder.encode("\n\nScusa, ho avuto un problema a rispondere. Riprova tra poco."),
-        );
+        if (!abort.signal.aborted) {
+          console.error("Coach AI:", error);
+          controller.enqueue(
+            encoder.encode(
+              error instanceof CoachRateLimitError
+                ? "Troppe domande in poco tempo: aspetta un minuto e riprova."
+                : "\n\nScusa, ho avuto un problema a rispondere. Riprova tra poco.",
+            ),
+          );
+        }
       } finally {
         controller.close();
       }
     },
     cancel() {
-      stream.abort();
+      abort.abort();
     },
   });
 

@@ -2,7 +2,7 @@ import { ScanSearch } from "lucide-react";
 import { requireSpace } from "@/lib/auth/session";
 import { getCoachData } from "@/lib/data/coach";
 import { getQuickEntryContext } from "@/lib/data/intelligence";
-import { aiCoachAvailable } from "@/lib/coach/context";
+import { coachProvider } from "@/lib/coach/providers";
 import { EmptyState } from "@/components/empty-state";
 import {
   CoachChallenge,
@@ -27,6 +27,7 @@ export default async function CoachPage() {
     getQuickEntryContext(space.id),
   ]);
   const { report, input, stats } = data;
+  const provider = coachProvider();
 
   const afford: AffordData = {
     forecast: data.forecast,
@@ -87,7 +88,7 @@ export default async function CoachPage() {
           </div>
 
           <CoachChat
-            aiAvailable={aiCoachAvailable()}
+            aiAvailable={provider !== null}
             input={input}
             report={report}
             afford={afford}
@@ -98,8 +99,8 @@ export default async function CoachPage() {
       <p className="text-muted-foreground text-xs">
         Il coach ti aiuta a gestire il budget: non è un consulente finanziario abilitato e non
         consiglia investimenti specifici.
-        {aiCoachAvailable() &&
-          " Quando fai una domanda, un riepilogo dei tuoi dati viene inviato ad Anthropic per generare la risposta."}
+        {provider &&
+          ` Quando fai una domanda, un riepilogo dei tuoi dati viene inviato a ${provider.id === "anthropic" ? "Anthropic" : "Groq"} per generare la risposta.`}
       </p>
     </div>
   );

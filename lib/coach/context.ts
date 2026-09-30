@@ -4,11 +4,6 @@ import type { getRecentMovements } from "@/lib/data/coach";
 
 type Movements = Awaited<ReturnType<typeof getRecentMovements>>;
 
-/** Whether the AI coach can run: it needs an Anthropic API key on the server. */
-export const aiCoachAvailable = () => Boolean(process.env.ANTHROPIC_API_KEY);
-
-export const COACH_MODEL = process.env.COACH_MODEL || "claude-opus-5-5";
-
 /** The fixed part of the instructions: cached across conversations. */
 export const COACH_INSTRUCTIONS = `Sei il coach finanziario di FinTrack, un'app italiana per gestire i soldi di tutti i giorni.
 Parli con l'utente in italiano, dandogli del tu.
