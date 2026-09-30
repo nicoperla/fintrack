@@ -332,6 +332,26 @@ function buildTransactions(today: Date): TxSeed[] {
     description: "Rimborso Amazon",
     notes: "Reso scarpe",
   });
+  // Tobacco shop, twice a week, with a scratch card now and then. Its own random sequence, so
+  // adding it doesn't reshuffle the rest of the dataset.
+  const tobaccoRandom = mulberry32(20260930);
+  for (
+    let t = start.getTime();
+    t <= today.getTime();
+    t += (3 + Math.floor(tobaccoRandom() * 2)) * 86_400_000
+  ) {
+    const date = new Date(t);
+    const scratch = tobaccoRandom() < 0.2;
+    add({
+      account: "cash",
+      category: scratch ? "Lotto e gratta e vinci" : "Sigarette",
+      type: "EXPENSE",
+      amount: scratch ? 5 : 6.2,
+      date,
+      description: scratch ? "Gratta e vinci" : "Tabaccheria",
+    });
+  }
+
   const interestDay = utcDate(today.getUTCFullYear(), today.getUTCMonth() - 2, 30);
   add({
     account: "savings",

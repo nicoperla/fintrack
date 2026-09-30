@@ -6,7 +6,7 @@ import { AccountFormDialog } from "@/components/accounts/account-form-dialog";
 import { requireSpace } from "@/lib/auth/session";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { toAccountDTO } from "@/lib/dto";
-import { formatCurrency } from "@/lib/format";
+import { Amount } from "@/components/amount";
 
 export const metadata = { title: "Conti · FinTrack" };
 
@@ -31,7 +31,7 @@ export default async function AccountsPage() {
             <p className="text-muted-foreground text-sm">
               Saldo complessivo{" "}
               <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(total, space.currency)}
+                <Amount value={total} />
               </span>
             </p>
           )}

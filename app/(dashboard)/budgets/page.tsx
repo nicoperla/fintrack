@@ -10,7 +10,8 @@ import { getCategoryTree } from "@/lib/data/categories";
 import { currentMonth, formatMonthYear } from "@/lib/dates";
 import { toCategoryOptions } from "@/lib/dto";
 import { dailyAllowance } from "@/lib/finance/planning";
-import { formatCurrency, toDateInputValue } from "@/lib/format";
+import { toDateInputValue } from "@/lib/format";
+import { Amount } from "@/components/amount";
 
 export const metadata = { title: "Budget · FinTrack" };
 
@@ -76,9 +77,11 @@ export default async function BudgetsPage() {
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="text-sm">
                 Speso{" "}
-                <span className="font-semibold">{formatCurrency(totalSpent, space.currency)}</span>{" "}
+                <span className="font-semibold">
+                  <Amount value={totalSpent} />
+                </span>{" "}
                 <span className="text-muted-foreground">
-                  su {formatCurrency(totalBudget, space.currency)} di budget
+                  su <Amount value={totalBudget} /> di budget
                 </span>
               </p>
               <p className="text-muted-foreground text-xs">

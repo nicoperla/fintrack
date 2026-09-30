@@ -100,3 +100,58 @@ describe("parseQuickEntry", () => {
     });
   });
 });
+
+describe("tobacco and dictated entries", () => {
+  const withTobacco: QuickEntryContext = {
+    ...ctx,
+    categories: [
+      ...ctx.categories,
+      { id: "tabacchi", name: "Tabacchi", type: "EXPENSE" },
+      { id: "sigarette", name: "Sigarette", type: "EXPENSE" },
+      { id: "svapo", name: "Svapo e IQOS", type: "EXPENSE" },
+      { id: "lotto", name: "Lotto e gratta e vinci", type: "EXPENSE" },
+    ],
+  };
+
+  it.each([
+    ["sigarette 6,20", "6.20", "sigarette"],
+    ["5,50 marlboro", "5.50", "sigarette"],
+    ["iqos 5", "5.00", "svapo"],
+    ["gratta e vinci 10", "10.00", "lotto"],
+    ["4 tabacchi", "4.00", "tabacchi"],
+  ])("files %s under tobacco", (input, amount, categoryId) => {
+    expect(parseQuickEntry(input, withTobacco)).toMatchObject({ amount, categoryId });
+  });
+
+  it("falls back to the parent category when there's no subcategory", () => {
+    const parentOnly = {
+      ...ctx,
+      categories: [
+        ...ctx.categories,
+        { id: "tabacchi", name: "Tabacchi", type: "EXPENSE" as const },
+      ],
+    };
+    expect(parseQuickEntry("sigarette 6", parentOnly).categoryId).toBe("tabacchi");
+  });
+
+  it("understands a dictated sentence", () => {
+    expect(parseQuickEntry("Ieri ho speso 18 euro di pizza in contanti", ctx)).toEqual({
+      amount: "18.00",
+      type: "EXPENSE",
+      date: "2026-09-23",
+      description: "Pizza",
+      categoryId: "risto",
+      accountId: "cash",
+      tags: [],
+    });
+  });
+
+  it("reads euros and cents spoken as words", () => {
+    expect(parseQuickEntry("ho pagato 12 euro e 50 il pranzo", ctx)).toMatchObject({
+      amount: "12.50",
+      description: "Pranzo",
+      categoryId: "risto",
+    });
+    expect(parseQuickEntry("caffè 1 € e 5", ctx).amount).toBe("1.50");
+  });
+});

@@ -18,7 +18,14 @@ import { todayDateInputValue } from "@/lib/format";
 import type { ActionResult } from "@/lib/action-result";
 import type { AccountOption, CategoryOption, TransactionDTO } from "@/lib/dto";
 import { cn } from "@/lib/utils";
-import { currencySymbol, useSpaceInfo } from "@/components/currency-provider";
+import {
+  currencySymbol,
+  useSpaceInfo,
+  useAmountsHidden,
+  useWorkTime,
+} from "@/components/currency-provider";
+import { parseAmount } from "@/lib/finance/money";
+import { maskAmounts } from "@/components/amount";
 import { saveOrQueue } from "@/lib/offline/save";
 
 type TxType = "EXPENSE" | "INCOME" | "TRANSFER";
@@ -71,11 +78,18 @@ function TransactionForm({
   const [result, setResult] = useState<ActionResult | null>(null);
   const [pending, setPending] = useState(false);
   const { userId, spaceId } = useSpaceInfo();
+  const amountsHidden = useAmountsHidden();
+  const workTimeOf = useWorkTime();
+  const [amountText, setAmountText] = useState(initial?.amount.replace(".", ",") ?? "");
 
   const currencyOf = (id: string) => accounts.find((a) => a.id === id)?.currency ?? "EUR";
   const sourceCurrency = currencyOf(accountId);
   const destinationCurrency = currencyOf(destinationId);
   const crossCurrency = type === "TRANSFER" && sourceCurrency !== destinationCurrency;
+  const typedAmount = parseAmount(amountText);
+  const workTime =
+    type === "EXPENSE" && typedAmount ? workTimeOf(Number(typedAmount), sourceCurrency) : null;
+  const workHint = workTime ? `Sono ${workTime} del tuo lavoro.` : null;
 
   const categoriesForType = categories.filter((c) => c.type === type);
 
@@ -132,7 +146,9 @@ function TransactionForm({
           ? "Movimento aggiornato"
           : "Movimento registrato",
     );
-    res.warnings?.forEach((w) => toast.warning(w, { duration: 7000 }));
+    res.warnings?.forEach((w) =>
+      toast.warning(amountsHidden ? maskAmounts(w) : w, { duration: 7000 }),
+    );
     onSaved?.();
     onOpenChange(false);
   }
@@ -182,8 +198,10 @@ function TransactionForm({
             inputMode="decimal"
             placeholder="0,00"
             defaultValue={initial ? initial.amount.replace(".", ",") : ""}
+            onChange={(e) => setAmountText(e.target.value)}
             autoFocus={!transaction}
             className="text-lg font-medium tabular-nums"
+            hint={workHint ?? undefined}
             errors={errors?.amount}
           />
           <FormField

@@ -2,12 +2,14 @@ import { requireSpace } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { DigestToggle, ProfileForm } from "./settings-forms";
 import { SpaceSettings } from "./space-settings";
+import { WorkTimeForm } from "./work-time-form";
+import { getWorkSettings } from "@/lib/data/work-time";
 
 export const metadata = { title: "Impostazioni · FinTrack" };
 
 export default async function SettingsPage() {
   const space = await requireSpace();
-  const [user, members, invites] = await Promise.all([
+  const [user, members, invites, work] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: space.user.id },
       select: { name: true, email: true, weeklyDigest: true },
@@ -24,6 +26,7 @@ export default async function SettingsPage() {
           select: { id: true, email: true, expiresAt: true },
         })
       : Promise.resolve([]),
+    getWorkSettings(space.user.id, space.id),
   ]);
 
   return (
@@ -70,6 +73,14 @@ export default async function SettingsPage() {
               expiresAt: i.expiresAt.toISOString(),
             })),
           }}
+        />
+      </section>
+      <section className="bg-card grid gap-4 rounded-2xl border p-5" aria-label="Tempo di lavoro">
+        <WorkTimeForm
+          manualIncome={work.manualIncome}
+          estimatedIncome={work.estimatedIncome}
+          weeklyHours={work.weeklyHours}
+          enabled={work.enabled}
         />
       </section>
       <section className="bg-card grid gap-4 rounded-2xl border p-5" aria-label="Notifiche">

@@ -11,7 +11,7 @@ import { getAccountOptions } from "@/lib/data/accounts";
 import { getCategoryTree } from "@/lib/data/categories";
 import { listTransactions } from "@/lib/data/transactions";
 import { toCategoryOptions, toTransactionDTO } from "@/lib/dto";
-import { formatCurrency } from "@/lib/format";
+import { Amount } from "@/components/amount";
 import { transactionFiltersSchema } from "@/lib/validations/finance";
 import { QuickEntry } from "@/components/quick-entry/quick-entry";
 import { getQuickEntryContext } from "@/lib/data/intelligence";
@@ -101,13 +101,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <span>
               Entrate{" "}
               <span className="font-medium text-emerald-600 tabular-nums dark:text-emerald-400">
-                {formatCurrency(list.income, space.currency)}
+                <Amount value={list.income.toNumber()} />
               </span>
             </span>
             <span>
               Uscite{" "}
               <span className="text-foreground font-medium tabular-nums">
-                {formatCurrency(list.expense, space.currency)}
+                <Amount value={list.expense.toNumber()} />
               </span>
             </span>
           </div>

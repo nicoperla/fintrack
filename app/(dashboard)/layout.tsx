@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { Settings } from "lucide-react";
 import { requireSpace } from "@/lib/auth/session";
 import { SignOutButton } from "@/components/layout/sign-out-button";
@@ -6,12 +7,16 @@ import { DesktopNav, MobileNav } from "@/components/layout/app-nav";
 import { buttonVariants } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { CurrencyProvider } from "@/components/currency-provider";
+import { HIDE_AMOUNTS_COOKIE } from "@/lib/privacy";
+import { PrivacyToggle } from "@/components/layout/privacy-toggle";
+import { getWorkSettings } from "@/lib/data/work-time";
 import { SpaceSwitcher } from "@/components/layout/space-switcher";
 import { OfflineSync } from "@/components/offline/offline-sync";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const space = await requireSpace();
   const shared = (space.spaces.find((s) => s.id === space.id)?.memberCount ?? 1) > 1;
+  const work = await getWorkSettings(space.user.id, space.id);
 
   return (
     <CurrencyProvider
@@ -19,6 +24,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       shared={shared}
       spaceId={space.id}
       userId={space.user.id}
+      workRate={work.rate}
+      initialHidden={cookies().get(HIDE_AMOUNTS_COOKIE)?.value === "1"}
     >
       <div className="flex min-h-svh flex-col">
         <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
@@ -31,6 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
             <div className="flex min-w-0 items-center gap-2">
               <SpaceSwitcher current={space.id} spaces={space.spaces} />
+              <PrivacyToggle />
               <ThemeToggle />
               <Link
                 href="/settings"

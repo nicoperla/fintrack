@@ -1,3 +1,4 @@
+import { MaskedText } from "@/components/amount";
 import {
   CalendarDays,
   Gauge,
@@ -41,7 +42,9 @@ export function InsightCard({ insight }: { insight: Insight }) {
       )}
       <div className="min-w-0">
         <p className="text-muted-foreground text-xs">{tone.label}</p>
-        <p className="text-sm leading-snug">{insight.text}</p>
+        <p className="text-sm leading-snug">
+          <MaskedText text={insight.text} />
+        </p>
       </div>
     </li>
   );

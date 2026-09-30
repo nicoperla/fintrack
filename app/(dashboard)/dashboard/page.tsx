@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, PiggyBank } from "lucide-react";
 import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
+import { WorkTimeNote } from "@/components/dashboard/work-time-note";
+import { ForecastCard } from "@/components/dashboard/forecast-card";
+import { getForecast } from "@/lib/data/forecast";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
@@ -29,17 +32,27 @@ export default async function DashboardPage() {
   const space = await requireSpace();
   const { user } = space;
   const firstName = user.name?.split(" ")[0];
-  const [data, budgets, goals, insights, gamification, quickContext, accountOptions, tree] =
-    await Promise.all([
-      getDashboardData(space.id),
-      getBudgetsWithSpending(space.id),
-      getGoals(space.id),
-      getInsights(space.id),
-      getGamification(space.user.id, space.id),
-      getQuickEntryContext(space.id),
-      getAccountOptions(space.id),
-      getCategoryTree(space.id),
-    ]);
+  const [
+    data,
+    budgets,
+    goals,
+    insights,
+    gamification,
+    quickContext,
+    accountOptions,
+    tree,
+    forecast,
+  ] = await Promise.all([
+    getDashboardData(space.id),
+    getBudgetsWithSpending(space.id),
+    getGoals(space.id),
+    getInsights(space.id),
+    getGamification(space.user.id, space.id),
+    getQuickEntryContext(space.id),
+    getAccountOptions(space.id),
+    getCategoryTree(space.id),
+    getForecast(space.id),
+  ]);
 
   const greeting = (
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -117,6 +130,7 @@ export default async function DashboardPage() {
           previous={data.previousSamePeriod.expense}
           previousLabel={previousLabel}
           upIsGood={false}
+          extra={<WorkTimeNote amount={expense} />}
         />
         <StatTile
           label="Saldo del mese"
@@ -135,6 +149,8 @@ export default async function DashboardPage() {
           }
         />
       </div>
+
+      {forecast && <ForecastCard data={forecast} />}
 
       {insights.length > 0 && (
         <section aria-labelledby="dash-insights" className="grid gap-3">

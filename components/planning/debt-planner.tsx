@@ -18,7 +18,7 @@ import { DebtFormDialog } from "@/components/planning/debt-form-dialog";
 import { SliderField } from "@/components/planning/slider-field";
 import { deleteDebt } from "@/app/(dashboard)/debts/actions";
 import { simulatePayoff, type DebtInput, type Strategy } from "@/lib/finance/debts";
-import { useMoney } from "@/components/currency-provider";
+import { useMoney, useAmountsHidden, useWholeMoney } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -42,13 +42,6 @@ const axisNumber = new Intl.NumberFormat("it-IT", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
-const euro0 = (v: number) =>
-  new Intl.NumberFormat("it-IT", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-    useGrouping: "always",
-  }).format(v);
 
 function monthFromNow(offset: number) {
   const d = new Date();
@@ -66,6 +59,7 @@ function duration(months: number) {
 }
 
 function BalanceTooltip({ active, payload }: TooltipContentProps) {
+  const money0 = useWholeMoney();
   const point = payload?.[0]?.payload as
     { month: number; avalanche?: number; snowball?: number } | undefined;
   if (!active || !point) return null;
@@ -76,7 +70,7 @@ function BalanceTooltip({ active, payload }: TooltipContentProps) {
         <div key={s.key} className="flex items-center gap-2">
           <span aria-hidden className="h-0.5 w-3 rounded" style={{ backgroundColor: s.color }} />
           <span className="text-muted-foreground">{s.name}</span>
-          <span className="ml-auto font-medium tabular-nums">{euro0(point[s.key] ?? 0)}</span>
+          <span className="ml-auto font-medium tabular-nums">{money0(point[s.key] ?? 0)}</span>
         </div>
       ))}
     </div>
@@ -123,6 +117,8 @@ function DebtRow({ debt }: { debt: DebtInput }) {
 }
 
 export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
+  const money0 = useWholeMoney();
+  const hidden = useAmountsHidden();
   const money = useMoney();
   const reduceMotion = usePrefersReducedMotion();
   const [extra, setExtra] = useState(100);
@@ -196,8 +192,8 @@ export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
           min={0}
           max={1000}
           step={25}
-          format={(v) => `+${euro0(v)}/mese`}
-          hint={`Budget mensile per i debiti: ${euro0(minimums + extra)}. Quando chiudi un debito, la sua rata passa al successivo.`}
+          format={(v) => `+${money0(v)}/mese`}
+          hint={`Budget mensile per i debiti: ${money0(minimums + extra)}. Quando chiudi un debito, la sua rata passa al successivo.`}
         />
 
         <div role="radiogroup" aria-label="Strategia" className="grid gap-3 sm:grid-cols-2">
@@ -293,7 +289,7 @@ export function DebtPlanner({ debts }: { debts: DebtInput[] }) {
                   />
                   <YAxis
                     width={44}
-                    tickFormatter={(v: number) => axisNumber.format(v)}
+                    tickFormatter={(v: number) => (hidden ? "" : axisNumber.format(v))}
                     tickLine={false}
                     axisLine={false}
                     tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}

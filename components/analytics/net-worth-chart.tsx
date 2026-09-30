@@ -12,7 +12,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from "recharts";
-import { useMoney } from "@/components/currency-provider";
+import { useMoney, useAmountsHidden } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +71,7 @@ export function NetWorthChart({
   range: (typeof RANGES)[number][0];
   query: Record<string, string>;
 }) {
+  const hidden = useAmountsHidden();
   const money = useMoney();
   const reduceMotion = usePrefersReducedMotion();
   const up = data.change >= 0;
@@ -149,7 +150,7 @@ export function NetWorthChart({
             <YAxis
               width={48}
               domain={[min - pad, max + pad]}
-              tickFormatter={(v: number) => axisNumber.format(v)}
+              tickFormatter={(v: number) => (hidden ? "" : axisNumber.format(v))}
               tickLine={false}
               axisLine={false}
               tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}

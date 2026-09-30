@@ -35,6 +35,20 @@ const KEYWORDS: [RegExp, string[]][] = [
   ],
   [/^(caffe|bar|colazione|cappuccino|cornetto|brioche)$/, ["Bar e caffè", "Ristoranti e bar"]],
   [
+    /^(sigarette|sigaretta|pacchetto|tabacco|tabacchi|tabaccheria|tabaccaio|cartine|filtrini|marlboro|camel|winston|chesterfield|lucky)$/,
+    ["Sigarette", "Tabacchi"],
+  ],
+  [/^(svapo|iqos|heets|terea|liquido|liquidi|glo|svapare)$/, ["Svapo e IQOS", "Tabacchi"]],
+  [
+    /^(lotto|superenalotto|gratta|grattaevinci|grattino|lotteria|10elotto)$/,
+    ["Lotto e gratta e vinci", "Tabacchi"],
+  ],
+  [/^(scommessa|scommesse|snai|sisal|bet|eurobet|goldbet)$/, ["Scommesse", "Svago"]],
+  [
+    /^(glovo|deliveroo|justeat|domicilio|delivery)$/,
+    ["Cibo a domicilio", "Ristoranti", "Ristoranti e bar"],
+  ],
+  [
     /^(pizza|pizzeria|ristorante|cena|pranzo|sushi|trattoria|osteria|aperitivo|kebab|burger|hamburger|poke)$/,
     ["Ristoranti", "Ristoranti e bar"],
   ],
@@ -47,15 +61,34 @@ const KEYWORDS: [RegExp, string[]][] = [
     /^(telefono|ricarica|internet|fibra|iliad|tim|vodafone|windtre|fastweb)$/,
     ["Telefono e internet", "Abbonamenti"],
   ],
+  [/^(taxi|uber|freenow|monopattino|sharing|enjoy)$/, ["Taxi e sharing", "Trasporti"]],
   [
-    /^(treno|bus|autobus|metro|metropolitana|tram|taxi|uber|biglietto|trenitalia|italo|atm)$/,
+    /^(treno|bus|autobus|metro|metropolitana|tram|biglietto|trenitalia|italo|atm)$/,
     ["Trasporto pubblico", "Trasporti"],
   ],
-  [/^(parcheggio|autostrada|pedaggio|telepass)$/, ["Trasporti"]],
-  [/^(farmacia|medico|dentista|visita|analisi|ospedale|ticket)$/, ["Salute"]],
+  [/^(parcheggio|autostrada|pedaggio|telepass|strisce)$/, ["Parcheggi e pedaggi", "Trasporti"]],
+  [
+    /^(meccanico|gomme|pneumatici|tagliando|revisione|carrozziere)$/,
+    ["Manutenzione auto", "Trasporti"],
+  ],
+  [/^(farmacia|medicine|farmaci|tachipirina)$/, ["Farmacia", "Salute"]],
+  [/^(medico|dentista|visita|analisi|ospedale|ticket|oculista)$/, ["Visite mediche", "Salute"]],
+  [/^(parrucchiere|barbiere|estetista|manicure)$/, ["Parrucchiere", "Cura personale"]],
+  [/^(cosmetici|profumo|trucco|crema)$/, ["Cosmetici", "Cura personale"]],
+  [/^(veterinario)$/, ["Veterinario", "Animali"]],
+  [/^(crocchette|lettiera|scatolette)$/, ["Cibo per animali", "Animali"]],
+  [/^(volo|voli|ryanair|easyjet|aereo)$/, ["Voli e treni", "Viaggi"]],
+  [/^(hotel|albergo|airbnb|booking|ostello)$/, ["Alloggi", "Viaggi"]],
+  [/^(assicurazione|rca|polizza)$/, ["Assicurazioni"]],
+  [/^(tasse|f24|bollo|imu|multa)$/, ["Tasse", "Tasse e commissioni"]],
+  [/^(commissione|commissioni|canone)$/, ["Commissioni bancarie", "Tasse e commissioni"]],
   [/^(cinema|concerto|teatro|museo|mostra|evento)$/, ["Cinema e eventi", "Svago"]],
-  [/^(libro|libri|hobby)$/, ["Hobby", "Svago"]],
-  [/^(vestiti|scarpe|maglia|jeans|zara|abbigliamento|amazon|shopping|regalo)$/, ["Shopping"]],
+  [/^(libro|libri)$/, ["Libri", "Istruzione", "Hobby", "Svago"]],
+  [/^(corso|lezione|lezioni|universita)$/, ["Corsi", "Istruzione"]],
+  [/^(hobby)$/, ["Hobby", "Svago"]],
+  [/^(regalo|regali|donazione|beneficenza)$/, ["Regali e donazioni", "Shopping"]],
+  [/^(vestiti|scarpe|maglia|jeans|zara|abbigliamento)$/, ["Abbigliamento", "Shopping"]],
+  [/^(amazon|shopping)$/, ["Shopping"]],
   [/^(stipendio|busta|paga)$/, ["Stipendio"]],
   [/^(rimborso|reso)$/, ["Rimborsi"]],
 ];
@@ -86,6 +119,15 @@ const FILLER = new Set([
   "del",
   "della",
   "sul",
+  // What people add when they speak rather than type: "ieri ho speso 18 euro di pizza".
+  "ho",
+  "abbiamo",
+  "speso",
+  "spesi",
+  "pagato",
+  "pagati",
+  "comprato",
+  "presi",
 ]);
 
 const WEEKDAYS = ["domenica", "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato"];
@@ -165,10 +207,16 @@ function extractDate(text: string, today: string): { date: string; rest: string 
 export function parseQuickEntry(input: string, ctx: QuickEntryContext): QuickEntryResult {
   const tags: string[] = [];
   // The text is already lowercased and stripped of accents, so ASCII classes are enough.
-  let text = ` ${strip(input)} `.replace(/#([a-z0-9_-]+)/g, (_, tag: string) => {
-    tags.push(tag);
-    return " ";
-  });
+  let text = ` ${strip(input)} `
+    .replace(/#([a-z0-9_-]+)/g, (_, tag: string) => {
+      tags.push(tag);
+      return " ";
+    })
+    // Dictation writes cents as words: "18 euro e 50" / "18 € e 50" means 18,50.
+    .replace(
+      /\b(\d+) ?(?:euro|€) e (\d{1,2})\b/,
+      (_, units: string, cents: string) => `${units},${cents.padEnd(2, "0")} euro`,
+    );
 
   // Dates first, so "5 agosto 10 bar" doesn't read 5 as the amount.
   const { date, rest } = extractDate(text, ctx.today);

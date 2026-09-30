@@ -1,5 +1,6 @@
 "use client";
 
+import { useAmountsHidden, useWholeMoney } from "@/components/currency-provider";
 import { useMemo, useState } from "react";
 import {
   CartesianGrid,
@@ -34,13 +35,6 @@ const SERIES = [
   { key: "extra", name: "Con il risparmio extra", color: "var(--viz-income)" },
 ] as const;
 
-const euro0 = (v: number) =>
-  new Intl.NumberFormat("it-IT", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-    useGrouping: "always",
-  }).format(v);
 const axisNumber = new Intl.NumberFormat("it-IT", {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -64,6 +58,7 @@ function durationLabel(months: number) {
 }
 
 function SimTooltip({ active, payload }: TooltipContentProps) {
+  const money0 = useWholeMoney();
   const point = payload?.[0]?.payload as { month: number; base: number; extra: number } | undefined;
   if (!active || !point) return null;
   return (
@@ -73,7 +68,7 @@ function SimTooltip({ active, payload }: TooltipContentProps) {
         <div key={s.key} className="flex items-center gap-2">
           <span aria-hidden className="h-0.5 w-3 rounded" style={{ backgroundColor: s.color }} />
           <span className="text-muted-foreground">{s.name}</span>
-          <span className="ml-auto font-medium tabular-nums">{euro0(point[s.key])}</span>
+          <span className="ml-auto font-medium tabular-nums">{money0(point[s.key])}</span>
         </div>
       ))}
     </div>
@@ -89,6 +84,8 @@ export function SavingsSimulator({
   averageMonthlySavings: number;
   goals: Goal[];
 }) {
+  const money0 = useWholeMoney();
+  const hidden = useAmountsHidden();
   const reduceMotion = usePrefersReducedMotion();
   const [startText, setStartText] = useState(String(Math.max(0, Math.round(netWorth))));
   const [monthly, setMonthly] = useState(
@@ -137,8 +134,8 @@ export function SavingsSimulator({
           min={0}
           max={3000}
           step={25}
-          format={euro0}
-          hint={`La media degli ultimi 3 mesi è ${euro0(averageMonthlySavings)}.`}
+          format={money0}
+          hint={`La media degli ultimi 3 mesi è ${money0(averageMonthlySavings)}.`}
         />
         <SliderField
           label="E se risparmiassi in più…"
@@ -147,7 +144,7 @@ export function SavingsSimulator({
           min={0}
           max={1000}
           step={25}
-          format={(v) => `+${euro0(v)}/mese`}
+          format={(v) => `+${money0(v)}/mese`}
         />
         <SliderField
           label="Rendimento annuo"
@@ -176,15 +173,16 @@ export function SavingsSimulator({
             <p className="text-muted-foreground text-sm">
               Tra {years === 1 ? "un anno" : `${years} anni`} avresti
             </p>
-            <p className="text-4xl font-semibold tracking-tight">{euro0(finalExtra)}</p>
+            <p className="text-4xl font-semibold tracking-tight">{money0(finalExtra)}</p>
             <p className="text-muted-foreground mt-1 text-sm">
               {extra > 0 ? (
                 <>
                   <span className="text-foreground font-medium">
-                    +{euro0(finalExtra - finalBase)}
+                    +{money0(finalExtra - finalBase)}
                   </span>{" "}
-                  rispetto a continuare così ({euro0(finalBase)}): {euro0(contributed)} li metti tu
-                  {growth > 1 && <>, {euro0(growth)} arrivano dai rendimenti</>}.
+                  rispetto a continuare così ({money0(finalBase)}): {money0(contributed)} li metti
+                  tu
+                  {growth > 1 && <>, {money0(growth)} arrivano dai rendimenti</>}.
                 </>
               ) : (
                 "Sposta il cursore del risparmio extra per vedere la differenza."
@@ -225,7 +223,7 @@ export function SavingsSimulator({
                 />
                 <YAxis
                   width={48}
-                  tickFormatter={(v: number) => axisNumber.format(v)}
+                  tickFormatter={(v: number) => (hidden ? "" : axisNumber.format(v))}
                   tickLine={false}
                   axisLine={false}
                   tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}

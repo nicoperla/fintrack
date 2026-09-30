@@ -36,6 +36,10 @@ model User {
   name              String?
   /// Weekly summary email (Monday morning); can be turned off from settings or the email link.
   weeklyDigest      Boolean  @default(true) @map("weekly_digest")
+  /// Net monthly income for "what this costs in working time"; null: estimated from recorded income.
+  monthlyNetIncome  Decimal? @map("monthly_net_income") @db.Decimal(14, 2)
+  workHoursPerWeek  Int      @default(40) @map("work_hours_per_week")
+  showWorkTime      Boolean  @default(true) @map("show_work_time")
   /// The space currently shown; null (or a space the user left) falls back to their own.
   activeHouseholdId String?  @map("active_household_id")
   createdAt         DateTime @default(now()) @map("created_at")

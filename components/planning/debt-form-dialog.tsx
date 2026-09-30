@@ -97,7 +97,7 @@ export function DebtFormDialog({
               errors={errors?.interestRate}
             />
             <FormField
-              label="Rata minima (€/mese)"
+              label={`Rata minima (${symbol}/mese)`}
               name="minimumPayment"
               inputMode="decimal"
               placeholder="190"

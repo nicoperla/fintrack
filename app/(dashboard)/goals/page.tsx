@@ -5,7 +5,7 @@ import { GoalCard } from "@/components/planning/goal-card";
 import { GoalFormDialog } from "@/components/planning/goal-dialogs";
 import { requireSpace } from "@/lib/auth/session";
 import { getGoals } from "@/lib/data/goals";
-import { formatCurrency } from "@/lib/format";
+import { Amount } from "@/components/amount";
 
 export const metadata = { title: "Obiettivi · FinTrack" };
 
@@ -33,14 +33,14 @@ export default async function GoalsPage() {
             <p className="text-muted-foreground text-sm">
               Hai messo da parte{" "}
               <span className="text-foreground font-medium">
-                {formatCurrency(saved, space.currency)}
+                <Amount value={saved} />
               </span>
               {monthly > 0 && (
                 <>
                   {" "}
                   · per restare nei tempi servono{" "}
                   <span className="text-foreground font-medium">
-                    {formatCurrency(monthly, space.currency)}
+                    <Amount value={monthly} />
                   </span>{" "}
                   al mese
                 </>

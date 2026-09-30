@@ -7,7 +7,7 @@ import { getRecurring, type RecurringWithCategory } from "@/lib/data/intelligenc
 import { CategoryIcon } from "@/lib/category-style";
 import { FREQUENCY_LABELS } from "@/lib/finance/recurring";
 import { delPct } from "@/lib/finance/insights";
-import { formatCurrency } from "@/lib/format";
+import { Amount } from "@/components/amount";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 
 export const metadata = { title: "Abbonamenti · FinTrack" };
@@ -40,7 +40,7 @@ function RecurringRow({
   today: Date;
   currency: string;
 }) {
-  const money = (value: number) => formatCurrency(value, currency);
+  const money = (value: number) => <Amount value={value} currency={currency} />;
   return (
     <li className="flex items-center gap-3 py-3">
       <CategoryIcon name={item.category?.icon} color={item.category?.color} />
@@ -154,13 +154,13 @@ export default async function RecurringPage() {
             <div className="bg-card rounded-xl border p-4">
               <p className="text-muted-foreground text-sm">Spesa ricorrente al mese</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {formatCurrency(monthly, space.currency)}
+                <Amount value={monthly} />
               </p>
             </div>
             <div className="bg-card rounded-xl border p-4">
               <p className="text-muted-foreground text-sm">In un anno</p>
               <p className="mt-1 text-2xl font-semibold tracking-tight">
-                {formatCurrency(monthly * 12, space.currency)}
+                <Amount value={monthly * 12} />
               </p>
             </div>
             <div className="bg-card rounded-xl border p-4">
@@ -173,9 +173,15 @@ export default async function RecurringPage() {
             <div className="flex items-start gap-3 rounded-xl border border-(--delta-bad)/30 bg-(--delta-bad)/5 p-4 text-sm">
               <TrendingUp className="mt-0.5 size-4 shrink-0 text-(--delta-bad)" aria-hidden />
               <p>
-                {increases.length === 1
-                  ? `${increases[0].name} ha aumentato il prezzo: ora costa ${formatCurrency(increases[0].priceChange!.to, space.currency)} invece di ${formatCurrency(increases[0].priceChange!.from, space.currency)}.`
-                  : `${increases.length} abbonamenti hanno aumentato il prezzo: ${increases.map((i) => i.name).join(", ")}.`}{" "}
+                {increases.length === 1 ? (
+                  <>
+                    {increases[0].name} ha aumentato il prezzo: ora costa{" "}
+                    <Amount value={increases[0].priceChange!.to} /> invece di{" "}
+                    <Amount value={increases[0].priceChange!.from} />.
+                  </>
+                ) : (
+                  `${increases.length} abbonamenti hanno aumentato il prezzo: ${increases.map((i) => i.name).join(", ")}.`
+                )}{" "}
                 È un buon momento per chiederti se ti serve ancora.
               </p>
             </div>
@@ -199,7 +205,7 @@ export default async function RecurringPage() {
                       {dayMonth.format(new Date(`${r.nextDate}T00:00:00Z`))}
                     </span>
                     <span className="shrink-0 font-medium tabular-nums">
-                      {formatCurrency(r.averageAmount, space.currency)}
+                      <Amount value={r.averageAmount} />
                     </span>
                   </li>
                 ))}

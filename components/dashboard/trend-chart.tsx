@@ -11,7 +11,7 @@ import {
   YAxis,
   type TooltipContentProps,
 } from "recharts";
-import { useMoney } from "@/components/currency-provider";
+import { useMoney, useAmountsHidden } from "@/components/currency-provider";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-reduced-motion";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +60,7 @@ function TrendTooltip({ active, payload }: TooltipContentProps) {
 }
 
 export function TrendChart({ data }: { data: Point[] }) {
+  const hidden = useAmountsHidden();
   const money = useMoney();
   const [view, setView] = useState<"chart" | "table">("chart");
   const reduceMotion = usePrefersReducedMotion();
@@ -126,7 +127,7 @@ export function TrendChart({ data }: { data: Point[] }) {
                   tickLine={false}
                   axisLine={false}
                   tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-                  tickFormatter={(v: number) => axisNumber.format(v)}
+                  tickFormatter={(v: number) => (hidden ? "" : axisNumber.format(v))}
                   tickCount={5}
                 />
                 <Tooltip

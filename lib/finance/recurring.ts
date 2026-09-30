@@ -88,7 +88,7 @@ function coefficientOfVariation(values: number[]) {
   return Math.sqrt(variance) / mean;
 }
 
-function addMonths(iso: string, months: number) {
+export function addMonths(iso: string, months: number) {
   const d = new Date(`${iso}T00:00:00Z`);
   const day = d.getUTCDate();
   const target = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + months, 1));
@@ -97,6 +97,14 @@ function addMonths(iso: string, months: number) {
   ).getUTCDate();
   target.setUTCDate(Math.min(day, lastDay));
   return toIso(target.getTime());
+}
+
+/** The occurrence after `iso` for a series with this frequency. */
+export function nextOccurrence(iso: string, frequency: Frequency) {
+  if (frequency === "monthly") return addMonths(iso, 1);
+  if (frequency === "quarterly") return addMonths(iso, 3);
+  if (frequency === "yearly") return addMonths(iso, 12);
+  return toIso(toTime(iso) + (frequency === "weekly" ? 7 : 14) * DAY_MS);
 }
 
 const MIN_OCCURRENCES = 3;

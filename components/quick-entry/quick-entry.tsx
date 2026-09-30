@@ -2,14 +2,21 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { CalendarDays, CornerDownLeft, Pencil, Wallet, Zap } from "lucide-react";
+import { CalendarDays, CornerDownLeft, Hourglass, Mic, Pencil, Wallet, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import dynamic from "next/dynamic";
 import { saveOrQueue } from "@/lib/offline/save";
 import { parseQuickEntry, type QuickEntryContext } from "@/lib/quick-entry/parse";
 import { CategoryIcon } from "@/lib/category-style";
-import { useMoney, useSpaceInfo } from "@/components/currency-provider";
+import {
+  useMoney,
+  useSpaceInfo,
+  useAmountsHidden,
+  useWorkTime,
+} from "@/components/currency-provider";
+import { useDictation } from "@/components/quick-entry/use-dictation";
+import { maskAmounts } from "@/components/amount";
 import type { AccountOption, CategoryOption, TransactionDTO } from "@/lib/dto";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +72,18 @@ export function QuickEntry({
 }) {
   const money = useMoney();
   const { userId, spaceId } = useSpaceInfo();
+  const workTimeOf = useWorkTime();
+  const dictation = useDictation((spoken) => setText(spoken));
+  useEffect(() => {
+    if (dictation.error === "denied") {
+      toast.error("Per dettare, consenti al browser di usare il microfono.");
+    } else if (dictation.error === "no-speech") {
+      toast("Non ho sentito nulla: tocca il microfono e riprova.");
+    } else if (dictation.error === "unavailable") {
+      toast.error("La dettatura non è disponibile ora: scrivi il movimento.");
+    }
+  }, [dictation.error]);
+  const amountsHidden = useAmountsHidden();
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
@@ -84,6 +103,10 @@ export function QuickEntry({
   }, [categories]);
   const category = parsed?.categoryId ? categoryInfo.get(parsed.categoryId) : undefined;
   const account = accounts.find((a) => a.id === parsed?.accountId);
+  const workTime =
+    parsed?.type === "EXPENSE" && parsed.amount
+      ? workTimeOf(Number(parsed.amount), account?.currency)
+      : null;
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -158,7 +181,9 @@ export function QuickEntry({
     }
     if (res.queued) toast.success(`Salvato offline: ${label}. Lo sincronizzo appena torni online.`);
     else toast.success(`Registrato: ${label}`);
-    res.warnings?.forEach((w) => toast.warning(w, { duration: 7000 }));
+    res.warnings?.forEach((w) =>
+      toast.warning(amountsHidden ? maskAmounts(w) : w, { duration: 7000 }),
+    );
     setText("");
   }
 
@@ -175,7 +200,9 @@ export function QuickEntry({
           id={INPUT_ID}
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Scrivi un movimento, es. «35 benzina ieri»"
+          placeholder={
+            dictation.listening ? "Ti ascolto…" : "Scrivi un movimento, es. «35 benzina ieri»"
+          }
           aria-label="Inserimento rapido: scrivi importo, cosa e quando"
           aria-describedby="quick-entry-hint"
           autoComplete="off"
@@ -185,6 +212,19 @@ export function QuickEntry({
         <kbd className="text-muted-foreground hidden rounded border px-1.5 py-0.5 text-[10px] sm:block">
           /
         </kbd>
+        {dictation.supported && (
+          <Button
+            type="button"
+            size="sm"
+            variant={dictation.listening ? "destructive" : "ghost"}
+            aria-label={dictation.listening ? "Smetti di ascoltare" : "Detta il movimento"}
+            aria-pressed={dictation.listening}
+            title="Detta il movimento"
+            onClick={dictation.listening ? dictation.stop : dictation.start}
+          >
+            <Mic className={cn(dictation.listening && "motion-safe:animate-pulse")} />
+          </Button>
+        )}
         <Button type="submit" size="sm" disabled={!parsed || pending} aria-label="Registra">
           <CornerDownLeft />
         </Button>
@@ -204,6 +244,12 @@ export function QuickEntry({
               "Manca l'importo"
             )}
           </Chip>
+          {workTime && (
+            <Chip>
+              <Hourglass className="size-3.5" aria-hidden />
+              {workTime} di lavoro
+            </Chip>
+          )}
           <Chip>{parsed.description}</Chip>
           <Chip muted={!category}>
             {category ? (

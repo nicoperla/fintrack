@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { requireSpace } from "@/lib/auth/session";
 import { type ActionResult, validationError } from "@/lib/action-result";
 import { categorySchema } from "@/lib/validations/finance";
+import { suggestMissingCategories } from "@/lib/defaults/suggestions";
 
 const NOT_FOUND: ActionResult = { ok: false, error: "Categoria non trovata." };
 
@@ -84,6 +86,71 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   // Subcategories are deleted too; their transactions stay, uncategorized.
   const { count } = await prisma.category.deleteMany({ where: { id, householdId: space.id } });
   if (count === 0) return NOT_FOUND;
+
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+const sameName = (a: string, b: string) =>
+  a.trim().toLocaleLowerCase("it") === b.trim().toLocaleLowerCase("it");
+
+/**
+ * Adds the chosen starter categories the space doesn't have yet: the whole group when the
+ * top-level category is missing, otherwise only its missing subcategories.
+ */
+export async function addSuggestedCategories(names: unknown): Promise<ActionResult> {
+  const space = await requireSpace();
+  const parsed = z.array(z.string().max(60)).max(50).safeParse(names);
+  if (!parsed.success) return validationError(parsed.error);
+
+  const existing = await prisma.category.findMany({
+    where: { householdId: space.id },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      parentId: true,
+      parent: { select: { name: true } },
+    },
+  });
+  const chosen = suggestMissingCategories(
+    existing.map((c) => ({ name: c.name, type: c.type, parentName: c.parent?.name ?? null })),
+  ).filter((s) => parsed.data.includes(s.category.name));
+  if (chosen.length === 0) return { ok: true };
+
+  const owner = { householdId: space.id, userId: space.user.id };
+  await prisma.$transaction(async (tx) => {
+    for (const { category, missingParent, missingChildren } of chosen) {
+      const parentId = missingParent
+        ? (
+            await tx.category.create({
+              data: {
+                ...owner,
+                name: category.name,
+                type: category.type,
+                icon: category.icon,
+                color: category.color,
+              },
+            })
+          ).id
+        : existing.find(
+            (c) =>
+              c.parentId === null && c.type === category.type && sameName(c.name, category.name),
+          )!.id;
+      if (missingChildren.length) {
+        await tx.category.createMany({
+          data: missingChildren.map((child) => ({
+            ...owner,
+            name: child.name,
+            type: category.type,
+            icon: child.icon,
+            color: category.color,
+            parentId,
+          })),
+        });
+      }
+    }
+  });
 
   revalidatePath("/", "layout");
   return { ok: true };

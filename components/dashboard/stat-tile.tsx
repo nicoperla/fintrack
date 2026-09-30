@@ -13,6 +13,8 @@ type StatTileProps = {
   /** Whether an increase is good news (income) or bad news (expenses). */
   upIsGood?: boolean;
   footnote?: React.ReactNode;
+  /** A last line under the comparison (e.g. the amount in working time). */
+  extra?: React.ReactNode;
 };
 
 const percent = new Intl.NumberFormat("it-IT", { maximumFractionDigits: 0 });
@@ -25,6 +27,7 @@ export function StatTile({
   previousLabel,
   upIsGood = true,
   footnote,
+  extra,
 }: StatTileProps) {
   const change = previous === undefined ? null : percentChange(value, previous);
   const rounded = change === null ? null : Math.round(change);
@@ -62,6 +65,7 @@ export function StatTile({
           footnote
         )}
       </div>
+      {extra}
     </div>
   );
 }
