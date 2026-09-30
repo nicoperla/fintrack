@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { getHouseholdCurrency } from "@/lib/households";
 import { budgetUsage } from "@/lib/finance/planning";
@@ -5,7 +6,7 @@ import { currentMonth } from "@/lib/dates";
 import { formatCurrency } from "@/lib/format";
 import { alPct } from "@/lib/finance/insights";
 
-export async function getBudgetsWithSpending(householdId: string) {
+export const getBudgetsWithSpending = cache(async (householdId: string) => {
   const { start, end } = currentMonth();
   const [budgets, sums] = await Promise.all([
     prisma.budget.findMany({
@@ -57,7 +58,7 @@ export async function getBudgetsWithSpending(householdId: string) {
       };
     })
     .sort((a, b) => b.ratio - a.ratio);
-}
+});
 
 export type BudgetWithSpending = Awaited<ReturnType<typeof getBudgetsWithSpending>>[number];
 

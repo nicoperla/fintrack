@@ -9,10 +9,13 @@ import {
   Ellipsis,
   FileText,
   Flag,
+  GalleryVerticalEnd,
+  Handshake,
   Landmark,
   LayoutDashboard,
   Lightbulb,
   Repeat,
+  Sparkles,
   Tags,
   Target,
   Trophy,
@@ -36,10 +39,13 @@ const PRIMARY: NavItem[] = [
   { href: "/accounts", label: "Conti", icon: Wallet },
   { href: "/budgets", label: "Budget", icon: Target },
   { href: "/goals", label: "Obiettivi", icon: Flag },
+  { href: "/coach", label: "Coach", icon: Sparkles },
   { href: "/insights", label: "Analisi", icon: Lightbulb },
 ];
 
 const TOOLS: NavItem[] = [
+  { href: "/split", label: "Conti chiari", icon: Handshake },
+  { href: "/stories", label: "Il mese in storie", icon: GalleryVerticalEnd },
   { href: "/recurring", label: "Abbonamenti", icon: Repeat },
   { href: "/simulator", label: "Simulatore", icon: Calculator },
   { href: "/debts", label: "Piano debiti", icon: Landmark },
@@ -49,7 +55,7 @@ const TOOLS: NavItem[] = [
   { href: "/reports", label: "Report PDF", icon: FileText },
 ];
 
-const MOBILE_BAR = ["/dashboard", "/transactions", "/budgets", "/goals"];
+const MOBILE_BAR = ["/dashboard", "/transactions", "/coach", "/budgets"];
 const MOBILE_MORE = [...PRIMARY.filter((item) => !MOBILE_BAR.includes(item.href)), ...TOOLS];
 
 function useIsActive() {

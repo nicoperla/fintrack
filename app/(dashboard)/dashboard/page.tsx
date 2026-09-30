@@ -4,6 +4,9 @@ import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
 import { WorkTimeNote } from "@/components/dashboard/work-time-note";
 import { ForecastCard } from "@/components/dashboard/forecast-card";
 import { getForecast } from "@/lib/data/forecast";
+import { getCoachData } from "@/lib/data/coach";
+import { getLatestStoryMonth } from "@/lib/data/stories";
+import { CoachTeaser, StoryBubble } from "@/components/dashboard/coach-teaser";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
@@ -42,6 +45,8 @@ export default async function DashboardPage() {
     accountOptions,
     tree,
     forecast,
+    coach,
+    storyMonth,
   ] = await Promise.all([
     getDashboardData(space.id),
     getBudgetsWithSpending(space.id),
@@ -52,6 +57,8 @@ export default async function DashboardPage() {
     getAccountOptions(space.id),
     getCategoryTree(space.id),
     getForecast(space.id),
+    getCoachData(space.user.id, space.id),
+    getLatestStoryMonth(space.id),
   ]);
 
   const greeting = (
@@ -62,6 +69,7 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-muted-foreground text-sm">{data.monthLabel}</p>
       </div>
+      {storyMonth && <StoryBubble monthKey={storyMonth.key} monthName={storyMonth.name} />}
       <ProgressChips data={gamification} />
       <BadgeCelebration
         unlocked={gamification.badges
@@ -149,6 +157,8 @@ export default async function DashboardPage() {
           }
         />
       </div>
+
+      {coach.report.hasData && <CoachTeaser report={coach.report} />}
 
       {forecast && <ForecastCard data={forecast} />}
 

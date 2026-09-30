@@ -208,3 +208,33 @@
     transform: translateY(-4px);
   }
 }
+
+/* Stories: the progress bar of the current slide, bars that grow and icons that pop in. */
+@keyframes story-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}

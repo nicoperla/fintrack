@@ -482,7 +482,8 @@ async function main() {
     data: { email: DEMO_EMAIL, name: "Demo", passwordHash },
   });
   const partner = await prisma.user.create({
-    data: { email: PARTNER_EMAIL, name: "Sara", passwordHash },
+    // Sara's salary goes to another bank: set by hand, it drives the income-based split of "Conti chiari".
+    data: { email: PARTNER_EMAIL, name: "Sara", passwordHash, monthlyNetIncome: 1650 },
   });
   // Personal spaces use the owner's id (see lib/households.ts); the demo one is shared with Sara.
   const householdId = user.id;

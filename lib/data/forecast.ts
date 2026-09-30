@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { getRecurring } from "@/lib/data/intelligence";
@@ -15,7 +16,7 @@ const DAY_MS = 86_400_000;
 const EVERYDAY_TYPES = new Set(["CHECKING", "CARD", "CASH"]);
 
 /** The everyday accounts' balance for the next weeks, in the space currency. */
-export async function getForecast(householdId: string) {
+export const getForecast = cache(async (householdId: string) => {
   const t = todayInAppTimeZone();
   const today = utcDate(t.year, t.month, t.day);
   const since = new Date(today.getTime() - SPENDING_WINDOW_DAYS * DAY_MS);
@@ -72,6 +73,6 @@ export async function getForecast(householdId: string) {
     dailySpend: Math.round(dailySpend * 100) / 100,
     accounts: everyday.map((a) => a.name),
   };
-}
+});
 
 export type ForecastData = NonNullable<Awaited<ReturnType<typeof getForecast>>>;

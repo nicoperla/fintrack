@@ -1,9 +1,10 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { suggestedMonthlyContribution } from "@/lib/finance/planning";
 import { todayInAppTimeZone } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
 
-export async function getGoals(householdId: string) {
+export const getGoals = cache(async (householdId: string) => {
   const today = todayInAppTimeZone();
   const todayIso = toDateInputValue(new Date(Date.UTC(today.year, today.month, today.day)));
   const goals = await prisma.goal.findMany({
@@ -31,6 +32,6 @@ export async function getGoals(householdId: string) {
       };
     })
     .sort((a, b) => Number(a.completed) - Number(b.completed));
-}
+});
 
 export type GoalWithProgress = Awaited<ReturnType<typeof getGoals>>[number];

@@ -29,6 +29,12 @@ enum HouseholdRole {
   MEMBER
 }
 
+/// How shared expenses are divided among the members of a space ("Conti chiari").
+enum SplitMode {
+  EQUAL
+  INCOME
+}
+
 model User {
   id                String   @id @default(cuid())
   email             String   @unique
@@ -40,6 +46,8 @@ model User {
   monthlyNetIncome  Decimal? @map("monthly_net_income") @db.Decimal(14, 2)
   workHoursPerWeek  Int      @default(40) @map("work_hours_per_week")
   showWorkTime      Boolean  @default(true) @map("show_work_time")
+  /// How the user wants to manage money: the coach's method, targets and priorities (lib/finance/coach-profile.ts).
+  coachProfile      Json?    @map("coach_profile")
   /// The space currently shown; null (or a space the user left) falls back to their own.
   activeHouseholdId String?  @map("active_household_id")
   createdAt         DateTime @default(now()) @map("created_at")
@@ -57,6 +65,8 @@ model User {
   budgets             Budget[]
   goals               Goal[]
   debts               Debt[]
+  settlementsPaid     Settlement[]         @relation("SettlementFrom")
+  settlementsReceived Settlement[]         @relation("SettlementTo")
 
   @@map("users")
 }
@@ -64,13 +74,17 @@ model User {
 // A space whose finances are shared by its members (a couple, a family). Every user gets a
 // personal one at sign-up and can invite others into it; all financial data is scoped here.
 model Household {
-  id        String   @id @default(cuid())
-  name      String
+  id         String    @id @default(cuid())
+  name       String
   /// Base currency: totals, budgets, goals and debts are expressed in it.
-  currency  String   @default("EUR") @db.Char(3)
-  ownerId   String   @map("owner_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  currency   String    @default("EUR") @db.Char(3)
+  /// Shared expenses: split equally or in proportion to each member's income.
+  splitMode  SplitMode @default(EQUAL) @map("split_mode")
+  /// Expenses are shared from this date (null: from the start of the current month).
+  splitSince DateTime? @map("split_since") @db.Date
+  ownerId    String    @map("owner_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
   owner        User               @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   activeFor    User[]             @relation("ActiveHousehold")
@@ -82,6 +96,7 @@ model Household {
   budgets      Budget[]
   goals        Goal[]
   debts        Debt[]
+  settlements  Settlement[]
 
   @@index([ownerId])
   @@map("households")
@@ -286,4 +301,22 @@ model Debt {
 
   @@index([householdId])
   @@map("debts")
+}
+
+// "Conti chiari": money one member gives another to even out the shared expenses.
+model Settlement {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  fromUserId  String   @map("from_user_id")
+  toUserId    String   @map("to_user_id")
+  amount      Decimal  @db.Decimal(14, 2)
+  date        DateTime @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  from      User      @relation("SettlementFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to        User      @relation("SettlementTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, date])
+  @@map("settlements")
 }

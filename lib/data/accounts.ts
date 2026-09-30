@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { computeBalances } from "@/lib/finance/balances";
@@ -8,7 +9,7 @@ import { CurrencyError } from "@/lib/currency/convert";
  * Accounts with their balance in their own currency, and `baseBalance` converted to the space's
  * currency at today's rate (what net worth adds up).
  */
-export async function getAccountsWithBalances(householdId: string) {
+export const getAccountsWithBalances = cache(async (householdId: string) => {
   const [household, accounts, outgoing, incoming] = await Promise.all([
     prisma.household.findUniqueOrThrow({ where: { id: householdId }, select: { currency: true } }),
     prisma.financialAccount.findMany({ where: { householdId }, orderBy: { createdAt: "asc" } }),
@@ -62,7 +63,7 @@ export async function getAccountsWithBalances(householdId: string) {
       baseInitialBalance: toBase(account.initialBalance),
     };
   });
-}
+});
 
 export type AccountWithBalance = Awaited<ReturnType<typeof getAccountsWithBalances>>[number];
 

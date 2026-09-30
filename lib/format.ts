@@ -47,3 +47,20 @@ export function currencySymbol(currency: string) {
       .find((p) => p.type === "currency")?.value ?? currency
   );
 }
+
+const wholeFormatters = new Map<string, Intl.NumberFormat>();
+
+/** "1.250 €": rounded to the unit, for estimates where cents would be false precision. */
+export function formatWholeCurrency(value: number, currency = "EUR") {
+  let formatter = wholeFormatters.get(currency);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat("it-IT", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+      useGrouping: "always",
+    });
+    wholeFormatters.set(currency, formatter);
+  }
+  return formatter.format(Math.round(value));
+}

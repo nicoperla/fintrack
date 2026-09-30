@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { detectRecurring } from "@/lib/finance/recurring";
@@ -16,7 +17,7 @@ function todayIso() {
 
 // ---------- Recurring ----------
 
-export async function getRecurring(householdId: string) {
+export const getRecurring = cache(async (householdId: string) => {
   const today = todayIso();
   const since = new Date(Date.parse(`${today}T00:00:00Z`) - RECURRING_LOOKBACK_DAYS * DAY_MS);
   const [transactions, categories] = await Promise.all([
@@ -41,7 +42,7 @@ export async function getRecurring(householdId: string) {
     })),
     today,
   ).map((r) => ({ ...r, category: r.categoryId ? (byId.get(r.categoryId) ?? null) : null }));
-}
+});
 
 export type RecurringWithCategory = Awaited<ReturnType<typeof getRecurring>>[number];
 
@@ -90,7 +91,7 @@ export async function getQuickEntryContext(householdId: string): Promise<QuickEn
 
 // ---------- Debts ----------
 
-export async function getDebts(householdId: string) {
+export const getDebts = cache(async (householdId: string) => {
   const debts = await prisma.debt.findMany({
     where: { householdId },
     orderBy: { createdAt: "asc" },
@@ -102,7 +103,7 @@ export async function getDebts(householdId: string) {
     apr: Number(d.interestRate),
     minPayment: Number(d.minimumPayment),
   }));
-}
+});
 
 // ---------- Simulator ----------
 
