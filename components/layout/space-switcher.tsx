@@ -46,11 +46,13 @@ export function SpaceSwitcher({ current, spaces }: Props) {
     return (
       <Link
         href="/settings"
-        className="text-muted-foreground hover:text-foreground hover:bg-muted flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm"
-        title="Spazio condiviso"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm"
+        title={`Spazio condiviso: ${active.name}`}
+        aria-label={`Spazio condiviso: ${active.name}`}
       >
         <Users className="size-4 shrink-0" aria-hidden />
-        <span className="hidden max-w-32 truncate sm:inline">{active.name}</span>
+        {/* Next to the desktop menu there's no room for the name: the tooltip has it. */}
+        <span className="hidden max-w-32 truncate sm:inline lg:hidden">{active.name}</span>
       </Link>
     );
   }
@@ -59,11 +61,12 @@ export function SpaceSwitcher({ current, spaces }: Props) {
     <DropdownMenu>
       <DropdownMenuTrigger
         disabled={pending}
-        className="text-muted-foreground hover:text-foreground hover:bg-muted flex min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm outline-none disabled:opacity-60"
+        className="text-muted-foreground hover:text-foreground hover:bg-muted flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm outline-none disabled:opacity-60"
         aria-label={`Spazio: ${active.name}. Cambia spazio`}
+        title={`Spazio: ${active.name}`}
       >
         <Users className="size-4 shrink-0" aria-hidden />
-        <span className="hidden max-w-32 truncate sm:inline">{active.name}</span>
+        <span className="hidden max-w-32 truncate sm:inline lg:hidden">{active.name}</span>
         <ChevronsUpDown className="size-3.5 shrink-0" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-60">

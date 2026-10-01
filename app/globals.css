@@ -238,3 +238,165 @@
     transform: scale(1);
   }
 }
+
+/* ---------- Landing page ("/"): a dark, animated space scene ---------- */
+
+/* Rotating conic borders: the angle must be a registered property to be animated. */
+@property --lp-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes lp-border-spin {
+  to {
+    --lp-angle: 360deg;
+  }
+}
+
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@keyframes lp-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(8vw, 6vh) scale(1.15);
+  }
+}
+
+@keyframes lp-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1.1);
+  }
+  50% {
+    transform: translate(-10vw, -4vh) scale(0.95);
+  }
+}
+
+@keyframes lp-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes lp-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lp-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes lp-shimmer {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+  }
+  60%,
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+  }
+}
+
+@keyframes lp-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+@keyframes lp-wave {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes lp-gradient-pan {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.lp-rise {
+  animation: lp-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.lp-gradient-text {
+  background-image: linear-gradient(90deg, #a5b4fc, #c084fc, #f472b6, #22d3ee, #a5b4fc);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lp-gradient-pan 6s linear infinite;
+}
+
+/* A border drawn by a spinning conic gradient (mask keeps only the 1px ring). */
+.lp-glow-border {
+  position: relative;
+  isolation: isolate;
+}
+.lp-glow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(
+    from var(--lp-angle),
+    transparent 0deg,
+    #818cf8 60deg,
+    #e879f9 120deg,
+    #22d3ee 180deg,
+    transparent 240deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: lp-border-spin 5s linear infinite;
+  z-index: -1;
+}
+
+/* Film grain on the space background. */
+.lp-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-rise,
+  .lp-gradient-text,
+  .lp-glow-border::before,
+  .lp-motion {
+    animation: none !important;
+  }
+}

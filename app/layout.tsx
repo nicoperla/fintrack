@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { getAppUrl } from "@/lib/app-url";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 
@@ -17,6 +18,8 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
+  // Absolute URLs for the social previews (Open Graph images).
+  metadataBase: new URL(getAppUrl()),
   title: "FinTrack",
   description: "Gestione delle finanze personali",
   applicationName: "FinTrack",

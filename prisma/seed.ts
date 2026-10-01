@@ -32,7 +32,7 @@ const ACCOUNTS = [
     key: "checking",
     name: "Conto corrente",
     type: AccountType.CHECKING,
-    initialBalance: 2450,
+    initialBalance: 4200,
     currency: "EUR",
   },
   {
@@ -145,7 +145,7 @@ function buildTransactions(today: Date): TxSeed[] {
       account: "checking",
       category: "Stipendio",
       type: "INCOME",
-      amount: 2350,
+      amount: 2550,
       date: d(27),
       description: "Stipendio Acme S.r.l.",
     });
@@ -666,6 +666,22 @@ async function main() {
         createdAt: recordedAt(tx.date, now),
       };
     }),
+  });
+
+  // A coach already set up, so the demo shows advice instead of the first-run questions.
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      coachProfile: {
+        method: "paga-te-stesso",
+        savingsTarget: 15,
+        emergencyMonths: 3,
+        priorities: ["fondo-emergenza", "vizi", "viaggi"],
+        protectedCategoryIds: [categoryIds.get("Viaggi")].filter((id): id is string => !!id),
+        tone: "motivante",
+        note: "Voglio fare il viaggio in Giappone senza toccare il fondo per gli imprevisti.",
+      },
+    },
   });
 
   await prisma.budget.createMany({
