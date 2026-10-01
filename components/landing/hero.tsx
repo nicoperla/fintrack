@@ -316,8 +316,12 @@ export function Hero() {
             <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-xs font-semibold text-emerald-300">
               Nuovo
             </span>
-            Soldi ritrovati: il 730 che si scrive da solo
-            <ArrowRight className="size-3.5" aria-hidden />
+            {/* Shorter on phones, so the pill stays on one line. */}
+            <span>
+              <span className="hidden sm:inline">Soldi ritrovati: il 730</span>
+              <span className="sm:hidden">Il 730</span> che si scrive da solo
+            </span>
+            <ArrowRight className="size-3.5 shrink-0" aria-hidden />
           </a>
 
           <h1
