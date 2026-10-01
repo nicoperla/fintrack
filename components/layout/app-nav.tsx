@@ -10,6 +10,7 @@ import {
   FileText,
   Flag,
   GalleryVerticalEnd,
+  HandCoins,
   Handshake,
   Landmark,
   LayoutDashboard,
@@ -44,6 +45,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const TOOLS: NavItem[] = [
+  { href: "/ritrovati", label: "Soldi ritrovati", icon: HandCoins },
   { href: "/split", label: "Conti chiari", icon: Handshake },
   { href: "/stories", label: "Il mese in storie", icon: GalleryVerticalEnd },
   { href: "/recurring", label: "Abbonamenti", icon: Repeat },

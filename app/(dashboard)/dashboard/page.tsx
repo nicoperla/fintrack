@@ -6,7 +6,8 @@ import { ForecastCard } from "@/components/dashboard/forecast-card";
 import { getForecast } from "@/lib/data/forecast";
 import { getCoachData } from "@/lib/data/coach";
 import { getLatestStoryMonth } from "@/lib/data/stories";
-import { CoachTeaser, StoryBubble } from "@/components/dashboard/coach-teaser";
+import { CoachTeaser, FoundMoneyTeaser, StoryBubble } from "@/components/dashboard/coach-teaser";
+import { getFoundMoney } from "@/lib/data/found-money";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
@@ -47,6 +48,7 @@ export default async function DashboardPage() {
     forecast,
     coach,
     storyMonth,
+    found,
   ] = await Promise.all([
     getDashboardData(space.id),
     getBudgetsWithSpending(space.id),
@@ -59,6 +61,7 @@ export default async function DashboardPage() {
     getForecast(space.id),
     getCoachData(space.user.id, space.id),
     getLatestStoryMonth(space.id),
+    getFoundMoney(space.user.id, space.id),
   ]);
 
   const greeting = (
@@ -157,6 +160,22 @@ export default async function DashboardPage() {
           }
         />
       </div>
+
+      {found.total > 0 && (
+        <FoundMoneyTeaser
+          year={found.year}
+          total={found.total}
+          refund={found.summary.refund}
+          extras={[
+            found.summary.duplicates.count
+              ? `${found.summary.duplicates.count} ${found.summary.duplicates.count === 1 ? "doppio addebito" : "doppi addebiti"}`
+              : null,
+            found.summary.renewals.count ? "rinnovi in arrivo" : null,
+            found.summary.priceIncreases.count ? "abbonamenti aumentati" : null,
+            found.summary.bankFees ? "commissioni bancarie" : null,
+          ].filter((x): x is string => x !== null)}
+        />
+      )}
 
       {coach.report.hasData && <CoachTeaser report={coach.report} />}
 

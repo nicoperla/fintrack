@@ -69,6 +69,8 @@ model User {
   /// End of the paid period: renewal date, or the last day when the subscription was cancelled.
   planRenewsAt       DateTime? @map("plan_renews_at")
   planCancelsAtEnd   Boolean   @default(false) @map("plan_cancels_at_end")
+  /// Dependent children, for the per-child limits of the 730 deductions (school, sport, nursery).
+  dependentChildren  Int       @default(0) @map("dependent_children")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -106,17 +108,18 @@ model Household {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  owner        User               @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  activeFor    User[]             @relation("ActiveHousehold")
-  members      HouseholdMember[]
-  invites      HouseholdInvite[]
-  accounts     FinancialAccount[]
-  categories   Category[]
-  transactions Transaction[]
-  budgets      Budget[]
-  goals        Goal[]
-  debts        Debt[]
-  settlements  Settlement[]
+  owner             User                  @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  activeFor         User[]                @relation("ActiveHousehold")
+  members           HouseholdMember[]
+  invites           HouseholdInvite[]
+  accounts          FinancialAccount[]
+  categories        Category[]
+  transactions      Transaction[]
+  budgets           Budget[]
+  goals             Goal[]
+  debts             Debt[]
+  settlements       Settlement[]
+  dismissedFindings FoundMoneyDismissal[]
 
   @@index([ownerId])
   @@map("households")
@@ -286,6 +289,8 @@ model Transaction {
   description       String
   notes             String?
   tags              String[]        @default([])
+  /// 730 deduction chosen by hand: a type (lib/finance/deductions.ts) or "none"; null = automatic.
+  deduction         String?
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
 
@@ -363,4 +368,16 @@ model RateLimit {
 
   @@index([windowStart])
   @@map("rate_limits")
+}
+
+// "Soldi ritrovati": findings the user marked as fine (a duplicate that wasn't, a renewal they want).
+model FoundMoneyDismissal {
+  householdId String   @map("household_id")
+  key         String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, key])
+  @@map("found_money_dismissals")
 }

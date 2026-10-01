@@ -16,6 +16,7 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
     color: "#6366f1",
     children: [
       { name: "Affitto", icon: "key-round" },
+      { name: "Mutuo", icon: "landmark" },
       { name: "Bollette", icon: "zap" },
       { name: "Manutenzione", icon: "wrench" },
     ],
@@ -131,6 +132,8 @@ export const DEFAULT_CATEGORIES: DefaultCategory[] = [
     color: "#fb7185",
     children: [
       { name: "Scuola", icon: "school" },
+      { name: "Asilo nido", icon: "baby" },
+      { name: "Sport dei figli", icon: "dumbbell" },
       { name: "Baby sitter", icon: "users" },
     ],
   },

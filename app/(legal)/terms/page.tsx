@@ -17,17 +17,20 @@ export default function TermsPage() {
         <p>
           FinTrack ti aiuta a registrare entrate e spese, a pianificare budget e obiettivi e a
           capire le tue abitudini. Il piano gratuito comprende tutte le funzioni tranne la chat con
-          il coach AI, che fa parte di FinTrack Pro.
+          il coach AI e i dettagli di Soldi ritrovati (le spese una per una, il dossier 730 e le
+          lettere di disdetta), che fanno parte di FinTrack Pro.
         </p>
       </section>
 
       <section>
         <h2>Non è consulenza finanziaria</h2>
         <p>
-          Previsioni, punteggi, consigli e risposte del coach (anche AI) sono stime automatiche
-          basate sui dati che inserisci, a scopo informativo. Non sono consulenza finanziaria,
-          fiscale o sugli investimenti. Le decisioni restano tue: per scelte importanti rivolgiti a
-          un professionista abilitato. Le risposte del coach AI possono contenere errori.
+          Previsioni, punteggi, consigli, risposte del coach (anche AI) e stime del rimborso 730
+          sono calcoli automatici basati sui dati che inserisci, a scopo informativo. Non sono
+          consulenza finanziaria, fiscale o sugli investimenti: le regole fiscali cambiano e la
+          dichiarazione dei redditi va verificata con il CAF o un professionista. Le decisioni
+          restano tue: per scelte importanti rivolgiti a un professionista abilitato. Le risposte
+          del coach AI possono contenere errori.
         </p>
       </section>
 

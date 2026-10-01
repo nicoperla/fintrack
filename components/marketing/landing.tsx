@@ -14,6 +14,9 @@ import {
   ShoppingBag,
   Sparkles,
   Zap,
+  HandCoins,
+  FileText,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
@@ -21,6 +24,11 @@ import { SiteFooter } from "@/components/marketing/site-footer";
 import { cn } from "@/lib/utils";
 
 const FEATURES: { icon: LucideIcon; title: string; text: string }[] = [
+  {
+    icon: HandCoins,
+    title: "Soldi ritrovati",
+    text: "Rimborsi del 730, doppi addebiti, abbonamenti aumentati, commissioni: un contatore dei soldi che puoi recuperare.",
+  },
   {
     icon: Zap,
     title: "Una spesa in tre secondi",
@@ -252,6 +260,95 @@ export function Landing({
           <HeroMockup />
         </section>
 
+        <section className="mx-auto grid w-full max-w-5xl items-center gap-10 px-4 py-16 sm:py-20 lg:grid-cols-2">
+          <div className="grid content-start gap-4">
+            <p className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+              <HandCoins className="size-4" aria-hidden /> Soldi ritrovati
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight text-balance sm:text-4xl">
+              Il 730 che si scrive da solo.
+            </h2>
+            <p className="text-muted-foreground text-lg">
+              Farmacia, visite, dentista, veterinario, scuola e sport dei figli, abbonamento ai
+              mezzi: mentre registri le spese, FinTrack mette da parte quelle detraibili e ti dice
+              quanto ti torna con il 730. A maggio scarichi il dossier per il CAF.
+            </p>
+            <ul className="grid gap-2 text-sm">
+              {[
+                "Ti avvisa se paghi in contanti una spesa che va pagata con carta per essere detraibile",
+                "Trova i doppi addebiti, gli abbonamenti aumentati e quelli che stanno per rinnovarsi",
+                "Prepara la lettera di disdetta: la copi e la mandi",
+              ].map((item) => (
+                <li key={item} className="flex gap-2">
+                  <Check
+                    className="mt-0.5 size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                    aria-hidden
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="relative" aria-hidden>
+            <div
+              className="absolute -inset-6 -z-10 rounded-full opacity-30 blur-3xl"
+              style={{ background: "radial-gradient(circle, #10b981, transparent 65%)" }}
+            />
+            <div className="bg-card grid gap-3 rounded-3xl border p-5 shadow-2xl">
+              <div
+                className="rounded-2xl p-4 text-white"
+                style={{ background: "linear-gradient(135deg, #047857, #0d9488 55%, #0369a1)" }}
+              >
+                <p className="text-xs text-white/80">Rimborso IRPEF stimato</p>
+                <p className="text-4xl font-semibold tracking-tight">284 €</p>
+                <p className="text-xs text-white/80">730/2027 · sale a ogni scontrino</p>
+              </div>
+              {[
+                {
+                  name: "Visita dermatologica",
+                  detail: "Carta · 14 mar",
+                  amount: "120 €",
+                  ok: true,
+                },
+                { name: "Ortodonzia", detail: "Bonifico · 2 mag", amount: "1.480 €", ok: true },
+                { name: "Farmacia", detail: "Contanti · 9 giu", amount: "23,40 €", ok: true },
+                {
+                  name: "Visita oculistica",
+                  detail: "Contanti · 21 set",
+                  amount: "90 €",
+                  ok: false,
+                },
+              ].map((row) => (
+                <div
+                  key={row.name}
+                  className="flex items-center gap-3 rounded-xl border px-3 py-2 text-sm"
+                >
+                  <span
+                    className={cn(
+                      "flex size-6 shrink-0 items-center justify-center rounded-full",
+                      row.ok
+                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : "bg-amber-500/15 text-(--warn-text)",
+                    )}
+                  >
+                    {row.ok ? <Check className="size-3.5" /> : <X className="size-3.5" />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{row.name}</span>
+                    <span className="text-muted-foreground text-xs">
+                      {row.ok ? row.detail : `${row.detail} · in contanti non è detraibile`}
+                    </span>
+                  </span>
+                  <span className="tabular-nums">{row.amount}</span>
+                </div>
+              ))}
+              <p className="text-muted-foreground flex items-center gap-2 text-xs">
+                <FileText className="size-3.5" /> Dossier 730 pronto per il CAF
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section id="funzioni" className="bg-muted/40 scroll-mt-14 border-y">
           <div className="mx-auto grid w-full max-w-5xl gap-10 px-4 py-16 sm:py-20">
             <div className="grid max-w-2xl gap-3">
@@ -280,10 +377,11 @@ export function Landing({
         >
           <div className="grid max-w-2xl gap-3">
             <h2 className="text-3xl font-semibold tracking-tight">
-              Gratis. Pro se vuoi l&apos;AI.
+              Gratis. Pro per recuperare di più.
             </h2>
             <p className="text-muted-foreground text-lg">
-              Tutta l&apos;app è gratuita. Paghi solo se vuoi chiedere qualsiasi cosa al coach AI.
+              Tutta l&apos;app è gratuita, e ti mostra quanti soldi puoi recuperare. Con Pro vedi
+              esattamente quali, scarichi il dossier 730 e chiedi qualsiasi cosa al coach AI.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -298,6 +396,7 @@ export function Landing({
                   "Inserimento rapido e a voce, import CSV",
                   "Previsione, ore di lavoro, analisi e report PDF",
                   "Coach con punteggio, consigli e «Posso permettermelo?»",
+                  "Soldi ritrovati: il totale da recuperare",
                   "Il mese in storie e conti chiari in coppia",
                 ].map((item) => (
                   <li key={item} className="flex gap-2">
@@ -327,6 +426,8 @@ export function Landing({
               <ul className="grid gap-2 text-sm">
                 {[
                   "Tutto quello che c'è nel piano gratuito",
+                  "Soldi ritrovati in dettaglio: le spese detraibili una per una e il dossier 730 in PDF",
+                  "Doppi addebiti, aumenti e rinnovi, con le lettere di disdetta pronte",
                   "Coach AI: chiedi qualsiasi cosa, risponde con i tuoi numeri",
                   "Piani su misura per il prossimo mese",
                   "Disdici quando vuoi, in due clic",

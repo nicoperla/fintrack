@@ -7,6 +7,7 @@ const nextConfig = {
     // that file tracing can't follow: ship them with the PDF route explicitly.
     outputFileTracingIncludes: {
       "/api/reports": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
+      "/api/ritrovati/dossier": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
     },
   },
 };

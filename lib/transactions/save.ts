@@ -5,6 +5,8 @@ import { getBudgetWarnings } from "@/lib/data/budgets";
 import { currentMonth } from "@/lib/dates";
 import { CurrencyError } from "@/lib/currency/convert";
 import { createConverter } from "@/lib/currency/rates";
+import { inferDeduction, refundOf, RULES } from "@/lib/finance/deductions";
+import { formatCurrency } from "@/lib/format";
 
 type SpaceRef = { id: string; currency: string; userId: string };
 
@@ -14,24 +16,33 @@ const NOT_FOUND: ActionResult = { ok: false, error: "Transazione non trovata." }
 async function checkOwnership(
   householdId: string,
   data: TransactionInput,
-): Promise<{ error: ActionResult } | { currencies: Map<string, string> }> {
+): Promise<
+  | { error: ActionResult }
+  | {
+      currencies: Map<string, string>;
+      accountTypes: Map<string, string>;
+      category: { name: string; parent: string | null } | null;
+    }
+> {
   const accountIds = [data.accountId, data.transferAccountId].filter((v): v is string => !!v);
   const accounts = await prisma.financialAccount.findMany({
     where: { householdId, id: { in: accountIds } },
-    select: { id: true, currency: true },
+    select: { id: true, currency: true, type: true },
   });
   if (accounts.length !== accountIds.length) {
     return { error: { ok: false, fieldErrors: { accountId: ["Conto non valido"] } } };
   }
 
+  let categoryNames: { name: string; parent: string | null } | null = null;
   if (data.categoryId) {
     const category = await prisma.category.findFirst({
       where: { id: data.categoryId, householdId },
-      select: { type: true },
+      select: { type: true, name: true, parent: { select: { name: true } } },
     });
     if (!category) {
       return { error: { ok: false, fieldErrors: { categoryId: ["Categoria non valida"] } } };
     }
+    categoryNames = { name: category.name, parent: category.parent?.name ?? null };
     if (category.type !== data.type) {
       return {
         error: {
@@ -47,7 +58,11 @@ async function checkOwnership(
       };
     }
   }
-  return { currencies: new Map(accounts.map((a) => [a.id, a.currency])) };
+  return {
+    currencies: new Map(accounts.map((a) => [a.id, a.currency])),
+    accountTypes: new Map(accounts.map((a) => [a.id, a.type])),
+    category: categoryNames,
+  };
 }
 
 /**
@@ -114,5 +129,24 @@ export async function saveTransactionInSpace(
   const affectsCurrentBudgets =
     data.type === "EXPENSE" && data.categoryId && data.date >= start && data.date < end;
   const warnings = affectsCurrentBudgets ? await getBudgetWarnings(space.id, data.categoryId!) : [];
+
+  // "Soldi ritrovati": a deductible expense paid in cash is a refund lost. Say so right away,
+  // while there's still time to pay the next one by card.
+  if (data.type === "EXPENSE" && ownership.accountTypes.get(data.accountId) === "CASH") {
+    const deduction = inferDeduction({
+      category: ownership.category?.name ?? null,
+      parent: ownership.category?.parent ?? null,
+      description: data.description,
+    });
+    if (
+      deduction?.confidence === "sure" &&
+      RULES[deduction.type].traceable &&
+      !deduction.cashAllowed
+    ) {
+      warnings.push(
+        `Pagata in contanti: per il 730 non è detraibile. Con carta o bancomat avresti recuperato circa ${formatCurrency(refundOf(Number(data.baseAmount), deduction.type))}.`,
+      );
+    }
+  }
   return { ok: true, warnings };
 }

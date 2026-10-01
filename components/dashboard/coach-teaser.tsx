@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, HandCoins, Sparkles } from "lucide-react";
+import { useMoney } from "@/components/currency-provider";
 import { MaskedText } from "@/components/amount";
 import { ScoreRing } from "@/components/coach/coach-overview";
 import type { CoachReport } from "@/lib/finance/coach";
@@ -67,4 +68,48 @@ export function StoryBubble({ monthKey, monthName }: { monthKey: string; monthNa
       </span>
     </Link>
   );
+}
+
+/** "Soldi ritrovati" in one line: the counter that keeps growing with every receipt. */
+export function FoundMoneyTeaser({
+  year,
+  total,
+  refund,
+  extras,
+}: {
+  year: number;
+  total: number;
+  refund: number;
+  /** Other findings, e.g. "1 doppio addebito". */
+  extras: string[];
+}) {
+  return (
+    <Link
+      href="/ritrovati"
+      className="group relative flex items-center gap-4 overflow-hidden rounded-xl p-4 text-white"
+      style={{ background: "linear-gradient(135deg, #047857, #0d9488 55%, #0369a1)" }}
+    >
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/15">
+        <HandCoins className="size-6" aria-hidden />
+      </span>
+      <div className="grid min-w-0 flex-1 gap-0.5">
+        <p className="text-xs text-white/80">Soldi ritrovati nel {year}</p>
+        <p className="text-2xl font-semibold tracking-tight tabular-nums">
+          <MaskedAmount value={total} />
+        </p>
+        <p className="truncate text-sm text-white/85">
+          {[refund > 0 ? "rimborso 730 stimato" : null, ...extras].filter(Boolean).join(" · ")}
+        </p>
+      </div>
+      <ChevronRight
+        className="size-5 shrink-0 text-white/80 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+function MaskedAmount({ value }: { value: number }) {
+  const money = useMoney();
+  return <>{money(value)}</>;
 }

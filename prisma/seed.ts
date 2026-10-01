@@ -352,6 +352,71 @@ function buildTransactions(today: Date): TxSeed[] {
     });
   }
 
+  // "Soldi ritrovati": deductible expenses (one paid in cash, so lost), a monthly transport
+  // pass, a card charged twice and the account fee.
+  const ago = (days: number) => new Date(today.getTime() - days * 86_400_000);
+  add({
+    account: "card",
+    category: "Visite mediche",
+    type: "EXPENSE",
+    amount: 120,
+    date: ago(64),
+    description: "Visita dermatologica",
+  });
+  add({
+    account: "checking",
+    category: "Visite mediche",
+    type: "EXPENSE",
+    amount: 180,
+    date: ago(41),
+    description: "Dentista dott. Bianchi",
+    notes: "Pulizia e otturazione",
+  });
+  add({
+    account: "cash",
+    category: "Visite mediche",
+    type: "EXPENSE",
+    amount: 90,
+    date: ago(6),
+    description: "Visita oculistica",
+  });
+  add({
+    account: "card",
+    category: "Veterinario",
+    type: "EXPENSE",
+    amount: 165,
+    date: ago(52),
+    description: "Clinica veterinaria Fido",
+  });
+  for (let m = MONTHS_OF_HISTORY; m >= 0; m--) {
+    add({
+      account: "card",
+      category: "Trasporto pubblico",
+      type: "EXPENSE",
+      amount: 39,
+      date: utcDate(today.getUTCFullYear(), today.getUTCMonth() - m, 1),
+      description: "Abbonamento mensile ATM",
+    });
+    add({
+      account: "checking",
+      category: "Commissioni bancarie",
+      type: "EXPENSE",
+      amount: 7.9,
+      date: utcDate(today.getUTCFullYear(), today.getUTCMonth() - m, 5),
+      description: "Canone conto corrente",
+    });
+  }
+  for (let i = 0; i < 2; i++) {
+    add({
+      account: "card",
+      category: "Abbigliamento",
+      type: "EXPENSE",
+      amount: 59.9,
+      date: ago(12),
+      description: "Zalando",
+    });
+  }
+
   const interestDay = utcDate(today.getUTCFullYear(), today.getUTCMonth() - 2, 30);
   add({
     account: "savings",
@@ -478,12 +543,20 @@ async function main() {
   await prisma.user.deleteMany({ where: { email: { in: [DEMO_EMAIL, PARTNER_EMAIL] } } });
 
   const passwordHash = await hashPassword(DEMO_PASSWORD);
+  const confirmed = { emailVerifiedAt: now, termsAcceptedAt: now };
   const user = await prisma.user.create({
-    data: { email: DEMO_EMAIL, name: "Demo", passwordHash },
+    // Demo accounts are ready to use: confirmed email, terms accepted.
+    data: { email: DEMO_EMAIL, name: "Demo", passwordHash, ...confirmed },
   });
   const partner = await prisma.user.create({
     // Sara's salary goes to another bank: set by hand, it drives the income-based split of "Conti chiari".
-    data: { email: PARTNER_EMAIL, name: "Sara", passwordHash, monthlyNetIncome: 1650 },
+    data: {
+      email: PARTNER_EMAIL,
+      name: "Sara",
+      passwordHash,
+      monthlyNetIncome: 1650,
+      ...confirmed,
+    },
   });
   // Personal spaces use the owner's id (see lib/households.ts); the demo one is shared with Sara.
   const householdId = user.id;
