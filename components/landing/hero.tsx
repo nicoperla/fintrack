@@ -20,6 +20,7 @@ import {
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
+import { LogoMark } from "@/components/brand/logo-mark";
 import { PhoneFrame, SmartVideo } from "@/components/landing/devices";
 import { Tilt, useSafeReducedMotion } from "@/components/landing/effects";
 import { VIDEOS } from "@/components/landing/media";
@@ -31,16 +32,7 @@ export const DISPLAY = "font-[family-name:var(--font-display)] tracking-tight";
 export function Logo({ className }: { className?: string }) {
   return (
     <Link href="/" className={cn("flex items-center gap-2 font-semibold text-white", className)}>
-      <span aria-hidden className="relative flex size-7 items-center justify-center">
-        <span className="size-3.5 rounded-full bg-gradient-to-br from-indigo-300 via-violet-400 to-fuchsia-500 shadow-[0_0_18px_rgba(167,139,250,0.9)]" />
-        <span
-          className="lp-motion absolute inset-0"
-          style={{ animation: "lp-orbit 4s linear infinite" }}
-        >
-          <span className="absolute top-0 left-1/2 size-1.5 -translate-x-1/2 rounded-full bg-cyan-300 shadow-[0_0_8px_#67e8f9]" />
-        </span>
-        <span className="absolute inset-0 rounded-full border border-white/15" />
-      </span>
+      <LogoMark />
       <span className={DISPLAY}>FinTrack</span>
     </Link>
   );

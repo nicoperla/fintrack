@@ -1,5 +1,5 @@
-import { Space_Grotesk } from "next/font/google";
-import { CursorGlow, MotionRoot, Nebula } from "@/components/landing/effects";
+import { Nebula } from "@/components/brand/nebula";
+import { CursorGlow, MotionRoot } from "@/components/landing/effects";
 import { Hero, Nav } from "@/components/landing/hero";
 import {
   Bento,
@@ -12,12 +12,6 @@ import {
 import { FinalCta, Footer, Found730, Faq, Pricing, Trust } from "@/components/landing/closing";
 import { StarfieldProvider } from "@/components/landing/starfield";
 import { cn } from "@/lib/utils";
-
-const display = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-});
 
 /**
  * The public landing page: a dark space scene (stars, nebulae, orbits) around real screenshots
@@ -34,7 +28,6 @@ export function Landing({
   return (
     <div
       className={cn(
-        display.variable,
         "relative isolate min-h-svh overflow-x-clip bg-[#05050c] text-white antialiased [color-scheme:dark] selection:bg-violet-500/40",
       )}
     >

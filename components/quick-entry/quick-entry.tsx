@@ -193,9 +193,12 @@ export function QuickEntry({
   }
 
   return (
-    <section aria-label="Inserimento rapido" className="bg-card rounded-xl border p-3">
+    <section
+      aria-label="Inserimento rapido"
+      className="bg-card rounded-xl border p-3 focus-within:border-violet-400/60 focus-within:shadow-[0_0_0_4px_rgb(139_92_246/0.12),0_16px_40px_-16px_rgb(139_92_246/0.5)]"
+    >
       <form onSubmit={onSubmit} className="flex items-center gap-2">
-        <Zap className="text-muted-foreground ml-1 size-4 shrink-0" aria-hidden />
+        <Zap className="ml-1 size-4 shrink-0 text-violet-500 dark:text-violet-300" aria-hidden />
         <Input
           id={INPUT_ID}
           value={text}

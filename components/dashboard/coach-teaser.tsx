@@ -13,7 +13,7 @@ export function CoachTeaser({ report }: { report: CoachReport }) {
   return (
     <Link
       href="/coach"
-      className="bg-card hover:bg-muted/40 group flex items-center gap-4 rounded-xl border p-4 transition-colors"
+      className="bg-card group flex items-center gap-4 rounded-xl border p-4 transition-[translate,border-color,box-shadow] duration-300 hover:-translate-y-0.5"
     >
       <ScoreRing score={report.score} size={64} />
       <div className="grid min-w-0 flex-1 gap-0.5">
@@ -86,7 +86,7 @@ export function FoundMoneyTeaser({
   return (
     <Link
       href="/ritrovati"
-      className="group relative flex items-center gap-4 overflow-hidden rounded-xl p-4 text-white"
+      className="app-sheen group flex items-center gap-4 rounded-xl p-4 text-white shadow-[0_18px_40px_-20px_rgba(13,148,136,0.8)] transition-[translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-18px_rgba(13,148,136,0.95)]"
       style={{ background: "linear-gradient(135deg, #047857, #0d9488 55%, #0369a1)" }}
     >
       <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white/15">

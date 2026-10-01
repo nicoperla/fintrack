@@ -10,27 +10,32 @@
   }
 }
 
+/* "Orbit" palette: ink and lavender greys with an indigo-violet accent. Cards and popovers
+   keep an opaque base (--card-solid, --popover-solid); the app turns card surfaces into glass by
+   mixing that base with transparency (see the app section at the end). */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  --radius: 0.75rem;
+  --background: oklch(0.982 0.006 286);
+  --foreground: oklch(0.2 0.03 283);
+  --card-solid: oklch(1 0 0);
+  --card: var(--card-solid);
+  --card-foreground: oklch(0.2 0.03 283);
+  --popover-solid: oklch(1 0 0);
+  --popover: var(--popover-solid);
+  --popover-foreground: oklch(0.2 0.03 283);
+  --primary: oklch(0.511 0.262 276.966);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.955 0.012 286);
+  --secondary-foreground: oklch(0.25 0.03 283);
+  --muted: oklch(0.955 0.012 286);
+  --muted-foreground: oklch(0.5 0.025 283);
+  --accent: oklch(0.95 0.02 286);
+  --accent-foreground: oklch(0.25 0.03 283);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: oklch(0.905 0.014 286);
+  --input: oklch(0.89 0.016 286);
+  --ring: oklch(0.606 0.25 292.717);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -47,25 +52,28 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.155 0.022 281);
+  --foreground: oklch(0.97 0.006 286);
+  --card-solid: oklch(0.205 0.026 282);
+  /* Recomputed here too, so a .dark subtree (the auth pages) gets dark surfaces. */
+  --card: var(--card-solid);
+  --card-foreground: oklch(0.97 0.006 286);
+  --popover-solid: oklch(0.215 0.028 282);
+  --popover: var(--popover-solid);
+  --popover-foreground: oklch(0.97 0.006 286);
+  --primary: oklch(0.785 0.115 274.713);
+  --primary-foreground: oklch(0.2 0.05 280);
+  --secondary: oklch(0.26 0.03 282);
+  --secondary-foreground: oklch(0.97 0.006 286);
+  --muted: oklch(0.26 0.03 282);
+  --muted-foreground: oklch(0.72 0.03 284);
+  --accent: oklch(0.28 0.04 282);
+  --accent-foreground: oklch(0.97 0.006 286);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: oklch(1 0 0 / 9%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.702 0.183 293.541);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -120,6 +128,8 @@
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --font-heading: var(--font-display);
 }
 
 @layer base {
@@ -184,7 +194,7 @@
 
 /* Spending heatmap: single-hue sequential ramp (blue), level 0 = no spending. */
 :root {
-  --heat-0: oklch(0.955 0 0);
+  --heat-0: oklch(0.95 0.01 286);
   --heat-1: #b7d3f6;
   --heat-2: #6da7ec;
   --heat-3: #2a78d6;
@@ -192,7 +202,7 @@
 }
 
 .dark {
-  --heat-0: oklch(0.25 0 0);
+  --heat-0: oklch(0.27 0.025 282);
   --heat-1: #184f95;
   --heat-2: #256abf;
   --heat-3: #3987e5;
@@ -398,5 +408,388 @@
   .lp-glow-border::before,
   .lp-motion {
     animation: none !important;
+  }
+}
+
+/* ---------- App ("Orbit"): space background, glass surfaces, light that follows the pointer ---------- */
+
+:root {
+  --app-glow-a: rgb(99 102 241 / 0.14);
+  --app-glow-b: rgb(217 70 239 / 0.09);
+  --app-glow-c: rgb(34 211 238 / 0.09);
+  /* How much of the opaque card colour the glass keeps. */
+  --app-glass: 84%;
+  --app-card-shadow: 0 1px 2px rgb(30 27 75 / 0.04), 0 12px 32px -18px rgb(30 27 75 / 0.18);
+  --app-card-hover-border: color-mix(in oklab, var(--ring) 45%, var(--border));
+  --app-spot: rgb(99 102 241 / 0.08);
+  --app-grad-text: linear-gradient(90deg, #4f46e5, #a21caf, #0e7490, #4f46e5);
+  --app-number-grad: linear-gradient(180deg, oklch(0.2 0.03 283) 30%, oklch(0.42 0.16 280));
+  --app-header-line: linear-gradient(
+    90deg,
+    transparent,
+    rgb(99 102 241 / 0.35),
+    rgb(217 70 239 / 0.3),
+    rgb(34 211 238 / 0.3),
+    transparent
+  );
+  --app-stars-small: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='520'%3E%3Ccircle cx='226.8' cy='184.7' r='0.80' fill='%23a5f3fc' fill-opacity='0.41'/%3E%3Ccircle cx='128.7' cy='44.6' r='0.74' fill='%23c7d2fe' fill-opacity='0.43'/%3E%3Ccircle cx='318.0' cy='412.8' r='0.42' fill='%23ffffff' fill-opacity='0.63'/%3E%3Ccircle cx='166.1' cy='185.1' r='0.81' fill='%23a5f3fc' fill-opacity='0.48'/%3E%3Ccircle cx='316.3' cy='91.0' r='0.70' fill='%23ffffff' fill-opacity='0.70'/%3E%3Ccircle cx='71.6' cy='435.4' r='0.65' fill='%23ffffff' fill-opacity='0.54'/%3E%3Ccircle cx='411.5' cy='157.7' r='0.50' fill='%23c7d2fe' fill-opacity='0.51'/%3E%3Ccircle cx='508.9' cy='48.5' r='0.67' fill='%23ffffff' fill-opacity='0.43'/%3E%3Ccircle cx='407.7' cy='65.5' r='0.76' fill='%23a5f3fc' fill-opacity='0.73'/%3E%3Ccircle cx='202.6' cy='129.9' r='0.87' fill='%23ffffff' fill-opacity='0.35'/%3E%3Ccircle cx='449.0' cy='400.0' r='0.53' fill='%23a5f3fc' fill-opacity='0.33'/%3E%3Ccircle cx='12.0' cy='383.1' r='0.36' fill='%23c7d2fe' fill-opacity='0.73'/%3E%3Ccircle cx='384.0' cy='493.9' r='0.61' fill='%23ffffff' fill-opacity='0.71'/%3E%3Ccircle cx='227.3' cy='403.9' r='0.46' fill='%23c7d2fe' fill-opacity='0.73'/%3E%3Ccircle cx='0.6' cy='480.1' r='0.69' fill='%23ffffff' fill-opacity='0.53'/%3E%3Ccircle cx='407.6' cy='121.7' r='0.47' fill='%23e9d5ff' fill-opacity='0.75'/%3E%3Ccircle cx='411.8' cy='493.9' r='0.68' fill='%23ffffff' fill-opacity='0.61'/%3E%3Ccircle cx='3.1' cy='43.8' r='0.75' fill='%23c7d2fe' fill-opacity='0.50'/%3E%3Ccircle cx='363.9' cy='8.1' r='0.63' fill='%23ffffff' fill-opacity='0.36'/%3E%3Ccircle cx='486.3' cy='175.7' r='0.39' fill='%23ffffff' fill-opacity='0.35'/%3E%3Ccircle cx='490.9' cy='161.8' r='0.41' fill='%23ffffff' fill-opacity='0.77'/%3E%3Ccircle cx='310.6' cy='280.7' r='0.49' fill='%23c7d2fe' fill-opacity='0.48'/%3E%3Ccircle cx='130.4' cy='161.5' r='0.45' fill='%23e9d5ff' fill-opacity='0.65'/%3E%3Ccircle cx='327.1' cy='158.7' r='0.87' fill='%23ffffff' fill-opacity='0.75'/%3E%3Ccircle cx='456.3' cy='135.1' r='0.65' fill='%23ffffff' fill-opacity='0.41'/%3E%3Ccircle cx='37.0' cy='276.6' r='0.55' fill='%23ffffff' fill-opacity='0.29'/%3E%3Ccircle cx='390.0' cy='26.9' r='0.51' fill='%23ffffff' fill-opacity='0.60'/%3E%3Ccircle cx='253.3' cy='145.9' r='0.78' fill='%23ffffff' fill-opacity='0.36'/%3E%3Ccircle cx='507.7' cy='460.3' r='0.57' fill='%23ffffff' fill-opacity='0.26'/%3E%3Ccircle cx='214.5' cy='332.8' r='0.59' fill='%23ffffff' fill-opacity='0.30'/%3E%3Ccircle cx='473.2' cy='182.1' r='0.85' fill='%23ffffff' fill-opacity='0.76'/%3E%3Ccircle cx='82.8' cy='262.9' r='0.57' fill='%23ffffff' fill-opacity='0.62'/%3E%3Ccircle cx='388.3' cy='367.5' r='0.73' fill='%23ffffff' fill-opacity='0.62'/%3E%3Ccircle cx='2.8' cy='477.8' r='0.81' fill='%23a5f3fc' fill-opacity='0.49'/%3E%3Ccircle cx='97.6' cy='362.7' r='0.42' fill='%23ffffff' fill-opacity='0.77'/%3E%3Ccircle cx='205.8' cy='386.7' r='0.42' fill='%23ffffff' fill-opacity='0.70'/%3E%3Ccircle cx='146.6' cy='161.5' r='0.88' fill='%23ffffff' fill-opacity='0.44'/%3E%3Ccircle cx='516.8' cy='421.8' r='0.63' fill='%23a5f3fc' fill-opacity='0.64'/%3E%3Ccircle cx='518.1' cy='31.4' r='0.80' fill='%23ffffff' fill-opacity='0.47'/%3E%3Ccircle cx='437.6' cy='291.9' r='0.37' fill='%23ffffff' fill-opacity='0.74'/%3E%3Ccircle cx='344.1' cy='331.6' r='0.49' fill='%23a5f3fc' fill-opacity='0.73'/%3E%3Ccircle cx='290.4' cy='237.7' r='0.57' fill='%23a5f3fc' fill-opacity='0.43'/%3E%3Ccircle cx='7.9' cy='392.4' r='0.89' fill='%23ffffff' fill-opacity='0.51'/%3E%3Ccircle cx='0.9' cy='185.4' r='0.58' fill='%23ffffff' fill-opacity='0.37'/%3E%3Ccircle cx='222.1' cy='388.6' r='0.77' fill='%23a5f3fc' fill-opacity='0.68'/%3E%3Ccircle cx='96.6' cy='216.0' r='0.70' fill='%23c7d2fe' fill-opacity='0.33'/%3E%3Ccircle cx='449.3' cy='289.1' r='0.67' fill='%23a5f3fc' fill-opacity='0.62'/%3E%3Ccircle cx='43.6' cy='142.9' r='0.50' fill='%23ffffff' fill-opacity='0.46'/%3E%3Ccircle cx='270.7' cy='71.4' r='0.45' fill='%23c7d2fe' fill-opacity='0.78'/%3E%3Ccircle cx='134.3' cy='30.5' r='0.40' fill='%23c7d2fe' fill-opacity='0.53'/%3E%3Ccircle cx='342.1' cy='390.2' r='0.46' fill='%23ffffff' fill-opacity='0.42'/%3E%3Ccircle cx='348.1' cy='210.0' r='0.87' fill='%23e9d5ff' fill-opacity='0.57'/%3E%3Ccircle cx='173.5' cy='493.4' r='0.40' fill='%23ffffff' fill-opacity='0.78'/%3E%3Ccircle cx='283.4' cy='85.6' r='0.78' fill='%23ffffff' fill-opacity='0.74'/%3E%3Ccircle cx='107.1' cy='38.0' r='0.75' fill='%23ffffff' fill-opacity='0.64'/%3E%3Ccircle cx='216.7' cy='461.1' r='0.45' fill='%23ffffff' fill-opacity='0.33'/%3E%3Ccircle cx='390.1' cy='328.1' r='0.83' fill='%23ffffff' fill-opacity='0.29'/%3E%3Ccircle cx='218.0' cy='240.3' r='0.59' fill='%23c7d2fe' fill-opacity='0.36'/%3E%3Ccircle cx='454.1' cy='387.7' r='0.79' fill='%23ffffff' fill-opacity='0.48'/%3E%3Ccircle cx='130.2' cy='439.0' r='0.48' fill='%23c7d2fe' fill-opacity='0.26'/%3E%3Ccircle cx='170.7' cy='466.8' r='0.79' fill='%23ffffff' fill-opacity='0.60'/%3E%3Ccircle cx='458.3' cy='79.7' r='0.38' fill='%23ffffff' fill-opacity='0.74'/%3E%3Ccircle cx='191.3' cy='30.0' r='0.83' fill='%23ffffff' fill-opacity='0.73'/%3E%3Ccircle cx='383.6' cy='129.4' r='0.78' fill='%23ffffff' fill-opacity='0.63'/%3E%3C/svg%3E");
+  --app-stars-big: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='790' height='790'%3E%3Ccircle cx='8.5' cy='40.3' r='1.07' fill='%23c7d2fe' fill-opacity='0.71'/%3E%3Ccircle cx='565.5' cy='531.7' r='0.88' fill='%23ffffff' fill-opacity='0.64'/%3E%3Ccircle cx='767.2' cy='160.0' r='1.32' fill='%23ffffff' fill-opacity='0.81'/%3E%3Ccircle cx='480.6' cy='109.4' r='1.26' fill='%23ffffff' fill-opacity='0.89'/%3E%3Ccircle cx='2.7' cy='1.6' r='1.29' fill='%23ffffff' fill-opacity='0.92'/%3E%3Ccircle cx='284.9' cy='161.5' r='0.96' fill='%23a5f3fc' fill-opacity='0.86'/%3E%3Ccircle cx='771.0' cy='249.0' r='1.17' fill='%23a5f3fc' fill-opacity='0.62'/%3E%3Ccircle cx='487.7' cy='641.0' r='1.25' fill='%23ffffff' fill-opacity='0.88'/%3E%3Ccircle cx='564.1' cy='446.5' r='0.97' fill='%23a5f3fc' fill-opacity='0.75'/%3E%3Ccircle cx='249.8' cy='564.7' r='1.29' fill='%23e9d5ff' fill-opacity='0.75'/%3E%3Ccircle cx='274.6' cy='724.7' r='1.33' fill='%23ffffff' fill-opacity='0.64'/%3E%3Ccircle cx='163.5' cy='706.3' r='1.14' fill='%23ffffff' fill-opacity='0.66'/%3E%3Ccircle cx='704.0' cy='675.9' r='0.98' fill='%23ffffff' fill-opacity='0.84'/%3E%3Ccircle cx='135.7' cy='416.4' r='1.09' fill='%23a5f3fc' fill-opacity='0.63'/%3E%3Ccircle cx='691.8' cy='177.1' r='1.11' fill='%23a5f3fc' fill-opacity='0.83'/%3E%3Ccircle cx='528.5' cy='332.7' r='0.88' fill='%23e9d5ff' fill-opacity='0.77'/%3E%3Ccircle cx='279.1' cy='685.3' r='1.09' fill='%23e9d5ff' fill-opacity='0.61'/%3E%3Ccircle cx='458.3' cy='548.2' r='0.86' fill='%23c7d2fe' fill-opacity='0.64'/%3E%3Ccircle cx='260.4' cy='10.6' r='0.93' fill='%23e9d5ff' fill-opacity='0.84'/%3E%3Ccircle cx='601.1' cy='251.9' r='1.22' fill='%23ffffff' fill-opacity='0.66'/%3E%3Ccircle cx='750.5' cy='442.5' r='0.98' fill='%23a5f3fc' fill-opacity='0.65'/%3E%3Ccircle cx='595.9' cy='543.5' r='1.18' fill='%23ffffff' fill-opacity='0.57'/%3E%3Ccircle cx='303.7' cy='9.1' r='0.99' fill='%23c7d2fe' fill-opacity='0.68'/%3E%3Ccircle cx='774.2' cy='737.0' r='1.19' fill='%23e9d5ff' fill-opacity='0.75'/%3E%3Ccircle cx='509.8' cy='25.3' r='1.04' fill='%23ffffff' fill-opacity='0.51'/%3E%3Ccircle cx='251.9' cy='139.6' r='1.32' fill='%23ffffff' fill-opacity='0.68'/%3E%3C/svg%3E");
+}
+
+.dark {
+  --app-glow-a: rgb(99 102 241 / 0.2);
+  --app-glow-b: rgb(217 70 239 / 0.12);
+  --app-glow-c: rgb(34 211 238 / 0.09);
+  --app-glass: 76%;
+  --app-card-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 20px 44px -28px rgb(0 0 0 / 0.9);
+  --app-spot: rgb(139 92 246 / 0.14);
+  --app-grad-text: linear-gradient(90deg, #a5b4fc, #f0abfc, #67e8f9, #a5b4fc);
+  --app-number-grad: linear-gradient(180deg, #ffffff 35%, #c7d2fe);
+  --app-header-line: linear-gradient(
+    90deg,
+    transparent,
+    rgb(129 140 248 / 0.5),
+    rgb(232 121 249 / 0.4),
+    rgb(34 211 238 / 0.4),
+    transparent
+  );
+}
+
+@keyframes app-aurora {
+  from {
+    transform: translate3d(-3%, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(3%, 3%, 0) scale(1.08);
+  }
+}
+
+@keyframes app-drift {
+  to {
+    transform: translate3d(0, 520px, 0);
+  }
+}
+
+@keyframes app-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes app-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes app-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Orbits (rotate property, so it combines with a static transform) and light sweeps. */
+@keyframes app-spin {
+  from {
+    rotate: var(--orbit-start, 0deg);
+  }
+  to {
+    rotate: calc(var(--orbit-start, 0deg) + 360deg);
+  }
+}
+
+@keyframes app-spin-back {
+  from {
+    rotate: calc(var(--orbit-start, 0deg) * -1);
+  }
+  to {
+    rotate: calc(var(--orbit-start, 0deg) * -1 - 360deg);
+  }
+}
+
+@keyframes app-sheen {
+  0% {
+    transform: translateX(-100%);
+  }
+  35%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes app-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* The sky behind every page: auroras, slowly drifting stars (dark theme) or a dot grid (light). */
+.app-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--background);
+}
+.app-backdrop > * {
+  position: absolute;
+}
+.app-backdrop__aurora {
+  inset: -15% -10% auto;
+  height: 75vh;
+  background:
+    radial-gradient(55% 60% at 18% 0%, var(--app-glow-a), transparent 70%),
+    radial-gradient(45% 55% at 88% 8%, var(--app-glow-b), transparent 70%);
+  animation: app-aurora 30s ease-in-out infinite alternate;
+}
+.app-backdrop__horizon {
+  inset: auto -20% -35%;
+  height: 70vh;
+  background: radial-gradient(50% 50% at 50% 100%, var(--app-glow-c), transparent 70%);
+  animation: app-aurora 36s ease-in-out infinite alternate-reverse;
+}
+.app-backdrop__stars {
+  inset: -520px 0 0;
+  background-image: var(--app-stars-small);
+  background-size: 520px 520px;
+  animation: app-drift 240s linear infinite;
+}
+.app-backdrop__twinkle {
+  inset: 0;
+  background-image: var(--app-stars-big);
+  background-size: 790px 790px;
+  animation: app-twinkle 6s ease-in-out infinite;
+}
+.app-backdrop__dots {
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    oklch(0.5 0.06 283 / 0.17) 1px,
+    transparent 0
+  );
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 90% 65% at 50% 0%, #000 25%, transparent 75%);
+  mask-image: radial-gradient(ellipse 90% 65% at 50% 0%, #000 25%, transparent 75%);
+}
+.app-backdrop__grain {
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+.app-backdrop__stars,
+.app-backdrop__twinkle,
+.app-backdrop__grain,
+.dark .app-backdrop__dots {
+  display: none;
+}
+.dark .app-backdrop__stars,
+.dark .app-backdrop__twinkle,
+.dark .app-backdrop__grain {
+  display: block;
+}
+
+/* The sticky header: frosted glass with a thin aurora line under it. */
+.app-header::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: var(--app-header-line);
+}
+
+/* Every page slides in, its sections one after the other. Only "backwards" fill: once done, the
+   elements go back to their own styles (opacity and transform utilities keep working). */
+.app-page > * > * {
+  animation: app-enter 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.app-page > * > :nth-child(2) {
+  animation-delay: 50ms;
+}
+.app-page > * > :nth-child(3) {
+  animation-delay: 100ms;
+}
+.app-page > * > :nth-child(4) {
+  animation-delay: 150ms;
+}
+.app-page > * > :nth-child(5) {
+  animation-delay: 200ms;
+}
+.app-page > * > :nth-child(6) {
+  animation-delay: 250ms;
+}
+.app-page > * > :nth-child(7) {
+  animation-delay: 300ms;
+}
+.app-page > * > :nth-child(n + 8) {
+  animation-delay: 350ms;
+}
+
+/* Animated gradient text, with readable colours in both themes. */
+.app-gradient-text {
+  background-image: var(--app-grad-text);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: lp-gradient-pan 8s linear infinite;
+}
+
+/* Big amounts: a soft vertical gradient on the digits. */
+.app-number {
+  background-image: var(--app-number-grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* The main call to action: an indigo-violet gradient with a light sweeping across on hover. */
+.btn-cosmic {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #fff;
+  background-image: linear-gradient(135deg, #4f46e5, #7c3aed 55%, #a21caf);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.2),
+    0 8px 22px -12px rgb(99 102 241 / 0.9);
+}
+.btn-cosmic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, transparent 35%, rgb(255 255 255 / 0.3) 50%, transparent 65%);
+  transform: translateX(-110%);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-cosmic:hover::after {
+  transform: translateX(110%);
+}
+.btn-cosmic:hover {
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 10px 28px -10px rgb(139 92 246 / 0.95);
+}
+
+/* A light that sweeps across a coloured card every few seconds. */
+.app-sheen {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.app-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 40%, rgb(255 255 255 / 0.2) 50%, transparent 60%);
+  transform: translateX(-100%);
+  animation: app-sheen 7s ease-in-out 1.2s infinite;
+}
+
+/* The loading screen shows up only if the page takes more than a moment. */
+.app-loading {
+  animation: app-fade-in 0.3s ease 0.2s backwards;
+}
+
+/* Loading placeholders: glass blocks with a light passing through. */
+.app-skeleton {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card-solid) 60%, transparent);
+}
+.app-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--foreground) 7%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: app-shimmer 1.6s ease-in-out infinite;
+}
+
+@layer components {
+  /* Card surfaces become glass: the card colour lets the sky through, and a light follows the
+     pointer (its position comes from <CardSpotlight />). Low specificity, so utilities win. */
+  .app-shell :where(.bg-card.border, [data-slot="card"]) {
+    --card: color-mix(in oklab, var(--card-solid) var(--app-glass), transparent);
+    background-image: radial-gradient(
+      560px circle at var(--spot-x, -9999px) var(--spot-y, -9999px),
+      var(--app-spot),
+      transparent 40%
+    );
+    box-shadow: var(--app-card-shadow);
+    transition-property: border-color, box-shadow, background-color, translate;
+    transition-duration: 300ms;
+  }
+  /* Surfaces without a border (e.g. a sticky table header) stay opaque. */
+  .app-shell :where(.bg-card:not(.border)) {
+    --card: var(--card-solid);
+  }
+  .app-shell :where(.bg-card.border):hover {
+    border-color: var(--app-card-hover-border);
+  }
+
+  .app-shell :where(h1, h2) {
+    font-family: var(--font-display);
+  }
+  .app-shell :where(h1) {
+    letter-spacing: -0.02em;
+  }
+
+  /* Menus and dialogs: frosted glass. */
+  :where(
+    [data-slot="dropdown-menu-content"],
+    [data-slot="select-content"],
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="popover-content"]
+  ) {
+    --popover: color-mix(in oklab, var(--popover-solid) 86%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
+  }
+}
+
+/* Phones and tablets: the sky stays still and the loops settle after a couple of rounds, so the
+   app doesn't keep the GPU busy (and the battery draining) while it's open. */
+@media (hover: none) {
+  .app-backdrop > *,
+  .app-header .lp-motion,
+  .app-gradient-text {
+    animation: none !important;
+  }
+  .app-orbit,
+  .app-sheen::after {
+    animation-iteration-count: 2 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-backdrop > *,
+  .app-page > * > *,
+  .app-gradient-text,
+  .app-skeleton::after {
+    animation: none !important;
+  }
+  .btn-cosmic::after,
+  .app-sheen::after {
+    display: none;
   }
 }

@@ -14,6 +14,9 @@ import { SpaceSwitcher } from "@/components/layout/space-switcher";
 import { OfflineSync } from "@/components/offline/offline-sync";
 import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
 import { prisma } from "@/lib/db/prisma";
+import { LogoMark } from "@/components/brand/logo-mark";
+import { AppBackdrop } from "@/components/layout/app-backdrop";
+import { CardSpotlight } from "@/components/layout/card-spotlight";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const space = await requireSpace();
@@ -35,12 +38,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
       workRate={work.rate}
       initialHidden={cookies().get(HIDE_AMOUNTS_COOKIE)?.value === "1"}
     >
-      <div className="flex min-h-svh flex-col">
-        <header className="bg-background/95 supports-backdrop-filter:bg-background/80 sticky top-0 z-40 border-b backdrop-blur">
+      <div className="app-shell relative isolate flex min-h-svh flex-col">
+        <AppBackdrop />
+        <CardSpotlight />
+        <header className="app-header bg-background/70 supports-backdrop-filter:bg-background/55 sticky top-0 z-40 backdrop-blur-xl backdrop-saturate-150">
           <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4">
-            <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="font-semibold tracking-tight">
-                FinTrack
+            <div className="flex items-center gap-5">
+              <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                <LogoMark />
+                <span className="font-display text-[1.05rem] tracking-tight">FinTrack</span>
               </Link>
               <DesktopNav />
             </div>
@@ -62,7 +68,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <OfflineSync />
         </header>
         {!account.emailVerifiedAt && <VerifyEmailBanner email={account.email} />}
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 lg:pb-10">{children}</main>
+        <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-32 lg:pb-12">{children}</main>
         <MobileNav />
       </div>
     </CurrencyProvider>

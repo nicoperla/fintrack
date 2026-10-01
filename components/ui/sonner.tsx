@@ -26,7 +26,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
+          // Frosted glass, like the menus.
+          "--normal-bg": "color-mix(in oklab, var(--popover-solid) 86%, transparent)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
           "--border-radius": "var(--radius)",
@@ -34,7 +35,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }
       toastOptions={{
         classNames: {
-          toast: "cn-toast",
+          toast: "cn-toast backdrop-blur-xl backdrop-saturate-150",
         },
       }}
       {...props}

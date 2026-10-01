@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, PiggyBank } from "lucide-react";
-import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
+import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
 import { WorkTimeNote } from "@/components/dashboard/work-time-note";
 import { ForecastCard } from "@/components/dashboard/forecast-card";
 import { getForecast } from "@/lib/data/forecast";
@@ -67,8 +67,13 @@ export default async function DashboardPage() {
   const greeting = (
     <div className="flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Ciao{firstName ? `, ${firstName}` : ""}
+        <h1 className="text-3xl font-semibold">
+          Ciao
+          {firstName && (
+            <>
+              , <span className="app-gradient-text">{firstName}</span>
+            </>
+          )}
         </h1>
         <p className="text-muted-foreground text-sm">{data.monthLabel}</p>
       </div>
@@ -102,33 +107,13 @@ export default async function DashboardPage() {
         categories={toCategoryOptions([...tree.expense, ...tree.income])}
       />
 
-      <section
-        className="bg-card relative overflow-hidden rounded-2xl border p-6"
-        aria-label="Patrimonio"
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full opacity-20 blur-3xl"
-          style={{ background: "radial-gradient(circle, var(--viz-income), transparent 70%)" }}
-        />
-        <p className="text-muted-foreground text-sm">Patrimonio netto</p>
-        <AnimatedCurrency
-          value={data.netWorth}
-          className="mt-1 block text-5xl font-semibold tracking-tight sm:text-6xl"
-        />
-        <Link
-          href="/accounts"
-          className="text-muted-foreground hover:text-foreground mt-3 inline-flex items-center gap-1 text-sm"
-        >
-          Somma di {data.accountCount === 1 ? "1 conto" : `${data.accountCount} conti`}
-          <ChevronRight className="size-4" />
-        </Link>
-      </section>
+      <NetWorthHero value={data.netWorth} accountCount={data.accountCount} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile
           label={`Entrate di ${data.monthName}`}
           icon={ArrowDownLeft}
+          accent="var(--viz-income)"
           value={income}
           previous={data.previousSamePeriod.income}
           previousLabel={previousLabel}
@@ -137,6 +122,7 @@ export default async function DashboardPage() {
         <StatTile
           label={`Uscite di ${data.monthName}`}
           icon={ArrowUpRight}
+          accent="var(--viz-expense)"
           value={expense}
           previous={data.previousSamePeriod.expense}
           previousLabel={previousLabel}
@@ -146,6 +132,7 @@ export default async function DashboardPage() {
         <StatTile
           label="Saldo del mese"
           icon={PiggyBank}
+          accent="#8b5cf6"
           value={saved}
           footnote={
             income > 0 ? (

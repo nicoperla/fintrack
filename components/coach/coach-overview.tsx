@@ -59,6 +59,7 @@ export function ScoreRing({ score, size = 132 }: { score: number; size?: number 
           strokeDasharray={circumference}
           strokeDashoffset={circumference * (1 - shown / 100)}
           className="motion-safe:transition-[stroke-dashoffset] motion-safe:duration-1000 motion-safe:ease-out"
+          style={{ filter: `drop-shadow(0 0 ${size / 22}px ${scoreColor(score)})` }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
