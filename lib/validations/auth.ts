@@ -17,6 +17,7 @@ export const registerSchema = z.object({
   name: z.string().trim().min(1, "Inserisci il tuo nome").max(80),
   email,
   password: newPassword,
+  acceptTerms: z.literal(true, "Per creare l'account accetta i termini e la privacy"),
 });
 
 export const forgotPasswordSchema = z.object({ email });

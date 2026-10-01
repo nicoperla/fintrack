@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export function RegisterForm({
       name: String(form.get("name") ?? ""),
       email: String(form.get("email") ?? ""),
       password: String(form.get("password") ?? ""),
+      acceptTerms: form.get("acceptTerms") === "on",
     };
 
     const res = await registerUser(values).catch(() => ({
@@ -78,6 +80,41 @@ export function RegisterForm({
         required
         errors={errors?.password}
       />
+      <div className="grid gap-1">
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="acceptTerms"
+            className="accent-primary mt-0.5 size-4 shrink-0"
+            aria-invalid={errors?.acceptTerms ? true : undefined}
+            aria-describedby={errors?.acceptTerms ? "acceptTerms-error" : undefined}
+          />
+          <span className="text-muted-foreground">
+            Ho almeno 18 anni e accetto i{" "}
+            <Link
+              href="/terms"
+              target="_blank"
+              className="text-foreground underline underline-offset-4"
+            >
+              termini di servizio
+            </Link>{" "}
+            e l&apos;
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="text-foreground underline underline-offset-4"
+            >
+              informativa sulla privacy
+            </Link>
+            .
+          </span>
+        </label>
+        {errors?.acceptTerms && (
+          <p id="acceptTerms-error" className="text-destructive text-sm">
+            {errors.acceptTerms[0]}
+          </p>
+        )}
+      </div>
       <Button type="submit" size="lg" disabled={pending}>
         {pending ? "Creazione account…" : "Crea account"}
       </Button>

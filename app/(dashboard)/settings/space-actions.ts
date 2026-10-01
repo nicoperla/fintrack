@@ -10,6 +10,7 @@ import { type ActionResult, validationError } from "@/lib/action-result";
 import { currencySchema } from "@/lib/validations/finance";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
+import { formatRetryAfter, rateLimit, RULES } from "@/lib/rate-limit";
 import { escapeHtml } from "@/lib/reports/digest";
 import { CurrencyError } from "@/lib/currency/convert";
 import { createConverter, latestConverter } from "@/lib/currency/rates";
@@ -148,6 +149,22 @@ export async function inviteMember(input: unknown): Promise<InviteResult> {
   const parsed = inviteSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
   const { email } = parsed.data;
+
+  // Invitations send email to anyone: only from confirmed addresses, and not in bulk.
+  const inviterRow = await prisma.user.findUnique({
+    where: { id: space.user.id },
+    select: { emailVerifiedAt: true },
+  });
+  if (!inviterRow?.emailVerifiedAt) {
+    return { ok: false, error: "Prima conferma la tua email: trovi il link nella posta." };
+  }
+  const limit = await rateLimit(`invites:user:${space.user.id}`, RULES.invites);
+  if (!limit.ok) {
+    return {
+      ok: false,
+      error: `Hai inviato molti inviti: riprova tra ${formatRetryAfter(limit.retryAfterSeconds)}.`,
+    };
+  }
 
   const [members, alreadyIn] = await Promise.all([
     prisma.householdMember.count({ where: { householdId: space.id } }),

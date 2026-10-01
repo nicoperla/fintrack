@@ -22,7 +22,11 @@ export function LoginForm({ callbackUrl, notice }: { callbackUrl: string; notice
       redirect: false,
     });
     if (!res?.ok) {
-      setError("Email o password non corretti.");
+      setError(
+        res?.error === "RATE_LIMITED"
+          ? "Troppi tentativi di accesso. Aspetta qualche minuto e riprova."
+          : "Email o password non corretti.",
+      );
       setPending(false);
       return;
     }

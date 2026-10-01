@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { ArrowUp, Sparkles, Square } from "lucide-react";
+import Link from "next/link";
+import { ArrowUp, Lock, MailCheck, ShieldCheck, Sparkles, Square } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { maskAmounts } from "@/components/amount";
@@ -16,6 +18,14 @@ import { checkAffordability } from "@/lib/finance/affordability";
 import type { CoachInput, CoachReport } from "@/lib/finance/coach";
 import type { AffordData } from "@/components/coach/afford-card";
 import { cn } from "@/lib/utils";
+import { setAiConsent } from "@/app/(dashboard)/coach/actions";
+
+/** Whether the AI answers, and if not why (see lib/coach/access.ts). */
+export type ChatAccess = {
+  status: "off" | "pro" | "verify" | "consent" | "ready";
+  /** Who receives the data, e.g. "Groq (Stati Uniti)". */
+  providerName: string | null;
+};
 
 type Message = { role: "user" | "assistant"; content: string; local?: boolean };
 
@@ -27,13 +37,17 @@ const SUGGESTIONS = [
   "Quanto spendo in sigarette?",
 ];
 
-/** **bold** inside a line. */
+/** **bold** and *italic* inside a line. */
 function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+  return text.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).map((part, i) =>
     part.startsWith("**") && part.endsWith("**") ? (
       <strong key={i} className="font-semibold">
         {part.slice(2, -2)}
       </strong>
+    ) : part.length > 2 && part.startsWith("*") && part.endsWith("*") ? (
+      <em key={i} className="text-muted-foreground">
+        {part.slice(1, -1)}
+      </em>
     ) : (
       part
     ),
@@ -72,12 +86,12 @@ export function RichText({ text }: { text: string }) {
 }
 
 export function CoachChat({
-  aiAvailable,
+  access,
   input,
   report,
   afford,
 }: {
-  aiAvailable: boolean;
+  access: ChatAccess;
   input: CoachInput;
   report: CoachReport;
   afford: AffordData;
@@ -89,7 +103,9 @@ export function CoachChat({
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
-  const [ai, setAi] = useState(aiAvailable);
+  const [status, setStatus] = useState(access.status);
+  const [consenting, setConsenting] = useState(false);
+  const ai = status === "ready";
   const abortRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -132,8 +148,22 @@ export function CoachChat({
     setMessages(history);
     setDraft("");
 
+    const replyLocally = (note?: string) =>
+      setMessages([
+        ...history,
+        {
+          role: "assistant",
+          content: note
+            ? `*${note}*
+
+${local(text)}`
+            : local(text),
+          local: true,
+        },
+      ]);
+
     if (!ai) {
-      setMessages([...history, { role: "assistant", content: local(text), local: true }]);
+      replyLocally();
       return;
     }
 
@@ -150,12 +180,25 @@ export function CoachChat({
         }),
         signal: controller.signal,
       });
-      if (response.status === 503) {
-        setAi(false);
-        setMessages([...history, { role: "assistant", content: local(text), local: true }]);
+      if (!response.ok) {
+        const { code, error } = (await response.json().catch(() => ({}))) as {
+          code?: string;
+          error?: string;
+        };
+        // The rules changed since the page loaded (plan, consent…): follow the server.
+        if (code === "off" || code === "pro" || code === "verify" || code === "consent") {
+          setStatus(code);
+        }
+        replyLocally(
+          code === "busy"
+            ? "Il coach AI è molto richiesto in questo momento: intanto ecco la risposta rapida."
+            : code === "quota"
+              ? `${error ?? "Hai finito le domande al coach AI per ora."} Intanto ecco la risposta rapida.`
+              : undefined,
+        );
         return;
       }
-      if (!response.ok || !response.body) throw new Error(String(response.status));
+      if (!response.body) throw new Error("Risposta vuota");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -170,10 +213,22 @@ export function CoachChat({
     } catch (error) {
       if ((error as Error).name === "AbortError") return;
       // Offline or AI unreachable: the built-in answers still work.
-      setMessages([...history, { role: "assistant", content: local(text), local: true }]);
+      replyLocally("Non riesco a raggiungere il coach AI: ecco la risposta rapida.");
     } finally {
       setBusy(false);
       abortRef.current = null;
+    }
+  }
+
+  async function giveConsent() {
+    setConsenting(true);
+    const res = await setAiConsent(true).catch(() => null);
+    setConsenting(false);
+    if (res?.ok) {
+      setStatus("ready");
+      toast.success("Coach AI attivato");
+    } else {
+      toast.error("Non sono riuscito a salvare. Riprova.");
     }
   }
 
@@ -204,6 +259,56 @@ export function CoachChat({
           {ai ? "AI" : "Risposte rapide"}
         </span>
       </div>
+
+      {status === "consent" && (
+        <div className="bg-muted/60 grid gap-3 rounded-xl border p-4 text-sm">
+          <p className="flex items-center gap-2 font-medium">
+            <ShieldCheck className="size-4" aria-hidden /> Attiva il coach AI
+          </p>
+          <p className="text-muted-foreground">
+            Per rispondere, il coach AI invia a {access.providerName ?? "un fornitore di AI"} un
+            riepilogo dei tuoi dati: medie, categorie, conti, obiettivi, debiti e gli ultimi
+            movimenti dello spazio. Il fornitore lo usa solo per generare la risposta. Puoi revocare
+            il consenso quando vuoi dalle Impostazioni. Dettagli nella{" "}
+            <Link href="/privacy#ai" className="text-foreground underline underline-offset-4">
+              privacy
+            </Link>
+            .
+          </p>
+          <Button className="justify-self-start" onClick={giveConsent} disabled={consenting}>
+            {consenting ? "Attivazione…" : "Accetto, attiva il coach AI"}
+          </Button>
+          <p className="text-muted-foreground text-xs">
+            Senza consenso puoi comunque usare le risposte rapide qui sotto.
+          </p>
+        </div>
+      )}
+      {status === "pro" && (
+        <Link
+          href="/settings#abbonamento"
+          className="bg-muted/60 hover:bg-muted flex items-start gap-3 rounded-xl border p-4 text-sm transition-colors"
+        >
+          <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            <span className="font-medium">Il coach AI fa parte di FinTrack Pro.</span>{" "}
+            <span className="text-muted-foreground">
+              Risponde a qualsiasi domanda con i tuoi numeri. Intanto le risposte rapide qui sotto
+              sono gratis.
+            </span>
+          </span>
+        </Link>
+      )}
+      {status === "verify" && (
+        <div className="bg-muted/60 flex items-start gap-3 rounded-xl border p-4 text-sm">
+          <MailCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
+          <span>
+            <span className="font-medium">Conferma la tua email per attivare il coach AI.</span>{" "}
+            <span className="text-muted-foreground">
+              Trovi il link nella posta; puoi farlo rinviare dal banner in alto.
+            </span>
+          </span>
+        </div>
+      )}
 
       {messages.length > 0 && (
         <div className="grid max-h-[28rem] gap-3 overflow-y-auto pr-1" aria-live="polite">

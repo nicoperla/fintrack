@@ -12,11 +12,19 @@ import { PrivacyToggle } from "@/components/layout/privacy-toggle";
 import { getWorkSettings } from "@/lib/data/work-time";
 import { SpaceSwitcher } from "@/components/layout/space-switcher";
 import { OfflineSync } from "@/components/offline/offline-sync";
+import { VerifyEmailBanner } from "@/components/layout/verify-email-banner";
+import { prisma } from "@/lib/db/prisma";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const space = await requireSpace();
   const shared = (space.spaces.find((s) => s.id === space.id)?.memberCount ?? 1) > 1;
-  const work = await getWorkSettings(space.user.id, space.id);
+  const [work, account] = await Promise.all([
+    getWorkSettings(space.user.id, space.id),
+    prisma.user.findUniqueOrThrow({
+      where: { id: space.user.id },
+      select: { email: true, emailVerifiedAt: true },
+    }),
+  ]);
 
   return (
     <CurrencyProvider
@@ -53,6 +61,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
           <OfflineSync />
         </header>
+        {!account.emailVerifiedAt && <VerifyEmailBanner email={account.email} />}
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-24 lg:pb-10">{children}</main>
         <MobileNav />
       </div>

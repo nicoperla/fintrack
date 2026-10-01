@@ -2,7 +2,7 @@ import { ScanSearch } from "lucide-react";
 import { requireSpace } from "@/lib/auth/session";
 import { getCoachData } from "@/lib/data/coach";
 import { getQuickEntryContext } from "@/lib/data/intelligence";
-import { coachProvider } from "@/lib/coach/providers";
+import { getCoachAccess, PROVIDER_NAMES } from "@/lib/coach/access";
 import { EmptyState } from "@/components/empty-state";
 import {
   CoachChallenge,
@@ -22,12 +22,13 @@ const count = (n: number, one: string, many: string) =>
 
 export default async function CoachPage() {
   const space = await requireSpace();
-  const [data, quickContext] = await Promise.all([
+  const [data, quickContext, access] = await Promise.all([
     getCoachData(space.user.id, space.id),
     getQuickEntryContext(space.id),
+    getCoachAccess(space.user.id),
   ]);
   const { report, input, stats } = data;
-  const provider = coachProvider();
+  const provider = access.status === "off" ? null : access.provider;
 
   const afford: AffordData = {
     forecast: data.forecast,
@@ -88,7 +89,10 @@ export default async function CoachPage() {
           </div>
 
           <CoachChat
-            aiAvailable={provider !== null}
+            access={{
+              status: access.status,
+              providerName: provider ? PROVIDER_NAMES[provider.id] : null,
+            }}
             input={input}
             report={report}
             afford={afford}
@@ -100,7 +104,7 @@ export default async function CoachPage() {
         Il coach ti aiuta a gestire il budget: non è un consulente finanziario abilitato e non
         consiglia investimenti specifici.
         {provider &&
-          ` Quando fai una domanda, un riepilogo dei tuoi dati viene inviato a ${provider.id === "anthropic" ? "Anthropic" : "Groq"} per generare la risposta.`}
+          ` Con il coach AI attivo, ogni domanda invia un riepilogo dei tuoi dati a ${PROVIDER_NAMES[provider.id]}, solo per generare la risposta.`}
       </p>
     </div>
   );
