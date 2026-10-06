@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowDownLeft, ArrowUpRight, ChevronRight, PiggyBank } from "lucide-react";
-import { NetWorthHero } from "@/components/dashboard/net-worth-hero";
+import { AvailableHero } from "@/components/dashboard/available-hero";
+import { InvestmentsCard } from "@/components/dashboard/investments-card";
+import { getInvestments } from "@/lib/data/investments";
 import { WorkTimeNote } from "@/components/dashboard/work-time-note";
 import { ForecastCard } from "@/components/dashboard/forecast-card";
 import { getForecast } from "@/lib/data/forecast";
@@ -49,6 +51,7 @@ export default async function DashboardPage() {
     coach,
     storyMonth,
     found,
+    investments,
   ] = await Promise.all([
     getDashboardData(space.id),
     getBudgetsWithSpending(space.id),
@@ -62,6 +65,7 @@ export default async function DashboardPage() {
     getCoachData(space.user.id, space.id),
     getLatestStoryMonth(space.id),
     getFoundMoney(space.user.id, space.id),
+    getInvestments(space.id),
   ]);
 
   const greeting = (
@@ -107,7 +111,13 @@ export default async function DashboardPage() {
         categories={toCategoryOptions([...tree.expense, ...tree.income])}
       />
 
-      <NetWorthHero value={data.netWorth} accountCount={data.accountCount} />
+      <AvailableHero
+        value={data.available}
+        accountCount={data.spendableCount}
+        hasInvestments={investments.total !== null}
+      />
+
+      <InvestmentsCard data={investments} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile

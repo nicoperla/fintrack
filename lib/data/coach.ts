@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
+import { getInvestments } from "@/lib/data/investments";
 import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getForecast } from "@/lib/data/forecast";
 import { getGoals } from "@/lib/data/goals";
@@ -43,6 +44,7 @@ export const getCoachData = cache(async (userId: string, householdId: string) =>
     small,
     uncategorized,
     counts,
+    investments,
   ] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { coachProfile: true } }),
     prisma.household
@@ -84,6 +86,7 @@ export const getCoachData = cache(async (userId: string, householdId: string) =>
       },
     }),
     prisma.transaction.count({ where: { householdId } }),
+    getInvestments(householdId),
   ]);
 
   const { profile, configured } = readCoachProfile(user.coachProfile);
@@ -189,9 +192,8 @@ export const getCoachData = cache(async (userId: string, householdId: string) =>
     everydayBalance: accounts
       .filter((a) => ["CHECKING", "CARD", "CASH"].includes(a.type) && !a.archived)
       .reduce((s, a) => s + a.baseBalance, 0),
-    investmentBalance: accounts
-      .filter((a) => a.type === "INVESTMENT" && !a.archived)
-      .reduce((s, a) => s + a.baseBalance, 0),
+    // What the investments are worth (the values entered), not just what was put in.
+    investmentBalance: investments.total?.value ?? 0,
     // Rent, bills and loan instalments are recurring too, but they're not subscriptions to review.
     subscriptions: recurring
       .filter((r) => r.active && r.type === "EXPENSE")

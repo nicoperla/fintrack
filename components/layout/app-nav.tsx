@@ -21,6 +21,7 @@ import {
   Tags,
   Target,
   Trophy,
+  TrendingUp,
   Upload,
   Wallet,
   type LucideIcon,
@@ -46,6 +47,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const TOOLS: NavItem[] = [
+  { href: "/investments", label: "Investimenti", icon: TrendingUp },
   { href: "/ritrovati", label: "Soldi ritrovati", icon: HandCoins },
   { href: "/split", label: "Conti chiari", icon: Handshake },
   { href: "/stories", label: "Il mese in storie", icon: GalleryVerticalEnd },

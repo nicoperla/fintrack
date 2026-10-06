@@ -58,6 +58,22 @@ const ACCOUNTS = [
     initialBalance: 300,
     currency: "USD",
   },
+  // Investments, apart from the money you can spend: monthly contributions and values entered by
+  // hand (see buildValuations).
+  {
+    key: "etf",
+    name: "ETF azionario globale",
+    type: AccountType.INVESTMENT,
+    initialBalance: 5200,
+    currency: "EUR",
+  },
+  {
+    key: "pension",
+    name: "Fondo pensione",
+    type: AccountType.INVESTMENT,
+    initialBalance: 3100,
+    currency: "EUR",
+  },
 ] as const;
 type AccountKey = (typeof ACCOUNTS)[number]["key"];
 
@@ -508,6 +524,23 @@ function buildTransactions(today: Date): TxSeed[] {
       date: utcDate(year, month, 28),
       description: "Accantonamento mensile",
     });
+    // Money put into the investments: an ETF savings plan and the pension fund.
+    add({
+      account: "checking",
+      transferTo: "etf",
+      type: "TRANSFER",
+      amount: 150,
+      date: utcDate(year, month, 10),
+      description: "PAC ETF mensile",
+    });
+    add({
+      account: "checking",
+      transferTo: "pension",
+      type: "TRANSFER",
+      amount: 50,
+      date: utcDate(year, month, 15),
+      description: "Versamento fondo pensione",
+    });
   }
 
   // A habit worth showing off: something recorded every day of the last two weeks (up to
@@ -527,6 +560,38 @@ function buildTransactions(today: Date): TxSeed[] {
   }
 
   return txs.sort((a, b) => a.date.getTime() - b.date.getTime());
+}
+
+/**
+ * Values entered by hand for the investments: at the end of each past month, plus a recent one for
+ * the ETF (up, a dip, up again). The pension fund's last value is over a month old, so the demo
+ * also shows the reminder to update it. Returns are over what was put in up to that day.
+ */
+function buildValuations(today: Date, transactions: TxSeed[]) {
+  const RETURNS: Partial<Record<AccountKey, number[]>> = {
+    etf: [0.052, 0.071, 0.049, 0.083],
+    pension: [0.019, 0.024],
+  };
+  const invested = (key: AccountKey, date: Date) =>
+    ACCOUNTS.find((a) => a.key === key)!.initialBalance +
+    transactions
+      .filter((t) => t.transferTo === key && t.date <= date)
+      .reduce((sum, t) => sum + t.amount, 0);
+  const days = [
+    ...Array.from({ length: MONTHS_OF_HISTORY }, (_, i) =>
+      utcDate(today.getUTCFullYear(), today.getUTCMonth() - MONTHS_OF_HISTORY + i + 1, 0),
+    ),
+  ];
+  // A recent value, two days ago (today, at the very start of a month: one value per day).
+  const recent = new Date(today.getTime() - 2 * 86_400_000);
+  days.push(recent > days[days.length - 1] ? recent : today);
+  return Object.entries(RETURNS).flatMap(([key, returns]) =>
+    returns!.map((r, i) => ({
+      account: key as AccountKey,
+      date: days[i],
+      value: Math.round(invested(key as AccountKey, days[i]) * (1 + r) * 100) / 100,
+    })),
+  );
 }
 
 /** Pretend each movement was recorded on its own day, in the evening, never in the future. */
@@ -666,6 +731,17 @@ async function main() {
         createdAt: recordedAt(tx.date, now),
       };
     }),
+  });
+
+  await prisma.investmentValuation.createMany({
+    data: buildValuations(today, transactions)
+      .filter((v) => accountIds[v.account])
+      .map((v) => ({
+        householdId,
+        accountId: accountIds[v.account],
+        date: v.date,
+        value: money(v.value),
+      })),
   });
 
   // A coach already set up, so the demo shows advice instead of the first-run questions.

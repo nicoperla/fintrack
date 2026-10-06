@@ -138,7 +138,8 @@ export function ReportDocument({ data }: { data: ReportData }) {
     timeZone: "Europe/Rome",
   }).format(data.generatedAt);
   const eur = moneyIn(data.currency);
-  const netWorth = data.accounts.reduce((sum, a) => sum + a.baseBalance, 0);
+  const spendable = data.accounts.filter((a) => !a.investment);
+  const available = spendable.reduce((sum, a) => sum + a.baseBalance, 0);
   const maxMonth = Math.max(...data.months.map((m) => Math.max(m.income, m.expense)), 1);
   const expenseDelta = delta(data.expense, data.previous.expense, false);
   const incomeDelta = delta(data.income, data.previous.income, true);
@@ -191,9 +192,13 @@ export function ReportDocument({ data }: { data: ReportData }) {
             note={data.savingsRate !== null ? `Tasso di risparmio ${pct(data.savingsRate)}` : null}
           />
           <Kpi
-            label="Patrimonio oggi"
-            value={eur(netWorth)}
-            note={`${data.accounts.length} conti`}
+            label="Disponibile oggi"
+            value={eur(available)}
+            note={
+              data.investments
+                ? `+ ${eur(data.investments.value)} investiti`
+                : `${spendable.length} conti`
+            }
           />
         </View>
 
@@ -346,11 +351,15 @@ export function ReportDocument({ data }: { data: ReportData }) {
         )}
 
         <View style={s.section} wrap={false}>
-          <Text style={s.h2}>Conti (saldo attuale)</Text>
+          <Text style={s.h2}>Conti (saldo attuale; investimenti al valore di oggi)</Text>
           {data.accounts.map((a) => (
             <View key={a.name} style={s.row}>
               <Text style={{ flex: 1 }}>{a.name}</Text>
-              <Text style={[s.small, { width: 110 }]}>{a.type}</Text>
+              <Text style={[s.small, { width: 140 }]}>
+                {a.gain !== null
+                  ? `${a.type} · ${a.gain >= 0 ? "+" : ""}${eur(a.gain, a.currency)}`
+                  : a.type}
+              </Text>
               <Text style={[s.right, { width: 90, color: a.balance < 0 ? C.bad : C.ink }]}>
                 {eur(a.balance, a.currency)}
               </Text>

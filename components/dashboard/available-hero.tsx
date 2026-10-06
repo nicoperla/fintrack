@@ -3,17 +3,28 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
 
-/** The first thing on the dashboard: the net worth, next to a small planet with moons in orbit. */
-export function NetWorthHero({ value, accountCount }: { value: number; accountCount: number }) {
+/**
+ * The first thing on the dashboard: the money you can spend (every account except investments,
+ * which have their own card), next to a small planet with moons in orbit.
+ */
+export function AvailableHero({
+  value,
+  accountCount,
+  hasInvestments,
+}: {
+  value: number;
+  accountCount: number;
+  hasInvestments: boolean;
+}) {
   return (
     <section
-      aria-label="Patrimonio"
+      aria-label="Soldi disponibili"
       className="bg-card relative overflow-hidden rounded-2xl border p-6 sm:p-8"
     >
       <Orbits />
       <div className="relative">
         {/* On phones the planet sits in the top corner: this row keeps the number below it. */}
-        <p className="text-muted-foreground min-h-12 text-sm sm:min-h-0">Patrimonio netto</p>
+        <p className="text-muted-foreground min-h-12 text-sm sm:min-h-0">Soldi disponibili</p>
         <AnimatedCurrency
           value={value}
           className="app-number font-display mt-1 block text-5xl font-semibold tracking-tight tabular-nums sm:text-7xl"
@@ -23,6 +34,7 @@ export function NetWorthHero({ value, accountCount }: { value: number; accountCo
           className="text-muted-foreground hover:text-foreground mt-3 inline-flex items-center gap-1 text-sm"
         >
           Somma di {accountCount === 1 ? "1 conto" : `${accountCount} conti`}
+          {hasInvestments && ", investimenti esclusi"}
           <ChevronRight className="size-4" />
         </Link>
       </div>

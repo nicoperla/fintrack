@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { isInvestment } from "@/lib/account-types";
 import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { detectRecurring } from "@/lib/finance/recurring";
@@ -123,7 +124,8 @@ export async function getSimulatorDefaults(householdId: string) {
   const sum = (type: string) => Number(sums.find((s) => s.type === type)?._sum.baseAmount ?? 0);
 
   return {
-    netWorth: accounts.reduce((s, a) => s + a.baseBalance, 0),
+    // The money you can spend: investments grow on their own and have their own page.
+    netWorth: accounts.filter((a) => !isInvestment(a.type)).reduce((s, a) => s + a.baseBalance, 0),
     // Average of the last three complete months; never suggest a negative baseline.
     averageMonthlySavings: Math.max(0, Math.round((sum("INCOME") - sum("EXPENSE")) / 3)),
     goals: goals

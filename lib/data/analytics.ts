@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { getHouseholdCurrency } from "@/lib/households";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
+import { isInvestment } from "@/lib/account-types";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { buildCashFlow, buildHeatmap, netWorthSeries, weekdayIndex } from "@/lib/finance/analytics";
 import { generateInsights, type CategoryTotal } from "@/lib/finance/insights";
@@ -117,15 +118,29 @@ export async function getSpendingHeatmap(householdId: string, weeks = 26) {
 export const NET_WORTH_RANGES = { "3m": 3, "6m": 6, "1a": 12, tutto: null } as const;
 export type NetWorthRange = keyof typeof NET_WORTH_RANGES;
 
+/**
+ * The money you can spend over time: every account except investments, which have their own page.
+ * Income and expenses on those accounts move it, and so do transfers to and from investments
+ * (money put in or taken out); transfers between two spending accounts cancel out.
+ */
 export async function getNetWorth(householdId: string, range: NetWorthRange) {
   const today = todayUtc();
-  const [accounts, flows, first] = await Promise.all([
+  const [allAccounts, flows, first] = await Promise.all([
     getAccountsWithBalances(householdId),
     prisma.$queryRaw<{ date: Date; net: Prisma.Decimal }[]>`
-      SELECT "date", SUM(CASE WHEN "type"::text = 'INCOME' THEN "base_amount" ELSE -"base_amount" END) AS net
-      FROM "transactions"
-      WHERE "household_id" = ${householdId} AND "type"::text IN ('INCOME', 'EXPENSE')
-      GROUP BY "date"`,
+      SELECT t."date", SUM(CASE
+          WHEN a."type"::text = 'INVESTMENT' THEN
+            CASE WHEN t."type"::text = 'TRANSFER' AND d."type"::text <> 'INVESTMENT' THEN t."base_amount" ELSE 0 END
+          WHEN t."type"::text = 'INCOME' THEN t."base_amount"
+          WHEN t."type"::text = 'EXPENSE' THEN -t."base_amount"
+          WHEN d."type"::text = 'INVESTMENT' THEN -t."base_amount"
+          ELSE 0
+        END) AS net
+      FROM "transactions" t
+      JOIN "accounts" a ON a."id" = t."account_id"
+      LEFT JOIN "accounts" d ON d."id" = t."transfer_account_id"
+      WHERE t."household_id" = ${householdId}
+      GROUP BY t."date"`,
     prisma.transaction.findFirst({
       where: { householdId },
       orderBy: { date: "asc" },
@@ -133,6 +148,7 @@ export async function getNetWorth(householdId: string, range: NetWorthRange) {
     }),
   ]);
 
+  const accounts = allAccounts.filter((a) => !isInvestment(a.type));
   // Opening balances in other currencies are valued at today's rate.
   const opening = accounts.reduce((sum, a) => sum + a.baseInitialBalance, 0);
   const months = NET_WORTH_RANGES[range];

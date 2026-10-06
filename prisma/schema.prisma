@@ -120,6 +120,7 @@ model Household {
   debts             Debt[]
   settlements       Settlement[]
   dismissedFindings FoundMoneyDismissal[]
+  valuations        InvestmentValuation[]
 
   @@index([ownerId])
   @@map("households")
@@ -194,10 +195,11 @@ model FinancialAccount {
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
 
-  household         Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  user              User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  transactions      Transaction[] @relation("TransactionAccount")
-  incomingTransfers Transaction[] @relation("TransferDestination")
+  household         Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user              User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transactions      Transaction[]         @relation("TransactionAccount")
+  incomingTransfers Transaction[]         @relation("TransferDestination")
+  valuations        InvestmentValuation[]
 
   @@index([householdId])
   @@map("accounts")
@@ -380,4 +382,24 @@ model FoundMoneyDismissal {
 
   @@id([householdId, key])
   @@map("found_money_dismissals")
+}
+
+/// The market value of an investment account on a day, as the bank or broker shows it. The
+/// account's transactions are the money put in and taken out; the gap is the gain or loss.
+model InvestmentValuation {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  accountId   String   @map("account_id")
+  date        DateTime @db.Date
+  /// In the account's currency.
+  value       Decimal  @db.Decimal(14, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  household Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account   FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, date])
+  @@index([householdId])
+  @@map("investment_valuations")
 }

@@ -9,10 +9,20 @@ import { AccountFormDialog } from "@/components/accounts/account-form-dialog";
 import { deleteAccount } from "@/app/(dashboard)/accounts/actions";
 import { ACCOUNT_TYPES } from "@/lib/account-types";
 import { useCurrency, useMoney } from "@/components/currency-provider";
+import { GainBadge } from "@/components/investments/investment-bits";
 import { cn } from "@/lib/utils";
 import type { AccountDTO } from "@/lib/dto";
 
-export function AccountCard({ account }: { account: AccountDTO }) {
+/** An investment account shows what it's worth (the value entered by hand), not its book balance. */
+type InvestmentFigures = { value: number; gain: number; gainPct: number | null };
+
+export function AccountCard({
+  account,
+  investment,
+}: {
+  account: AccountDTO;
+  investment?: InvestmentFigures;
+}) {
   const money = useMoney();
   const baseCurrency = useCurrency();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -53,22 +63,41 @@ export function AccountCard({ account }: { account: AccountDTO }) {
         </div>
       </div>
 
-      <div>
-        <p className={cn("text-2xl font-semibold tabular-nums", negative && "text-destructive")}>
-          {money(account.balance, account.currency)}
-        </p>
-        {account.currency !== baseCurrency && (
-          <p className="text-muted-foreground text-sm tabular-nums">
-            ≈ {money(account.baseBalance)} al cambio di oggi
+      {investment ? (
+        <div className="grid gap-0.5">
+          <p className="text-2xl font-semibold tabular-nums">
+            {money(investment.value, account.currency)}
           </p>
-        )}
-      </div>
+          <p className="text-sm">
+            <GainBadge
+              gain={investment.gain}
+              pct={investment.gainPct}
+              currency={account.currency}
+            />
+          </p>
+        </div>
+      ) : (
+        <div>
+          <p className={cn("text-2xl font-semibold tabular-nums", negative && "text-destructive")}>
+            {money(account.balance, account.currency)}
+          </p>
+          {account.currency !== baseCurrency && (
+            <p className="text-muted-foreground text-sm tabular-nums">
+              ≈ {money(account.baseBalance)} al cambio di oggi
+            </p>
+          )}
+        </div>
+      )}
 
       <Link
-        href={`/transactions?accountId=${account.id}`}
+        href={investment ? "/investments" : `/transactions?accountId=${account.id}`}
         className="text-muted-foreground hover:text-foreground -mb-1 flex items-center justify-between text-sm"
       >
-        {account.transactionCount === 1 ? "1 movimento" : `${account.transactionCount} movimenti`}
+        {investment
+          ? "Valore e rendimento"
+          : account.transactionCount === 1
+            ? "1 movimento"
+            : `${account.transactionCount} movimenti`}
         <ChevronRight className="size-4" />
       </Link>
 

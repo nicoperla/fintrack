@@ -192,6 +192,32 @@
   --meter-over-track: #4d2020;
 }
 
+/* Categorical slots, in this fixed order (investments split by account: the colour follows the
+   account, never its rank), plus a grey for reference lines (money put in). Validated with the
+   dataviz palette checker against the card surfaces of both themes; the light aqua and yellow
+   sit under 3:1, so they always come with a visible label. */
+:root {
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+  --viz-7: #4a3aa7;
+  --viz-ref: #898781;
+}
+
+.dark {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+  --viz-7: #9085e9;
+  --viz-ref: #898781;
+}
+
 /* Spending heatmap: single-hue sequential ramp (blue), level 0 = no spending. */
 :root {
   --heat-0: oklch(0.95 0.01 286);
@@ -532,6 +558,24 @@
   }
 }
 
+/* A chart that draws itself from left to right: the clip rectangle around its lines grows. */
+@keyframes app-reveal {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.app-reveal {
+  transform-box: fill-box;
+  transform-origin: left;
+  animation: app-reveal 1.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+}
+
+/* The dot at the end of a line chart shows up once the line gets there. */
+.app-reveal-dot {
+  animation: app-fade-in 0.4s ease 1.4s both;
+}
+
 /* The sky behind every page: auroras, slowly drifting stars (dark theme) or a dot grid (light). */
 .app-backdrop {
   position: fixed;
@@ -785,7 +829,9 @@
   .app-backdrop > *,
   .app-page > * > *,
   .app-gradient-text,
-  .app-skeleton::after {
+  .app-skeleton::after,
+  .app-reveal,
+  .app-reveal-dot {
     animation: none !important;
   }
   .btn-cosmic::after,

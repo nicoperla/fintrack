@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
+import { isInvestment } from "@/lib/account-types";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import {
   formatMonth,
@@ -78,12 +79,15 @@ export async function getDashboardData(householdId: string) {
   });
 
   const current = trend[trend.length - 1];
-  const netWorth = accounts.reduce((sum, a) => sum + a.baseBalance, 0);
+  // Investments have their own card: here only the money you can spend.
+  const spendable = accounts.filter((a) => !isInvestment(a.type));
+  const available = spendable.reduce((sum, a) => sum + a.baseBalance, 0);
   const monthEnd = utcDate(year, month + 1, 0);
 
   return {
     accountCount: accounts.length,
-    netWorth,
+    spendableCount: spendable.length,
+    available,
     monthName: formatMonth(monthStart),
     monthLabel: formatMonthYear(monthStart),
     previousMonthName: formatMonth(previousMonthStart),

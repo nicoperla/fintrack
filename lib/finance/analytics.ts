@@ -146,8 +146,8 @@ export function buildHeatmap(days: DayTotal[], end: Date, weeks: number, trackin
 export type DailyNet = { date: string; net: number };
 
 /**
- * Net worth at the end of each day from `start` to `end`: the sum of opening balances plus every
- * income minus every expense up to that day (transfers move money between accounts and cancel out).
+ * A balance at the end of each day from `start` to `end`: the opening balances plus each day's net
+ * movement up to that day (which movements count is up to the caller, see getNetWorth).
  * Downsampled to at most `maxPoints`, always keeping the last day.
  */
 export function netWorthSeries(

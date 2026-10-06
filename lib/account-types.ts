@@ -20,3 +20,11 @@ export const ACCOUNT_TYPE_OPTIONS = Object.entries(ACCOUNT_TYPES).map(([value, m
   value: value as AccountType,
   label: meta.label,
 }));
+
+/** Investments are kept apart from the money you can spend (see lib/data/investments.ts). */
+export const isInvestment = (type: AccountType) => type === "INVESTMENT";
+
+/** Fixed colours for investment accounts, by creation order; the rest fold into "Altri". */
+export const INVESTMENT_SLOTS = 7;
+export const slotColor = (slot: number) =>
+  slot < INVESTMENT_SLOTS ? `var(--viz-${slot + 1})` : "var(--viz-ref)";

@@ -42,6 +42,24 @@ export const accountSchema = z.object({
   currency: currencySchema.optional(),
 });
 
+/** The value of an investment account on a day, as the bank or broker shows it. */
+export const valuationSchema = z.object({
+  accountId: id,
+  date: isoDate.refine(
+    // A day of slack for time zones: the form defaults to today in Italy.
+    (d) => d.getTime() <= Date.now() + 86_400_000,
+    "Il valore non può essere di una data futura",
+  ),
+  value: z.string().transform((v, ctx) => {
+    const parsed = parseAmount(v);
+    if (parsed === null) {
+      ctx.addIssue({ code: "custom", message: "Valore non valido (es. 12.450,30)" });
+      return z.NEVER;
+    }
+    return parsed;
+  }),
+});
+
 export const categorySchema = z.object({
   name: z.string().trim().min(1, "Inserisci un nome").max(40, "Massimo 40 caratteri"),
   type: z.enum(["INCOME", "EXPENSE"], "Scegli se è una categoria di entrata o di uscita"),

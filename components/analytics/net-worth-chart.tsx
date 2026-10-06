@@ -91,7 +91,7 @@ export function NetWorthChart({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="networth-title" className="font-medium">
-            Patrimonio netto nel tempo
+            Soldi disponibili nel tempo
           </h2>
           <p className="mt-1 text-2xl font-semibold tracking-tight">{money(data.current)}</p>
           <p className="text-muted-foreground flex items-center gap-1 text-xs">

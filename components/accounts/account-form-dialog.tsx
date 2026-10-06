@@ -17,15 +17,19 @@ import { FormField, FormMessage, SelectField } from "@/components/forms/form-fie
 import { saveAccount } from "@/app/(dashboard)/accounts/actions";
 import { ACCOUNT_TYPE_OPTIONS } from "@/lib/account-types";
 import type { ActionResult } from "@/lib/action-result";
+import type { AccountType } from "@prisma/client";
 import type { AccountDTO } from "@/lib/dto";
 import { CURRENCY_OPTIONS } from "@/lib/currency/currencies";
 import { currencySymbol, useCurrency } from "@/components/currency-provider";
 
 export function AccountFormDialog({
   account,
+  defaultType = "CHECKING",
   trigger,
 }: {
   account?: AccountDTO;
+  /** The type preselected for a new account. */
+  defaultType?: AccountType;
   trigger: React.ReactElement;
 }) {
   const [open, setOpen] = useState(false);
@@ -87,7 +91,7 @@ export function AccountFormDialog({
           <SelectField
             label="Tipo"
             name="type"
-            defaultValue={account?.type ?? "CHECKING"}
+            defaultValue={account?.type ?? defaultType}
             errors={errors?.type}
           >
             {ACCOUNT_TYPE_OPTIONS.map((o) => (

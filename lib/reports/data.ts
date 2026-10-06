@@ -1,10 +1,11 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
+import { getInvestments } from "@/lib/data/investments";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { budgetUsage } from "@/lib/finance/planning";
 import { formatMonthShort, formatMonthYear, todayInAppTimeZone, utcDate } from "@/lib/dates";
-import { ACCOUNT_TYPES } from "@/lib/account-types";
+import { ACCOUNT_TYPES, isInvestment } from "@/lib/account-types";
 
 export type ReportPeriod =
   { kind: "month"; year: number; month: number } | { kind: "year"; year: number };
@@ -70,6 +71,7 @@ export async function getReportData(
     monthly,
     budgets,
     accounts,
+    investments,
   ] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["type"],
@@ -137,7 +139,9 @@ export async function getReportData(
         })
       : Promise.resolve([]),
     getAccountsWithBalances(householdId),
+    getInvestments(householdId),
   ]);
+  const positions = new Map(investments.accounts.map((a) => [a.id, a]));
 
   const income = sumByType(totals, "INCOME");
   const expense = sumByType(totals, "EXPENSE");
@@ -208,13 +212,20 @@ export async function getReportData(
         ...budgetUsage(spent, Number(b.amount), b.alertThreshold),
       };
     }),
-    accounts: accounts.map((a) => ({
-      name: a.name,
-      type: ACCOUNT_TYPES[a.type].label,
-      balance: a.balance.toNumber(),
-      currency: a.currency,
-      baseBalance: a.baseBalance,
-    })),
+    // Investments at what they're worth, apart from the money you can spend.
+    accounts: accounts.map((a) => {
+      const position = isInvestment(a.type) ? positions.get(a.id) : undefined;
+      return {
+        name: a.name,
+        type: ACCOUNT_TYPES[a.type].label,
+        investment: !!position,
+        balance: position ? position.value : a.balance.toNumber(),
+        currency: a.currency,
+        baseBalance: position ? position.baseValue : a.baseBalance,
+        gain: position ? position.gain : null,
+      };
+    }),
+    investments: investments.total,
   };
 }
 

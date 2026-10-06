@@ -124,7 +124,7 @@ export function SavingsSimulator({
             onChange={(e) => setStartText(e.target.value)}
           />
           <p className="text-muted-foreground text-xs">
-            Di default è il tuo patrimonio netto attuale.
+            Di default sono i soldi disponibili sui tuoi conti, investimenti esclusi.
           </p>
         </div>
         <SliderField
