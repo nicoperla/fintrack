@@ -1,7 +1,11 @@
-import { AccountType, PrismaClient, TransactionType } from "@prisma/client";
+import { AccountType, Prisma, PrismaClient, TransactionType } from "@prisma/client";
 import { hashPassword } from "../lib/auth/password";
 import { DEFAULT_CATEGORIES as CATEGORIES } from "../lib/defaults/categories";
 import { createConverter } from "../lib/currency/rates";
+import { claimLetter } from "../lib/claims/letters";
+import { answerDeadline, findingKey } from "../lib/finance/claims";
+import { normalizeDescription } from "../lib/finance/recurring";
+import { toDateInputValue } from "../lib/format";
 
 const prisma = new PrismaClient();
 
@@ -432,6 +436,15 @@ function buildTransactions(today: Date): TxSeed[] {
       description: "Zalando",
     });
   }
+  // The second charge came back, thanks to a "Riprenditeli" claim (see seedClaims).
+  add({
+    account: "card",
+    category: "Altre entrate",
+    type: "INCOME",
+    amount: 59.9,
+    date: ago(4),
+    description: "Rimborso Zalando",
+  });
 
   const interestDay = utcDate(today.getUTCFullYear(), today.getUTCMonth() - 2, 30);
   add({
@@ -598,6 +611,126 @@ function buildValuations(today: Date, transactions: TxSeed[]) {
 function recordedAt(date: Date, now: Date) {
   const evening = new Date(date.getTime() + 19 * 3_600_000);
   return evening < now ? evening : now;
+}
+
+/**
+ * Three "Riprenditeli" claims, with letters and deadlines from the app's own rules: the Zalando
+ * charge taken twice, already refunded; the gym cancelled but charged again, which the app spots
+ * and turns into a refund to ask for; a complaint about the account fees, waiting for the bank.
+ */
+async function seedClaims(
+  householdId: string,
+  user: { id: string; name: string | null },
+  today: Date,
+  transactions: TxSeed[],
+) {
+  const DAY = 86_400_000;
+  const iso = (date: Date) => toDateInputValue(date);
+  const asDate = (day: string) => new Date(`${day}T00:00:00.000Z`);
+  const daysAgo = (days: number) => new Date(today.getTime() - days * DAY);
+  const at = (date: Date, hour: number) => new Date(date.getTime() + hour * 3_600_000);
+  const fullName = user.name ?? "";
+  const claims: Prisma.ClaimCreateManyInput[] = [];
+
+  // "Soldi ritrovati" flags the second of the two identical charges, in its own order.
+  const [, second] = (
+    await prisma.transaction.findMany({
+      where: { householdId, type: "EXPENSE", description: "Zalando" },
+      select: { id: true, date: true },
+    })
+  ).sort((a, b) => a.date.getTime() - b.date.getTime() || a.id.localeCompare(b.id));
+  if (second) {
+    const sent = daysAgo(11);
+    const letter = claimLetter({
+      kind: "DUPLICATE_CHARGE",
+      fullName,
+      counterparty: "Zalando",
+      amount: 59.9,
+      today: iso(sent),
+      chargeDate: iso(second.date),
+      chargeDescription: "Zalando",
+    });
+    claims.push({
+      householdId,
+      userId: user.id,
+      kind: "DUPLICATE_CHARGE",
+      status: "WON",
+      findingKey: findingKey.duplicate(second.id),
+      transactionId: second.id,
+      counterparty: "Zalando",
+      expectedAmount: money(59.9),
+      recoveredAmount: money(59.9),
+      ...letter,
+      channel: "email",
+      sentAt: sent,
+      deadline: asDate(answerDeadline("DUPLICATE_CHARGE", iso(sent), true)!),
+      closedAt: at(daysAgo(4), 10),
+      notes: "Riaccreditati sulla carta.",
+      createdAt: at(sent, 9),
+    });
+  }
+
+  // Cancelled two weeks ahead for two days before the latest charge, which came anyway.
+  const gym = transactions
+    .filter((t) => t.description === "FitLife Palestra")
+    .reduce<TxSeed | null>((last, t) => (!last || t.date > last.date ? t : last), null);
+  if (gym) {
+    const effectiveFrom = new Date(gym.date.getTime() - 2 * DAY);
+    const sent = new Date(effectiveFrom.getTime() - 14 * DAY);
+    const letter = claimLetter({
+      kind: "CANCELLATION",
+      fullName,
+      counterparty: "FitLife Palestra",
+      amount: gym.amount * 12,
+      today: iso(sent),
+      effectiveFrom: iso(effectiveFrom),
+    });
+    claims.push({
+      householdId,
+      userId: user.id,
+      kind: "CANCELLATION",
+      status: "SENT",
+      findingKey: findingKey.subscription(`EXPENSE|${normalizeDescription(gym.description)}`),
+      counterparty: "FitLife Palestra",
+      expectedAmount: money(gym.amount * 12),
+      ...letter,
+      channel: "raccomandata",
+      sentAt: sent,
+      effectiveFrom,
+      createdAt: at(sent, 8),
+    });
+  }
+
+  const fees = transactions.filter((t) => t.category === "Commissioni bancarie");
+  if (fees.length > 0) {
+    const total = fees.reduce((sum, t) => sum + t.amount, 0);
+    const sent = daysAgo(9);
+    const letter = claimLetter({
+      kind: "BANK_COMPLAINT",
+      fullName,
+      counterparty: "Conto corrente",
+      amount: total,
+      today: iso(sent),
+      aboutFees: true,
+    });
+    claims.push({
+      householdId,
+      userId: user.id,
+      kind: "BANK_COMPLAINT",
+      status: "SENT",
+      findingKey: findingKey.fees,
+      counterparty: "Conto corrente",
+      expectedAmount: money(total),
+      ...letter,
+      channel: "pec",
+      sentAt: sent,
+      deadline: asDate(answerDeadline("BANK_COMPLAINT", iso(sent), false)!),
+      createdAt: at(sent, 18),
+    });
+  }
+
+  await prisma.claim.createMany({ data: claims });
+  return claims.length;
 }
 
 async function main() {
@@ -807,8 +940,10 @@ async function main() {
     })),
   });
 
+  const claimCount = await seedClaims(householdId, user, today, transactions);
+
   console.log(
-    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti.`,
+    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
   console.log(

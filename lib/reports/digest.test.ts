@@ -20,6 +20,7 @@ const base: DigestInput = {
   ],
   budgets: [],
   upcoming: [],
+  claims: [],
   streak: { current: 5, longest: 9 },
   level: { level: 2, name: "Apprendista" },
   appUrl: "https://fintrack.example",
@@ -89,6 +90,32 @@ describe("buildWeeklyDigest", () => {
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
     expect(html).toContain('href="https://fintrack.example/dashboard"');
+  });
+
+  it("lists the claims to follow, with a link to each", () => {
+    const { text, html } = buildWeeklyDigest({
+      ...base,
+      claims: [
+        {
+          id: "c1",
+          counterparty: "FitLife <Palestra>",
+          kind: "Disdetta",
+          step: "Ti hanno addebitato il servizio dopo la disdetta: chiedi il rimborso alla banca.",
+          urgent: true,
+        },
+      ],
+    });
+    expect(text).toContain("Pratiche da seguire:");
+    expect(text).toContain("- FitLife <Palestra> (disdetta): Ti hanno addebitato il servizio");
+    expect(text).toContain("https://fintrack.example/ritrovati/pratiche/c1");
+    expect(html).toContain("FitLife &lt;Palestra&gt;");
+    expect(html).toContain('href="https://fintrack.example/ritrovati/pratiche/c1"');
+  });
+
+  it("leaves the claims out when there are none", () => {
+    const { text, html } = buildWeeklyDigest(base);
+    expect(text).not.toContain("Pratiche da seguire");
+    expect(html).not.toContain("Pratiche da seguire");
   });
 
   it("celebrates a record streak", () => {

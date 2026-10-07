@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Trash2 } from "lucide-react";
+import { HandCoins, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -305,6 +306,17 @@ function TransactionForm({
           rows={2}
           errors={errors?.notes}
         />
+
+        {transaction?.type === "EXPENSE" && (
+          <Link
+            href={`/ritrovati/pratiche/nuova?movimento=${transaction.id}`}
+            onClick={() => onOpenChange(false)}
+            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 justify-self-start text-sm underline-offset-4 hover:underline"
+          >
+            <HandCoins className="size-4" aria-hidden />
+            Contesta questo addebito
+          </Link>
+        )}
 
         <DialogFooter className="sm:justify-between">
           {transaction && onDelete ? (

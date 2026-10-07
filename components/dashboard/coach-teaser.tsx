@@ -6,6 +6,7 @@ import { useMoney } from "@/components/currency-provider";
 import { MaskedText } from "@/components/amount";
 import { ScoreRing } from "@/components/coach/coach-overview";
 import type { CoachReport } from "@/lib/finance/coach";
+import type { ClaimTotals } from "@/lib/finance/claims";
 
 /** The coach's verdict in one card, with its most urgent tip. */
 export function CoachTeaser({ report }: { report: CoachReport }) {
@@ -70,22 +71,50 @@ export function StoryBubble({ monthKey, monthName }: { monthKey: string; monthNa
   );
 }
 
+const count = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
+
 /** "Soldi ritrovati" in one line: the counter that keeps growing with every receipt. */
 export function FoundMoneyTeaser({
   year,
   total,
   refund,
   extras,
+  claims,
 }: {
   year: number;
   total: number;
   refund: number;
   /** Other findings, e.g. "1 doppio addebito". */
   extras: string[];
+  /** "Riprenditeli": what the claims brought back, and what can't wait. */
+  claims: Pick<ClaimTotals, "recovered" | "open" | "urgent">;
 }) {
+  const money = useMoney();
+  const pending =
+    claims.urgent > 0
+      ? count(claims.urgent, "pratica da fare subito", "pratiche da fare subito")
+      : claims.open > 0
+        ? count(claims.open, "pratica aperta", "pratiche aperte")
+        : null;
+  // Nothing found this year but claims under way: then the card speaks of those.
+  const card: { label: string; value: string | null; notes: (string | null)[] } =
+    total > 0
+      ? {
+          label: `Soldi ritrovati nel ${year}`,
+          value: money(total),
+          notes: [
+            pending,
+            claims.recovered > 0 ? `recuperati ${money(claims.recovered)}` : null,
+            refund > 0 ? "rimborso 730 stimato" : null,
+            ...extras,
+          ],
+        }
+      : claims.recovered > 0
+        ? { label: "Recuperati con Riprenditeli", value: money(claims.recovered), notes: [pending] }
+        : { label: "Riprenditeli", value: pending, notes: ["scadenze e prossimi passi"] };
   return (
     <Link
-      href="/ritrovati"
+      href={claims.urgent > 0 || total === 0 ? "/ritrovati/pratiche" : "/ritrovati"}
       className="app-sheen group flex items-center gap-4 rounded-xl p-4 text-white shadow-[0_18px_40px_-20px_rgba(13,148,136,0.8)] transition-[translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_50px_-18px_rgba(13,148,136,0.95)]"
       style={{ background: "linear-gradient(135deg, #047857, #0d9488 55%, #0369a1)" }}
     >
@@ -93,13 +122,9 @@ export function FoundMoneyTeaser({
         <HandCoins className="size-6" aria-hidden />
       </span>
       <div className="grid min-w-0 flex-1 gap-0.5">
-        <p className="text-xs text-white/80">Soldi ritrovati nel {year}</p>
-        <p className="text-2xl font-semibold tracking-tight tabular-nums">
-          <MaskedAmount value={total} />
-        </p>
-        <p className="truncate text-sm text-white/85">
-          {[refund > 0 ? "rimborso 730 stimato" : null, ...extras].filter(Boolean).join(" · ")}
-        </p>
+        <p className="text-xs text-white/80">{card.label}</p>
+        <p className="text-2xl font-semibold tracking-tight tabular-nums">{card.value}</p>
+        <p className="truncate text-sm text-white/85">{card.notes.filter(Boolean).join(" · ")}</p>
       </div>
       <ChevronRight
         className="size-5 shrink-0 text-white/80 transition-transform group-hover:translate-x-0.5"
@@ -107,9 +132,4 @@ export function FoundMoneyTeaser({
       />
     </Link>
   );
-}
-
-function MaskedAmount({ value }: { value: number }) {
-  const money = useMoney();
-  return <>{money(value)}</>;
 }

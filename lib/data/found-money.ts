@@ -35,7 +35,7 @@ export const getFoundMoney = cache(
     const [user, household, first] = await Promise.all([
       prisma.user.findUniqueOrThrow({
         where: { id: userId },
-        select: { dependentChildren: true, plan: true, name: true },
+        select: { dependentChildren: true, plan: true },
       }),
       prisma.household.findUniqueOrThrow({
         where: { id: householdId },
@@ -194,7 +194,6 @@ export const getFoundMoney = cache(
       today,
       currency: household.currency,
       children,
-      userName: user.name ?? "",
       shared: household.members.length > 1,
       total,
       summary,

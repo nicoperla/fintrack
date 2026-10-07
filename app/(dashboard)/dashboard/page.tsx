@@ -10,6 +10,7 @@ import { getCoachData } from "@/lib/data/coach";
 import { getLatestStoryMonth } from "@/lib/data/stories";
 import { CoachTeaser, FoundMoneyTeaser, StoryBubble } from "@/components/dashboard/coach-teaser";
 import { getFoundMoney } from "@/lib/data/found-money";
+import { getClaimsOverview } from "@/lib/data/claims";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
@@ -52,6 +53,7 @@ export default async function DashboardPage() {
     storyMonth,
     found,
     investments,
+    claims,
   ] = await Promise.all([
     getDashboardData(space.id),
     getBudgetsWithSpending(space.id),
@@ -66,6 +68,7 @@ export default async function DashboardPage() {
     getLatestStoryMonth(space.id),
     getFoundMoney(space.user.id, space.id),
     getInvestments(space.id),
+    getClaimsOverview(space.user.id, space.id),
   ]);
 
   const greeting = (
@@ -158,7 +161,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      {found.total > 0 && (
+      {(found.total > 0 || claims.totals.recovered > 0 || claims.totals.open > 0) && (
         <FoundMoneyTeaser
           year={found.year}
           total={found.total}
@@ -171,6 +174,7 @@ export default async function DashboardPage() {
             found.summary.priceIncreases.count ? "abbonamenti aumentati" : null,
             found.summary.bankFees ? "commissioni bancarie" : null,
           ].filter((x): x is string => x !== null)}
+          claims={claims.totals}
         />
       )}
 

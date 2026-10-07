@@ -93,6 +93,9 @@ export async function deleteAccount(input: unknown): Promise<ActionResult> {
         data: { role: "OWNER" },
       });
     }
+    // "Riprenditeli" letters are written in the user's name: unlike the other records of a
+    // shared space, they leave with the account.
+    await tx.claim.deleteMany({ where: { userId: user.id } });
     // Cascades to memberships, tokens and the spaces still owned; records in shared spaces
     // stay there with no author.
     await tx.user.delete({ where: { id: user.id } });

@@ -34,6 +34,13 @@ export default function PrivacyPage() {
             netto e le ore di lavoro se li imposti, le preferenze del coach.
           </li>
           <li>
+            <strong>Pratiche di «Riprenditeli»</strong>: per le disdette, i rimborsi e i reclami che
+            apri, a chi sono rivolti, gli importi, il testo della lettera, le date di invio e di
+            scadenza e com&apos;è finita. FinTrack non invia niente al posto tuo. I dati tra
+            parentesi quadre, come IBAN e numero cliente, li completi tu nella tua email: non ti
+            chiediamo di salvarli.
+          </li>
+          <li>
             <strong>Dati tecnici</strong>: il cookie di sessione, l&apos;indirizzo IP e l&apos;email
             usati per bloccare i tentativi di accesso ripetuti (conservati al massimo 2 giorni), i
             log tecnici dei fornitori di hosting.
@@ -123,8 +130,9 @@ export default function PrivacyPage() {
           Teniamo i dati finché hai un account. Se elimini l&apos;account cancelliamo subito
           profilo, spazi personali e tutti i loro dati; le copie di sicurezza tecniche del database
           si sovrascrivono entro 7 giorni. I movimenti che hai registrato in spazi condivisi con
-          altre persone restano a loro, senza il tuo nome. I dati di fatturazione sono conservati
-          per il tempo previsto dalla legge (10 anni).
+          altre persone restano a loro, senza il tuo nome; le pratiche di «Riprenditeli» che hai
+          aperto lì invece le cancelliamo, perché le lettere sono a tuo nome. I dati di fatturazione
+          sono conservati per il tempo previsto dalla legge (10 anni).
         </p>
       </section>
 

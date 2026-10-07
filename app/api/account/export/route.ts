@@ -38,43 +38,57 @@ export async function GET() {
   const spaces = await Promise.all(
     user.memberships.map(async (membership) => {
       const id = membership.householdId;
-      const [household, accounts, categories, transactions, budgets, goals, debts, settlements] =
-        await Promise.all([
-          prisma.household.findUniqueOrThrow({
-            where: { id },
-            select: {
-              name: true,
-              currency: true,
-              splitMode: true,
-              splitSince: true,
-              createdAt: true,
-              members: {
-                select: { role: true, user: { select: { id: true, name: true } } },
-              },
+      const [
+        household,
+        accounts,
+        categories,
+        transactions,
+        budgets,
+        goals,
+        debts,
+        settlements,
+        claims,
+      ] = await Promise.all([
+        prisma.household.findUniqueOrThrow({
+          where: { id },
+          select: {
+            name: true,
+            currency: true,
+            splitMode: true,
+            splitSince: true,
+            createdAt: true,
+            members: {
+              select: { role: true, user: { select: { id: true, name: true } } },
             },
-          }),
-          prisma.financialAccount.findMany({
-            where: { householdId: id },
-            orderBy: { createdAt: "asc" },
-          }),
-          prisma.category.findMany({ where: { householdId: id }, orderBy: { name: "asc" } }),
-          prisma.transaction.findMany({
-            where: { householdId: id },
-            orderBy: [{ date: "asc" }, { createdAt: "asc" }],
-            include: {
-              account: { select: { name: true } },
-              transferAccount: { select: { name: true } },
-              category: { select: { name: true } },
-            },
-          }),
-          prisma.budget.findMany({
-            where: { householdId: id },
-            include: { category: { select: { name: true } } },
-          }),
-          prisma.goal.findMany({ where: { householdId: id } }),
-          prisma.debt.findMany({ where: { householdId: id } }),
-          prisma.settlement.findMany({ where: { householdId: id }, orderBy: { date: "asc" } }),
-        ]);
+          },
+        }),
+        prisma.financialAccount.findMany({
+          where: { householdId: id },
+          orderBy: { createdAt: "asc" },
+        }),
+        prisma.category.findMany({ where: { householdId: id }, orderBy: { name: "asc" } }),
+        prisma.transaction.findMany({
+          where: { householdId: id },
+          orderBy: [{ date: "asc" }, { createdAt: "asc" }],
+          include: {
+            account: { select: { name: true } },
+            transferAccount: { select: { name: true } },
+            category: { select: { name: true } },
+          },
+        }),
+        prisma.budget.findMany({
+          where: { householdId: id },
+          include: { category: { select: { name: true } } },
+        }),
+        prisma.goal.findMany({ where: { householdId: id } }),
+        prisma.debt.findMany({ where: { householdId: id } }),
+        prisma.settlement.findMany({ where: { householdId: id }, orderBy: { date: "asc" } }),
+        prisma.claim.findMany({
+          where: { householdId: id },
+          orderBy: { createdAt: "asc" },
+          include: { transaction: { select: { date: true, description: true } } },
+        }),
+      ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
       const who = (authorId: string | null) =>
         authorId === userId ? "tu" : authorId ? (names.get(authorId) ?? "ex membro") : "ex membro";
@@ -139,6 +153,26 @@ export async function GET() {
           from: who(s.fromUserId),
           to: who(s.toUserId),
           amount: s.amount,
+        })),
+        claims: claims.map((c) => ({
+          kind: c.kind,
+          status: c.status,
+          counterparty: c.counterparty,
+          expectedAmount: c.expectedAmount,
+          recoveredAmount: c.recoveredAmount,
+          subject: c.subject,
+          letter: c.body,
+          channel: c.channel,
+          sentAt: c.sentAt ? toDateInputValue(c.sentAt) : null,
+          effectiveFrom: c.effectiveFrom ? toDateInputValue(c.effectiveFrom) : null,
+          deadline: c.deadline ? toDateInputValue(c.deadline) : null,
+          closedAt: c.closedAt,
+          notes: c.notes,
+          contestedCharge: c.transaction
+            ? { date: toDateInputValue(c.transaction.date), description: c.transaction.description }
+            : null,
+          openedBy: who(c.userId),
+          openedAt: c.createdAt,
         })),
       };
     }),

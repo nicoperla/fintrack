@@ -2,6 +2,8 @@ import { prisma } from "@/lib/db/prisma";
 import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getGamification } from "@/lib/data/gamification";
 import { getRecurring } from "@/lib/data/intelligence";
+import { claimsToMention, getClaimsOverview } from "@/lib/data/claims";
+import { KIND_LABELS } from "@/lib/finance/claims";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -29,32 +31,42 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
   const { today, start, end, previousStart } = lastCompleteWeek();
   const types = { in: ["INCOME" as const, "EXPENSE" as const] };
 
-  const [user, totals, previousExpense, sums, categories, budgets, recurring, gamification] =
-    await Promise.all([
-      prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
-      prisma.transaction.groupBy({
-        by: ["type"],
-        where: { householdId, type: types, date: { gte: start, lt: end } },
-        _sum: { baseAmount: true },
-        _count: { _all: true },
-      }),
-      prisma.transaction.aggregate({
-        where: { householdId, type: "EXPENSE", date: { gte: previousStart, lt: start } },
-        _sum: { baseAmount: true },
-      }),
-      prisma.transaction.groupBy({
-        by: ["categoryId"],
-        where: { householdId, type: "EXPENSE", date: { gte: start, lt: end } },
-        _sum: { baseAmount: true },
-      }),
-      prisma.category.findMany({
-        where: { householdId },
-        select: { id: true, name: true, color: true, parentId: true },
-      }),
-      getBudgetsWithSpending(householdId),
-      getRecurring(householdId),
-      getGamification(userId, householdId),
-    ]);
+  const [
+    user,
+    totals,
+    previousExpense,
+    sums,
+    categories,
+    budgets,
+    recurring,
+    gamification,
+    claims,
+  ] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
+    prisma.transaction.groupBy({
+      by: ["type"],
+      where: { householdId, type: types, date: { gte: start, lt: end } },
+      _sum: { baseAmount: true },
+      _count: { _all: true },
+    }),
+    prisma.transaction.aggregate({
+      where: { householdId, type: "EXPENSE", date: { gte: previousStart, lt: start } },
+      _sum: { baseAmount: true },
+    }),
+    prisma.transaction.groupBy({
+      by: ["categoryId"],
+      where: { householdId, type: "EXPENSE", date: { gte: start, lt: end } },
+      _sum: { baseAmount: true },
+    }),
+    prisma.category.findMany({
+      where: { householdId },
+      select: { id: true, name: true, color: true, parentId: true },
+    }),
+    getBudgetsWithSpending(householdId),
+    getRecurring(householdId),
+    getGamification(userId, householdId),
+    getClaimsOverview(userId, householdId),
+  ]);
 
   const total = (type: string) => Number(totals.find((r) => r.type === type)?._sum.baseAmount ?? 0);
   const todayIso = toDateInputValue(today);
@@ -89,6 +101,13 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       .sort((a, b) => a.nextDate.localeCompare(b.nextDate))
       .slice(0, 5)
       .map((r) => ({ name: r.name, amount: r.lastAmount, date: r.nextDate })),
+    claims: claimsToMention(claims.claims, claims.today).map((c) => ({
+      id: c.id,
+      counterparty: c.counterparty,
+      kind: KIND_LABELS[c.kind],
+      step: c.step.text,
+      urgent: c.step.tone === "urgent",
+    })),
     streak: { current: gamification.streak.current, longest: gamification.streak.longest },
     level: { level: gamification.level.level, name: gamification.level.name },
     appUrl: getAppUrl(),

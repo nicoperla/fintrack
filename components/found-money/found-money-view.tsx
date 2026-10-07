@@ -8,14 +8,14 @@ import {
   Banknote,
   Bus,
   Check,
-  Copy,
+  ChevronRight,
   Files as Duplicate,
   Download,
   FileText,
+  HandCoins,
   House,
   Landmark,
   Lock,
-  Mail,
   PawPrint,
   School,
   ShieldCheck,
@@ -30,14 +30,7 @@ import { toast } from "sonner";
 import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
 import { useMoney } from "@/components/currency-provider";
 import { Button, buttonVariants } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { StatusBadge } from "@/components/claims/claim-ui";
 import {
   DEDUCTION_TYPES,
   RULES,
@@ -46,7 +39,8 @@ import {
   type DeductionType,
   type TypeSummary,
 } from "@/lib/finance/deductions";
-import { cancellationLetter } from "@/lib/finance/found-money";
+import { findingKey, type ClaimTotals } from "@/lib/finance/claims";
+import type { ClaimMarks } from "@/lib/data/claims";
 import type { FoundMoney } from "@/lib/data/found-money";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
@@ -515,7 +509,85 @@ function TaxSection({ data }: { data: FoundMoney }) {
   );
 }
 
-function DuplicatesSection({ data }: { data: FoundMoney }) {
+/** The way into "Riprenditeli" from a finding: its claim if it has one, otherwise a new one. */
+/** The claim already opened for a finding (or for its charge), if any. */
+const claimOf = (marks: ClaimMarks, finding: string, transactionId?: string) =>
+  marks.byFinding[finding] ?? (transactionId ? marks.byTransaction[transactionId] : undefined);
+
+function ClaimAction({
+  finding,
+  transactionId,
+  label,
+  marks,
+  variant = "default",
+}: {
+  finding: string;
+  transactionId?: string;
+  label: string;
+  marks: ClaimMarks;
+  variant?: "default" | "outline";
+}) {
+  const mark = claimOf(marks, finding, transactionId);
+  if (mark) {
+    return (
+      <Link
+        href={`/ritrovati/pratiche/${mark.id}`}
+        className="inline-flex items-center gap-1.5 text-xs font-medium hover:underline"
+      >
+        <StatusBadge status={mark.status} /> Vai alla pratica
+      </Link>
+    );
+  }
+  return (
+    <Link
+      href={`/ritrovati/pratiche/nuova?ritrovato=${encodeURIComponent(finding)}`}
+      className={buttonVariants({ size: "xs", variant })}
+    >
+      {label}
+    </Link>
+  );
+}
+
+/** "Riprenditeli": from finding money to getting it back. Always there, as the way in. */
+function ClaimsStrip({ totals }: { totals: ClaimTotals }) {
+  const money = useMoney();
+  const parts = [
+    totals.urgent > 0 ? `${totals.urgent} da fare subito` : null,
+    totals.open > 0
+      ? totals.open === 1
+        ? "1 pratica aperta"
+        : `${totals.open} pratiche aperte`
+      : null,
+    totals.recovered > 0 ? `recuperati ${money(totals.recovered)}` : null,
+    totals.savedPerYear > 0
+      ? `${money(totals.savedPerYear)} l'anno risparmiati con le disdette`
+      : null,
+  ].filter((p): p is string => p !== null);
+  return (
+    <Link
+      href="/ritrovati/pratiche"
+      className="bg-card hover:bg-muted/40 group flex items-center gap-3 rounded-2xl border p-4 transition-colors"
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
+        <HandCoins className="size-5" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Riprenditeli</p>
+        <p className="text-muted-foreground text-sm">
+          {parts.length > 0
+            ? parts.join(" · ")
+            : "Non fermarti a trovarli: apri una pratica e ti preparo la lettera per riavere i soldi, con le scadenze di legge."}
+        </p>
+      </div>
+      <ChevronRight
+        className="text-muted-foreground size-5 shrink-0 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+function DuplicatesSection({ data, marks }: { data: FoundMoney; marks: ClaimMarks }) {
   const money = useMoney();
   const { pending, run } = useAction();
   const { summary, details } = data;
@@ -539,14 +611,22 @@ function DuplicatesSection({ data }: { data: FoundMoney }) {
                 </p>
               </div>
               <span className="tabular-nums">{money(d.amount)}</span>
-              <Button
-                size="xs"
-                variant="outline"
-                disabled={pending}
-                onClick={() => run(() => dismissFinding(d.key), "Segnato come corretto")}
-              >
-                Non è un errore
-              </Button>
+              <ClaimAction
+                finding={d.key}
+                transactionId={d.transactionId}
+                label="Riprenditeli"
+                marks={marks}
+              />
+              {!claimOf(marks, d.key, d.transactionId) && (
+                <Button
+                  size="xs"
+                  variant="outline"
+                  disabled={pending}
+                  onClick={() => run(() => dismissFinding(d.key), "Segnato come corretto")}
+                >
+                  Non è un errore
+                </Button>
+              )}
             </li>
           ))}
         </ul>
@@ -563,69 +643,9 @@ function DuplicatesSection({ data }: { data: FoundMoney }) {
   );
 }
 
-function LetterDialog({
-  service,
-  userName,
-  today,
-  onClose,
-}: {
-  service: string | null;
-  userName: string;
-  today: string;
-  onClose: () => void;
-}) {
-  const letter = service ? cancellationLetter({ service, fullName: userName, today }) : null;
-  const [body, setBody] = useState(letter?.body ?? "");
-  const [lastService, setLastService] = useState(service);
-  if (service !== lastService) {
-    setLastService(service);
-    setBody(letter?.body ?? "");
-  }
-  return (
-    <Dialog open={service !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Disdetta {service}</DialogTitle>
-          <DialogDescription>
-            Completa i dati tra parentesi e inviala all&apos;indirizzo del servizio clienti (meglio
-            via PEC se ce l&apos;hai). Molti servizi si disdicono anche dalle impostazioni
-            dell&apos;account.
-          </DialogDescription>
-        </DialogHeader>
-        <Textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={12}
-          className="text-sm"
-        />
-        <div className="flex flex-wrap justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={() =>
-              navigator.clipboard
-                .writeText(body)
-                .then(() => toast.success("Lettera copiata"))
-                .catch(() => toast.error("Copia non riuscita"))
-            }
-          >
-            <Copy /> Copia
-          </Button>
-          <a
-            href={`mailto:?subject=${encodeURIComponent(letter?.subject ?? "")}&body=${encodeURIComponent(body)}`}
-            className={buttonVariants()}
-          >
-            <Mail /> Apri nell&apos;email
-          </a>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function SubscriptionsSection({ data }: { data: FoundMoney }) {
+function SubscriptionsSection({ data, marks }: { data: FoundMoney; marks: ClaimMarks }) {
   const money = useMoney();
   const { pending, run } = useAction();
-  const [letterFor, setLetterFor] = useState<string | null>(null);
   const { summary, details } = data;
   if (
     summary.subscriptions.count === 0 &&
@@ -656,17 +676,21 @@ function SubscriptionsSection({ data }: { data: FoundMoney }) {
                   : `tra ${r.daysLeft} ${r.daysLeft === 1 ? "giorno" : "giorni"}`}{" "}
                 ({money(r.amount)}). Se non ti serve più, disdici prima.
               </p>
-              <Button size="xs" onClick={() => setLetterFor(r.name)}>
-                Scrivi la disdetta
-              </Button>
-              <Button
-                size="xs"
-                variant="ghost"
-                disabled={pending}
-                onClick={() => run(() => dismissFinding(r.key), "Ok, lo tieni")}
-              >
-                Lo tengo
-              </Button>
+              <ClaimAction
+                finding={findingKey.subscription(r.recurringKey)}
+                label="Scrivi la disdetta"
+                marks={marks}
+              />
+              {!claimOf(marks, findingKey.subscription(r.recurringKey)) && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => run(() => dismissFinding(r.key), "Ok, lo tieni")}
+                >
+                  Lo tengo
+                </Button>
+              )}
             </div>
           ))}
           {details.priceIncreases.map((p) => (
@@ -680,17 +704,22 @@ function SubscriptionsSection({ data }: { data: FoundMoney }) {
                 {money(p.to)}:{" "}
                 <span className="font-medium">{money(p.yearly)} in più all&apos;anno</span>.
               </p>
-              <Button size="xs" variant="outline" onClick={() => setLetterFor(p.name)}>
-                Scrivi la disdetta
-              </Button>
-              <Button
-                size="xs"
-                variant="ghost"
-                disabled={pending}
-                onClick={() => run(() => dismissFinding(p.key), "Ok, lo tieni")}
-              >
-                Va bene così
-              </Button>
+              <ClaimAction
+                finding={findingKey.subscription(p.recurringKey)}
+                label="Scrivi la disdetta"
+                marks={marks}
+                variant="outline"
+              />
+              {!claimOf(marks, findingKey.subscription(p.recurringKey)) && (
+                <Button
+                  size="xs"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => run(() => dismissFinding(p.key), "Ok, lo tieni")}
+                >
+                  Va bene così
+                </Button>
+              )}
             </div>
           ))}
           <ul className="divide-y text-sm">
@@ -698,18 +727,15 @@ function SubscriptionsSection({ data }: { data: FoundMoney }) {
               <li key={s.key} className="flex items-center gap-3 py-2.5">
                 <p className="min-w-0 flex-1 truncate font-medium">{s.name}</p>
                 <span className="text-muted-foreground tabular-nums">{money(s.yearly)}/anno</span>
-                <Button size="xs" variant="outline" onClick={() => setLetterFor(s.name)}>
-                  Disdetta
-                </Button>
+                <ClaimAction
+                  finding={findingKey.subscription(s.key)}
+                  label="Disdici"
+                  marks={marks}
+                  variant="outline"
+                />
               </li>
             ))}
           </ul>
-          <LetterDialog
-            service={letterFor}
-            userName={data.userName}
-            today={data.today}
-            onClose={() => setLetterFor(null)}
-          />
         </div>
       ) : (
         <ProLock what="quali abbonamenti sono aumentati o stanno per rinnovarsi, con le lettere di disdetta pronte" />
@@ -718,7 +744,7 @@ function SubscriptionsSection({ data }: { data: FoundMoney }) {
   );
 }
 
-function BankFeesSection({ data }: { data: FoundMoney }) {
+function BankFeesSection({ data, marks }: { data: FoundMoney; marks: ClaimMarks }) {
   const money = useMoney();
   const { pending, run } = useAction();
   const fees = data.summary.bankFees;
@@ -738,14 +764,22 @@ function BankFeesSection({ data }: { data: FoundMoney }) {
             {data.details.bankFees.count} addebiti negli ultimi 12 mesi, per esempio{" "}
             {data.details.bankFees.examples.join(", ")}.
           </p>
-          <Button
-            size="xs"
-            variant="ghost"
-            disabled={pending}
-            onClick={() => run(() => dismissFinding("fees"), "Ok")}
-          >
-            Non mi interessa
-          </Button>
+          <ClaimAction
+            finding={findingKey.fees}
+            label="Fai reclamo"
+            marks={marks}
+            variant="outline"
+          />
+          {!claimOf(marks, findingKey.fees) && (
+            <Button
+              size="xs"
+              variant="ghost"
+              disabled={pending}
+              onClick={() => run(() => dismissFinding("fees"), "Ok")}
+            >
+              Non mi interessa
+            </Button>
+          )}
         </div>
       ) : (
         <ProLock what="quali addebiti ti costano e quanto" />
@@ -754,14 +788,22 @@ function BankFeesSection({ data }: { data: FoundMoney }) {
   );
 }
 
-export function FoundMoneyView({ data }: { data: FoundMoney }) {
+export function FoundMoneyView({
+  data,
+  claims,
+}: {
+  data: FoundMoney;
+  /** "Riprenditeli": which findings already have a claim, and how it's going overall. */
+  claims: { marks: ClaimMarks; totals: ClaimTotals };
+}) {
   return (
     <div className="grid gap-6">
       <Hero data={data} />
+      <ClaimsStrip totals={claims.totals} />
       <TaxSection data={data} />
-      <DuplicatesSection data={data} />
-      <SubscriptionsSection data={data} />
-      <BankFeesSection data={data} />
+      <DuplicatesSection data={data} marks={claims.marks} />
+      <SubscriptionsSection data={data} marks={claims.marks} />
+      <BankFeesSection data={data} marks={claims.marks} />
     </div>
   );
 }

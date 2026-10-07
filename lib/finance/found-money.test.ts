@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  cancellationLetter,
   findBankFees,
   findDuplicates,
   findPriceIncreases,
   findRenewals,
+  looksLikeBankFee,
   type FoundTx,
 } from "./found-money";
 import type { Recurring } from "./recurring";
@@ -28,12 +28,11 @@ const tx = (
 
 describe("findDuplicates", () => {
   it("flags the second identical charge on the same day", () => {
-    const dupes = findDuplicates(
-      [tx("2026-09-10", "ZALANDO SE", 59.9), tx("2026-09-10", "Zalando SE", 59.9)],
-      new Set(),
-    );
+    const first = tx("2026-09-10", "ZALANDO SE", 59.9);
+    const second = tx("2026-09-10", "Zalando SE", 59.9);
+    const dupes = findDuplicates([first, second], new Set());
     expect(dupes).toHaveLength(1);
-    expect(dupes[0].amount).toBe(59.9);
+    expect(dupes[0]).toMatchObject({ amount: 59.9, transactionId: second.id });
   });
 
   it("ignores small repeated purchases, other accounts and other days", () => {
@@ -84,6 +83,7 @@ describe("subscriptions", () => {
       new Set(),
     );
     expect(up.yearly).toBeCloseTo(18, 0);
+    expect(up.recurringKey).toBe("EXPENSE|netflix");
   });
 
   it("warns about yearly renewals due within a month", () => {
@@ -95,7 +95,7 @@ describe("subscriptions", () => {
     });
     expect(
       findRenewals([{ ...yearly, nextDate: "2026-10-11" }], "2026-10-01", new Set()),
-    ).toMatchObject([{ name: "Amazon Prime", daysLeft: 10 }]);
+    ).toMatchObject([{ name: "Amazon Prime", daysLeft: 10, recurringKey: "EXPENSE|prime" }]);
     expect(findRenewals([{ ...yearly, nextDate: "2026-11-20" }], "2026-10-01", new Set())).toEqual(
       [],
     );
@@ -121,15 +121,11 @@ describe("findBankFees", () => {
   });
 });
 
-describe("cancellationLetter", () => {
-  it("names the service and the sender", () => {
-    const letter = cancellationLetter({
-      service: "Netflix",
-      fullName: "Anna Rossi",
-      today: "2026-10-01",
-    });
-    expect(letter.subject).toBe("Disdetta abbonamento Netflix");
-    expect(letter.body).toContain("io sottoscritto/a Anna Rossi");
-    expect(letter.body).toContain("1 ottobre 2026");
+describe("looksLikeBankFee", () => {
+  it("recognizes the bank's own charges by category or description", () => {
+    expect(looksLikeBankFee("Canone conto corrente", null)).toBe(true);
+    expect(looksLikeBankFee("Imposta di bollo", null)).toBe(true);
+    expect(looksLikeBankFee("Addebito trimestrale", "Commissioni bancarie")).toBe(true);
+    expect(looksLikeBankFee("Zalando SE", "Abbigliamento")).toBe(false);
   });
 });

@@ -22,6 +22,8 @@ export type FoundTx = {
 
 export type Duplicate = {
   key: string;
+  /** The second charge: the one to contest. */
+  transactionId: string;
   date: string;
   description: string;
   amount: number;
@@ -59,6 +61,7 @@ export function findDuplicates(transactions: FoundTx[], dismissed: Set<string>):
         if (!dismissed.has(`dup:${b.id}`)) {
           found.push({
             key: `dup:${b.id}`,
+            transactionId: b.id,
             date: b.date,
             description: b.description,
             amount: b.amount,
@@ -80,7 +83,15 @@ const FREQUENCY_DAYS: Record<Recurring["frequency"], number> = {
   yearly: 365.25,
 };
 
-export type PriceIncrease = { key: string; name: string; from: number; to: number; yearly: number };
+export type PriceIncrease = {
+  key: string;
+  /** The subscription (Recurring.key), to cancel it. */
+  recurringKey: string;
+  name: string;
+  from: number;
+  to: number;
+  yearly: number;
+};
 
 /** Subscriptions whose last charge went up: what the increase costs in a year. */
 export function findPriceIncreases(
@@ -91,6 +102,7 @@ export function findPriceIncreases(
     .filter((r) => r.active && r.type === "EXPENSE" && r.priceChange)
     .map((r) => ({
       key: `price:${r.key}:${r.lastDate}`,
+      recurringKey: r.key,
       name: r.name,
       from: r.priceChange!.from,
       to: r.priceChange!.to,
@@ -102,7 +114,15 @@ export function findPriceIncreases(
     .sort((a, b) => b.yearly - a.yearly);
 }
 
-export type Renewal = { key: string; name: string; amount: number; date: string; daysLeft: number };
+export type Renewal = {
+  key: string;
+  /** The subscription (Recurring.key), to cancel it. */
+  recurringKey: string;
+  name: string;
+  amount: number;
+  date: string;
+  daysLeft: number;
+};
 
 /** Yearly and quarterly charges due within a month: still time to cancel. */
 export function findRenewals(
@@ -115,6 +135,7 @@ export function findRenewals(
     .filter((r) => r.frequency === "yearly" || r.frequency === "quarterly")
     .map((r) => ({
       key: `renew:${r.key}:${r.nextDate}`,
+      recurringKey: r.key,
       name: r.name,
       amount: r.averageAmount,
       date: r.nextDate,
@@ -126,6 +147,13 @@ export function findRenewals(
 
 const FEE =
   /\bcanone\b|commission|spese (di )?tenuta|tenuta conto|imposta di bollo|costo (del )?conto|spese (di )?gestione/;
+
+/** A charge from the bank itself (account fee, stamp duty), as opposed to a payment to someone. */
+export function looksLikeBankFee(description: string, category: string | null) {
+  return (
+    (category ?? "").toLowerCase() === "commissioni bancarie" || FEE.test(description.toLowerCase())
+  );
+}
 
 export type BankFees = { key: string; yearly: number; count: number; examples: string[] };
 
@@ -141,11 +169,9 @@ export function findBankFees(
 ): BankFees | null {
   if (dismissed.has("fees")) return null;
   const since = toTime(today) - 365 * DAY_MS;
-  const fees = transactions.filter((t) => {
-    if (toTime(t.date) < since) return false;
-    const category = (t.category ?? "").toLowerCase();
-    return category === "commissioni bancarie" || FEE.test(t.description.toLowerCase());
-  });
+  const fees = transactions.filter(
+    (t) => toTime(t.date) >= since && looksLikeBankFee(t.description, t.category),
+  );
   if (fees.length === 0) return null;
   const total = fees.reduce((s, t) => s + t.amount, 0);
   const days = trackedSince
@@ -168,7 +194,7 @@ export type CancellableSubscription = {
   yearly: number;
 };
 
-/** Active subscriptions, for the cancellation letters. */
+/** Active subscriptions, to cancel with a "Riprenditeli" claim (lib/claims/letters.ts). */
 export function cancellableSubscriptions(
   recurring: Recurring[],
   isEssential: (categoryId: string | null) => boolean,
@@ -182,31 +208,4 @@ export function cancellableSubscriptions(
       yearly: cents(r.monthlyCost * 12),
     }))
     .sort((a, b) => b.yearly - a.yearly);
-}
-
-const letterDate = new Intl.DateTimeFormat("it-IT", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-/** A ready-to-send cancellation request (email or PEC). */
-export function cancellationLetter(input: { service: string; fullName: string; today: string }) {
-  const name = input.fullName.trim() || "[Nome e cognome]";
-  const date = letterDate.format(new Date(`${input.today}T00:00:00Z`));
-  return {
-    subject: `Disdetta abbonamento ${input.service}`,
-    body: [
-      "Spettabile servizio clienti,",
-      "",
-      `con la presente io sottoscritto/a ${name}, titolare dell'abbonamento ${input.service} (email dell'account / numero cliente: [da completare]), comunico la disdetta del contratto con effetto dalla prima scadenza utile, e chiedo di non procedere a ulteriori addebiti.`,
-      "",
-      "Vi chiedo cortesemente di confermare per iscritto la ricezione della disdetta e la data di cessazione del servizio.",
-      "",
-      "Distinti saluti,",
-      name,
-      date,
-    ].join("\n"),
-  };
 }

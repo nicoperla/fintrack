@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSpace } from "@/lib/auth/session";
 import { getFoundMoney } from "@/lib/data/found-money";
+import { claimMarks, getClaimsOverview } from "@/lib/data/claims";
 import { FoundMoneyView } from "@/components/found-money/found-money-view";
 import { cn } from "@/lib/utils";
 
@@ -10,11 +11,14 @@ type SearchParams = { anno?: string | string[] };
 
 export default async function FoundMoneyPage({ searchParams }: { searchParams: SearchParams }) {
   const space = await requireSpace();
-  const data = await getFoundMoney(
-    space.user.id,
-    space.id,
-    typeof searchParams.anno === "string" ? searchParams.anno : undefined,
-  );
+  const [data, claims] = await Promise.all([
+    getFoundMoney(
+      space.user.id,
+      space.id,
+      typeof searchParams.anno === "string" ? searchParams.anno : undefined,
+    ),
+    getClaimsOverview(space.user.id, space.id),
+  ]);
 
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -44,7 +48,10 @@ export default async function FoundMoneyPage({ searchParams }: { searchParams: S
           </nav>
         )}
       </div>
-      <FoundMoneyView data={data} />
+      <FoundMoneyView
+        data={data}
+        claims={{ marks: claimMarks(claims.claims), totals: claims.totals }}
+      />
     </div>
   );
 }

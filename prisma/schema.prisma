@@ -41,6 +41,28 @@ enum SplitMode {
   INCOME
 }
 
+/// What a "Riprenditeli" claim asks for (lib/finance/claims.ts).
+enum ClaimKind {
+  /// Cancel a subscription; afterwards FinTrack watches for charges past the effective date.
+  CANCELLATION
+  /// Refund of a SEPA direct debit, within 8 weeks of the charge (artt. 13-14 d.lgs. 11/2010).
+  DIRECT_DEBIT_REFUND
+  /// Complaint to the bank (fees, a charge it shouldn't have taken); then the Arbitro Bancario Finanziario.
+  BANK_COMPLAINT
+  /// A merchant charged twice or the wrong amount: ask the merchant first.
+  DUPLICATE_CHARGE
+}
+
+/// DRAFT → SENT → WON / PARTIAL / LOST, or DROPPED when the user gives up.
+enum ClaimStatus {
+  DRAFT
+  SENT
+  WON
+  PARTIAL
+  LOST
+  DROPPED
+}
+
 model User {
   id                 String    @id @default(cuid())
   email              String    @unique
@@ -89,6 +111,7 @@ model User {
   debts               Debt[]
   settlementsPaid     Settlement[]             @relation("SettlementFrom")
   settlementsReceived Settlement[]             @relation("SettlementTo")
+  claims              Claim[]
 
   @@map("users")
 }
@@ -121,6 +144,7 @@ model Household {
   settlements       Settlement[]
   dismissedFindings FoundMoneyDismissal[]
   valuations        InvestmentValuation[]
+  claims            Claim[]
 
   @@index([ownerId])
   @@map("households")
@@ -301,6 +325,7 @@ model Transaction {
   account         FinancialAccount  @relation("TransactionAccount", fields: [accountId], references: [id], onDelete: Cascade)
   transferAccount FinancialAccount? @relation("TransferDestination", fields: [transferAccountId], references: [id], onDelete: Cascade)
   category        Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  claims          Claim[]
 
   @@index([householdId, date])
   @@index([userId])
@@ -402,4 +427,50 @@ model InvestmentValuation {
   @@unique([accountId, date])
   @@index([householdId])
   @@map("investment_valuations")
+}
+
+/// "Riprenditeli": a request to get money back or stop paying, from draft to outcome. The user
+/// sends the letter themselves; FinTrack keeps the deadlines (lib/finance/claims.ts).
+model Claim {
+  id              String      @id @default(cuid())
+  householdId     String      @map("household_id")
+  /// Who opened it and sends it in their own name (null if they deleted their account).
+  userId          String?     @map("user_id")
+  kind            ClaimKind
+  status          ClaimStatus @default(DRAFT)
+  /// The "Soldi ritrovati" finding it started from ("dup:<transaction>", "sub:<recurring key>",
+  /// "fees", "after:<transaction>"): one claim per finding.
+  findingKey      String?     @map("finding_key")
+  /// The charge being contested, if any.
+  transactionId   String?     @map("transaction_id")
+  /// Who took the money: the merchant, the provider or the bank.
+  counterparty    String
+  /// Expected money back, or saved per year for a CANCELLATION; in the space's currency.
+  expectedAmount  Decimal     @map("expected_amount") @db.Decimal(14, 2)
+  /// What actually came back (or is saved per year), set when the claim is closed.
+  recoveredAmount Decimal?    @map("recovered_amount") @db.Decimal(14, 2)
+  /// The letter as the user sends it. Bank details stay placeholders and are never stored here.
+  subject         String
+  body            String
+  /// email | pec | raccomandata | app | sportello (lib/finance/claims.ts CLAIM_CHANNELS).
+  channel         String?
+  sentAt          DateTime?   @map("sent_at") @db.Date
+  /// CANCELLATION: the day from which the service must no longer be charged.
+  effectiveFrom   DateTime?   @map("effective_from") @db.Date
+  /// DRAFT: last day to act; SENT: last day for the other side to answer.
+  deadline        DateTime?   @db.Date
+  closedAt        DateTime?   @map("closed_at")
+  notes           String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  // NULLs don't collide in Postgres: claims opened by hand have no finding and never conflict.
+  @@unique([householdId, findingKey])
+  @@index([householdId, status])
+  @@index([transactionId])
+  @@map("claims")
 }

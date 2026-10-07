@@ -16,6 +16,8 @@ export type DigestInput = {
   /** Only budgets that need attention (warning or over). */
   budgets: { name: string; ratio: number; status: "warning" | "over"; remaining: number }[];
   upcoming: { name: string; amount: number; date: string }[];
+  /** "Riprenditeli": open claims with something to do now or a deadline coming up. */
+  claims: { id: string; counterparty: string; kind: string; step: string; urgent: boolean }[];
   streak: { current: number; longest: number };
   level: { level: number; name: string };
   appUrl: string;
@@ -113,6 +115,15 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       input.topCategories.forEach((c) => lines.push(`- ${c.name}: ${eur(c.value)}`));
     }
   }
+  if (input.claims.length) {
+    lines.push("", "Pratiche da seguire:");
+    input.claims.forEach((c) =>
+      lines.push(
+        `- ${c.counterparty} (${c.kind.toLowerCase()}): ${c.step}`,
+        `  ${input.appUrl}/ritrovati/pratiche/${c.id}`,
+      ),
+    );
+  }
   if (input.budgets.length) {
     lines.push("", "Budget da tenere d'occhio:");
     input.budgets.forEach((b) =>
@@ -171,6 +182,23 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
         ),
       );
     }
+  }
+  if (input.claims.length) {
+    parts.push(
+      section(
+        "Pratiche da seguire",
+        table(
+          input.claims
+            .map((c) =>
+              listRow(
+                `<strong>${e(c.counterparty)}</strong> <span style="${muted}font-size:12px;">${e(c.kind)}</span><br><span style="font-size:13px;${c.urgent ? "color:#b45309;" : muted}">${e(c.step)}</span>`,
+                `<a href="${e(input.appUrl)}/ritrovati/pratiche/${e(c.id)}" style="color:#047857;font-weight:600;">Apri</a>`,
+              ),
+            )
+            .join(""),
+        ),
+      ),
+    );
   }
   if (input.budgets.length) {
     parts.push(
