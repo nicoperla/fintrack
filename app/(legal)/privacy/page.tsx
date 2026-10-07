@@ -31,7 +31,8 @@ export default function PrivacyPage() {
           <li>
             <strong>Dati finanziari che inserisci</strong>: conti, saldi, movimenti con descrizioni
             e note, categorie, budget, obiettivi, debiti, spazi condivisi e pareggi, lo stipendio
-            netto e le ore di lavoro se li imposti, le preferenze del coach.
+            netto e le ore di lavoro se li imposti, le preferenze del coach, le spese grosse
+            dell&apos;anno con giorno dello stipendio e tredicesima per «Lo stipendio vero».
           </li>
           <li>
             <strong>Pratiche di «Riprenditeli»</strong>: per le disdette, i rimborsi e i reclami che

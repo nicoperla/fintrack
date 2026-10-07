@@ -1,43 +1,84 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { Amount } from "@/components/amount";
 import { AnimatedCurrency } from "@/components/dashboard/animated-currency";
+
+const NUMBER_CLASS =
+  "app-number font-display mt-1 block text-5xl font-semibold tracking-tight tabular-nums sm:text-7xl";
+const LINK_CLASS =
+  "text-muted-foreground hover:text-foreground mt-3 inline-flex items-center gap-1 text-sm";
 
 /**
  * The first thing on the dashboard: the money you can spend (every account except investments,
- * which have their own card), next to a small planet with moons in orbit.
+ * which have their own card), next to a small planet with moons in orbit. With "Lo stipendio
+ * vero" turned on, what can be spent until the salary takes its place.
  */
 export function AvailableHero({
   value,
   accountCount,
   hasInvestments,
+  trueSalary = null,
+  offerTrueSalary = false,
 }: {
   value: number;
   accountCount: number;
   hasInvestments: boolean;
+  trueSalary?: { value: number; perDay: number; until: string; held: number } | null;
+  /** Points to "Lo stipendio vero" for whoever hasn't turned it on. */
+  offerTrueSalary?: boolean;
 }) {
   return (
     <section
-      aria-label="Soldi disponibili"
+      aria-label={trueSalary ? "Lo stipendio vero" : "Soldi disponibili"}
       className="bg-card relative overflow-hidden rounded-2xl border p-6 sm:p-8"
     >
       <Orbits />
-      <div className="relative">
-        {/* On phones the planet sits in the top corner: this row keeps the number below it. */}
-        <p className="text-muted-foreground min-h-12 text-sm sm:min-h-0">Soldi disponibili</p>
-        <AnimatedCurrency
-          value={value}
-          className="app-number font-display mt-1 block text-5xl font-semibold tracking-tight tabular-nums sm:text-7xl"
-        />
-        <Link
-          href="/accounts"
-          className="text-muted-foreground hover:text-foreground mt-3 inline-flex items-center gap-1 text-sm"
-        >
-          Somma di {accountCount === 1 ? "1 conto" : `${accountCount} conti`}
-          {hasInvestments && ", investimenti esclusi"}
-          <ChevronRight className="size-4" />
-        </Link>
-      </div>
+      {trueSalary ? (
+        <div className="relative">
+          {/* On phones the planet sits in the top corner: this row keeps the number below it. */}
+          <p className="text-muted-foreground min-h-12 text-sm sm:min-h-0">
+            Lo stipendio vero: puoi spendere
+          </p>
+          <AnimatedCurrency value={trueSalary.value} className={NUMBER_CLASS} />
+          <p className="text-muted-foreground mt-2 text-sm">
+            {trueSalary.value < 0 ? (
+              <>Per ora non c&apos;è margine, {trueSalary.until}.</>
+            ) : (
+              <>
+                Circa <Amount value={trueSalary.perDay} /> al giorno {trueSalary.until}.
+              </>
+            )}
+          </p>
+          <Link href="/stipendio-vero#calcolo" className={LINK_CLASS}>
+            Soldi disponibili <Amount value={value} />
+            {trueSalary.held > 0 && (
+              <>
+                , stangate da parte <Amount value={trueSalary.held} />
+              </>
+            )}
+            <ChevronRight className="size-4" />
+          </Link>
+        </div>
+      ) : (
+        <div className="relative">
+          <p className="text-muted-foreground min-h-12 text-sm sm:min-h-0">Soldi disponibili</p>
+          <AnimatedCurrency value={value} className={NUMBER_CLASS} />
+          <div className="flex flex-wrap items-center gap-x-4">
+            <Link href="/accounts" className={LINK_CLASS}>
+              Somma di {accountCount === 1 ? "1 conto" : `${accountCount} conti`}
+              {hasInvestments && ", investimenti esclusi"}
+              <ChevronRight className="size-4" />
+            </Link>
+            {offerTrueSalary && (
+              <Link href="/stipendio-vero" className={LINK_CLASS}>
+                Quanti puoi spenderne davvero?
+                <ChevronRight className="size-4" />
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </section>
   );
 }

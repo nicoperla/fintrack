@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowLeftRight,
+  BadgeEuro,
   Calculator,
   ChevronDown,
   Ellipsis,
@@ -47,6 +48,7 @@ const PRIMARY: NavItem[] = [
 ];
 
 const TOOLS: NavItem[] = [
+  { href: "/stipendio-vero", label: "Stipendio vero", icon: BadgeEuro },
   { href: "/investments", label: "Investimenti", icon: TrendingUp },
   { href: "/ritrovati", label: "Soldi ritrovati", icon: HandCoins },
   { href: "/split", label: "Conti chiari", icon: Handshake },

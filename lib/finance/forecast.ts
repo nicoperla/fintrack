@@ -29,7 +29,7 @@ const addDays = (iso: string, days: number) =>
   new Date(Date.parse(`${iso}T00:00:00Z`) + days * DAY_MS).toISOString().slice(0, 10);
 
 /** A salary or bill expected a few days ago but not recorded yet is still coming. */
-const LATE_GRACE_DAYS = 5;
+export const LATE_GRACE_DAYS = 5;
 
 export function forecastBalance(input: {
   today: string;

@@ -4,6 +4,7 @@ import { getGamification } from "@/lib/data/gamification";
 import { getRecurring } from "@/lib/data/intelligence";
 import { claimsToMention, getClaimsOverview } from "@/lib/data/claims";
 import { KIND_LABELS } from "@/lib/finance/claims";
+import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -41,6 +42,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     recurring,
     gamification,
     claims,
+    bigExpenses,
   ] = await Promise.all([
     prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
     prisma.transaction.groupBy({
@@ -66,6 +68,10 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     getRecurring(householdId),
     getGamification(userId, householdId),
     getClaimsOverview(userId, householdId),
+    prisma.bigExpense.findMany({
+      where: { householdId },
+      select: { name: true, amount: true, months: true, day: true, paidThrough: true },
+    }),
   ]);
 
   const total = (type: string) => Number(totals.find((r) => r.type === type)?._sum.baseAmount ?? 0);
@@ -94,13 +100,24 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
         ? []
         : [{ name: b.categoryName, ratio: b.ratio, status: b.status, remaining: b.remaining }],
     ),
-    upcoming: recurring
-      .filter(
-        (r) => r.active && r.type === "EXPENSE" && r.nextDate >= todayIso && r.nextDate < weekAhead,
-      )
-      .sort((a, b) => a.nextDate.localeCompare(b.nextDate))
-      .slice(0, 5)
-      .map((r) => ({ name: r.name, amount: r.lastAmount, date: r.nextDate })),
+    upcoming: [
+      ...recurring
+        .filter(
+          (r) =>
+            r.active && r.type === "EXPENSE" && r.nextDate >= todayIso && r.nextDate < weekAhead,
+        )
+        .map((r) => ({ name: r.name, amount: r.lastAmount, date: r.nextDate })),
+      // The big expenses of "Lo stipendio vero" due this week and not marked as paid yet.
+      ...bigExpenses.flatMap((b) => {
+        const paidThrough = b.paidThrough ? toDateInputValue(b.paidThrough) : null;
+        const schedule = { amount: Number(b.amount), months: b.months, day: b.day };
+        return paymentDates(schedule, todayIso, toDateInputValue(addDays(today, 6)))
+          .filter((date) => !paidThrough || date > paidThrough)
+          .map((date) => ({ name: b.name, amount: paymentShare(schedule), date }));
+      }),
+    ]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(0, 5),
     claims: claimsToMention(claims.claims, claims.today).map((c) => ({
       id: c.id,
       counterparty: c.counterparty,

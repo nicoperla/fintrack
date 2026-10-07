@@ -733,6 +733,25 @@ async function seedClaims(
   return claims.length;
 }
 
+/**
+ * "Lo stipendio vero" already on: the big expenses of a family renting their home (TARI is the
+ * tenant's), and the number on the dashboard instead of the plain balance.
+ */
+async function seedTrueSalary(householdId: string, now: Date) {
+  const bigExpenses = [
+    { preset: "tari", name: "TARI", amount: 168, months: [5, 11], day: 30 },
+    { preset: "rc-auto", name: "Assicurazione auto", amount: 480, months: [3], day: 15 },
+    { preset: "bollo-auto", name: "Bollo auto", amount: 196, months: [4], day: 30 },
+    { preset: "regali", name: "Regali di Natale", amount: 400, months: [12], day: 1 },
+    { preset: "vacanze", name: "Vacanze estive", amount: 1200, months: [8], day: 1 },
+  ];
+  await prisma.bigExpense.createMany({
+    data: bigExpenses.map((b) => ({ householdId, ...b, amount: money(b.amount) })),
+  });
+  await prisma.household.update({ where: { id: householdId }, data: { trueSalarySince: now } });
+  return bigExpenses.length;
+}
+
 async function main() {
   const now = new Date();
   const today = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -941,9 +960,10 @@ async function main() {
   });
 
   const claimCount = await seedClaims(householdId, user, today, transactions);
+  const bigExpenseCount = await seedTrueSalary(householdId, now);
 
   console.log(
-    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche.`,
+    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
   console.log(

@@ -48,6 +48,7 @@ export async function GET() {
         debts,
         settlements,
         claims,
+        bigExpenses,
       ] = await Promise.all([
         prisma.household.findUniqueOrThrow({
           where: { id },
@@ -57,6 +58,11 @@ export async function GET() {
             splitMode: true,
             splitSince: true,
             createdAt: true,
+            trueSalarySince: true,
+            payday: true,
+            thirteenthSalary: true,
+            fourteenthSalary: true,
+            reserveAccount: { select: { name: true } },
             members: {
               select: { role: true, user: { select: { id: true, name: true } } },
             },
@@ -88,6 +94,7 @@ export async function GET() {
           orderBy: { createdAt: "asc" },
           include: { transaction: { select: { date: true, description: true } } },
         }),
+        prisma.bigExpense.findMany({ where: { householdId: id }, orderBy: { createdAt: "asc" } }),
       ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
       const who = (authorId: string | null) =>
@@ -174,6 +181,20 @@ export async function GET() {
           openedBy: who(c.userId),
           openedAt: c.createdAt,
         })),
+        trueSalary: {
+          shownOnDashboardSince: household.trueSalarySince,
+          payday: household.payday,
+          thirteenthSalary: household.thirteenthSalary,
+          fourteenthSalary: household.fourteenthSalary,
+          reserveAccount: household.reserveAccount?.name ?? null,
+          bigExpenses: bigExpenses.map((b) => ({
+            name: b.name,
+            amountPerYear: b.amount,
+            months: b.months,
+            day: b.day,
+            paidThrough: b.paidThrough ? toDateInputValue(b.paidThrough) : null,
+          })),
+        },
       };
     }),
   );

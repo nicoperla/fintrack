@@ -11,6 +11,8 @@ import { getLatestStoryMonth } from "@/lib/data/stories";
 import { CoachTeaser, FoundMoneyTeaser, StoryBubble } from "@/components/dashboard/coach-teaser";
 import { getFoundMoney } from "@/lib/data/found-money";
 import { getClaimsOverview } from "@/lib/data/claims";
+import { getTrueSalary } from "@/lib/data/true-salary";
+import { untilPayday } from "@/components/true-salary/format";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { TrendChart } from "@/components/dashboard/trend-chart";
 import { CategoryDonut } from "@/components/dashboard/category-donut";
@@ -54,6 +56,7 @@ export default async function DashboardPage() {
     found,
     investments,
     claims,
+    trueSalary,
   ] = await Promise.all([
     getDashboardData(space.id),
     getBudgetsWithSpending(space.id),
@@ -69,6 +72,7 @@ export default async function DashboardPage() {
     getFoundMoney(space.user.id, space.id),
     getInvestments(space.id),
     getClaimsOverview(space.user.id, space.id),
+    getTrueSalary(space.id),
   ]);
 
   const greeting = (
@@ -118,6 +122,17 @@ export default async function DashboardPage() {
         value={data.available}
         accountCount={data.spendableCount}
         hasInvestments={investments.total !== null}
+        trueSalary={
+          trueSalary?.active
+            ? {
+                value: trueSalary.value,
+                perDay: trueSalary.perDay,
+                until: untilPayday(trueSalary.payday),
+                held: trueSalary.reserve.held,
+              }
+            : null
+        }
+        offerTrueSalary={trueSalary !== null && !trueSalary.active}
       />
 
       <InvestmentsCard data={investments} />

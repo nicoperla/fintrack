@@ -131,6 +131,17 @@ model Household {
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
+  // "Lo stipendio vero" (lib/finance/true-salary.ts).
+  /// Shown on the dashboard since this moment; null: not turned on.
+  trueSalarySince  DateTime? @map("true_salary_since")
+  /// Day of the month the salary arrives; null: taken from the recorded salary.
+  payday           Int?
+  /// Net extra salaries counted month by month as they accrue ("spalma la tredicesima").
+  thirteenthSalary Decimal?  @map("thirteenth_salary") @db.Decimal(14, 2)
+  fourteenthSalary Decimal?  @map("fourteenth_salary") @db.Decimal(14, 2)
+  /// Where the money for the big expenses is set aside; null: on the everyday accounts.
+  reserveAccountId String?   @map("reserve_account_id")
+
   owner             User                  @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   activeFor         User[]                @relation("ActiveHousehold")
   members           HouseholdMember[]
@@ -145,6 +156,8 @@ model Household {
   dismissedFindings FoundMoneyDismissal[]
   valuations        InvestmentValuation[]
   claims            Claim[]
+  bigExpenses       BigExpense[]
+  reserveAccount    FinancialAccount?     @relation("ReserveAccount", fields: [reserveAccountId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
   @@map("households")
@@ -224,6 +237,7 @@ model FinancialAccount {
   transactions      Transaction[]         @relation("TransactionAccount")
   incomingTransfers Transaction[]         @relation("TransferDestination")
   valuations        InvestmentValuation[]
+  reserveFor        Household[]           @relation("ReserveAccount")
 
   @@index([householdId])
   @@map("accounts")
@@ -473,4 +487,29 @@ model Claim {
   @@index([householdId, status])
   @@index([transactionId])
   @@map("claims")
+}
+
+/// "Lo stipendio vero": a big expense of the year ("stangata": IMU, bollo, RC auto, gifts…) that
+/// money is set aside for, a little every day until it's due (lib/finance/true-salary.ts).
+model BigExpense {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  /// Catalog key (BIG_EXPENSE_PRESETS), null for one the user wrote.
+  preset      String?
+  name        String
+  /// For the whole year, in the space currency; split evenly across the installments.
+  amount      Decimal   @db.Decimal(14, 2)
+  /// Months of the year it's paid in (1–12), the same share of the amount each time.
+  months      Int[]
+  /// Day of the month it's due (the last day, in shorter months).
+  day         Int       @default(1)
+  /// Installments due up to this day are already paid (marked before the due date).
+  paidThrough DateTime? @map("paid_through") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("big_expenses")
 }
