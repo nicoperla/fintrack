@@ -961,6 +961,40 @@ async function main() {
 
   const claimCount = await seedClaims(householdId, user, today, transactions);
   const bigExpenseCount = await seedTrueSalary(householdId, now);
+  // "Il fascicolo di famiglia": the notes only the family knows; no link is shared in the demo.
+  await prisma.familyFile.create({
+    data: {
+      householdId,
+      notes: {
+        documenti:
+          "Contratto d'affitto, polizza dell'auto e dichiarazioni dei redditi nella cartella blu, secondo cassetto dello studio. Le copie digitali sono nella cartella «Casa» del cloud.",
+        contatti:
+          "Commercialista: studio Bianchi, 02 1234 5678. Banca: filiale di via Roma, chiedere di Laura. Assicurazione auto: agenzia sotto casa.",
+        polizze:
+          "Fondo pensione con l'azienda (Acme): il modulo dei beneficiari è nella cartella blu.",
+        istruzioni:
+          "Disdire FitLife Palestra e Netflix. Le bollette di luce e gas sono intestate a Demo: vanno volturate.",
+      },
+    },
+  });
+  // "Radar dei diritti": company welfare to spend by the end of the year, the rent questions left
+  // for the demo to answer.
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      taxProfile: {
+        incomeBand: null,
+        birthYear: null,
+        rent: { contract: null, since: null, transferred: false },
+        welfare: {
+          balance: 350,
+          expiresOn: `${today.getUTCFullYear()}-12-31`,
+          fringe: 600,
+          fringeYear: today.getUTCFullYear(),
+        },
+      },
+    },
+  });
 
   console.log(
     `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate.`,

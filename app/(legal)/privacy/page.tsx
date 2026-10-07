@@ -32,7 +32,16 @@ export default function PrivacyPage() {
             <strong>Dati finanziari che inserisci</strong>: conti, saldi, movimenti con descrizioni
             e note, categorie, budget, obiettivi, debiti, spazi condivisi e pareggi, lo stipendio
             netto e le ore di lavoro se li imposti, le preferenze del coach, le spese grosse
-            dell&apos;anno con giorno dello stipendio e tredicesima per «Lo stipendio vero».
+            dell&apos;anno con giorno dello stipendio e tredicesima per «Lo stipendio vero», e per
+            il «Radar dei diritti» fascia di reddito, anno di nascita, contratto d&apos;affitto e
+            welfare aziendale. I totali del 730 precompilato che scrivi per il confronto restano nel
+            tuo browser: non li riceviamo.
+          </li>
+          <li>
+            <strong>Fascicolo di famiglia</strong>: le note che scrivi (dove sono i documenti, chi
+            chiamare). Se crei un link per una persona di fiducia, del link salviamo solo
+            un&apos;impronta (hash), la scadenza, per chi l&apos;hai indicato e quante volte viene
+            aperto.
           </li>
           <li>
             <strong>Pratiche di «Riprenditeli»</strong>: per le disdette, i rimborsi e i reclami che
@@ -114,6 +123,10 @@ export default function PrivacyPage() {
           <li>Groq Inc. o Anthropic PBC (USA): solo il coach AI, solo con il tuo consenso.</li>
           <li>Stripe (Irlanda/USA): solo i pagamenti di FinTrack Pro.</li>
         </ul>
+        <p>
+          Il fascicolo di famiglia lo vede anche chi riceve il link che crei tu, fino alla scadenza
+          o finché non lo revochi: senza importi, a meno che tu non scelga di mostrarli.
+        </p>
         <p>
           I trasferimenti verso gli Stati Uniti avvengono con le garanzie previste dal GDPR (EU-US
           Data Privacy Framework o clausole contrattuali standard). I tassi di cambio arrivano dalla

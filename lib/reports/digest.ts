@@ -18,6 +18,8 @@ export type DigestInput = {
   upcoming: { name: string; amount: number; date: string }[];
   /** "Riprenditeli": open claims with something to do now or a deadline coming up. */
   claims: { id: string; counterparty: string; kind: string; step: string; urgent: boolean }[];
+  /** "Radar dei diritti": company welfare credit that expires within a month. */
+  welfare: { balance: number; expiresOn: string; days: number } | null;
   streak: { current: number; longest: number };
   level: { level: number; name: string };
   appUrl: string;
@@ -38,6 +40,17 @@ const dayFormatter = new Intl.DateTimeFormat("it-IT", {
   timeZone: "UTC",
 });
 const day = (iso: string) => dayFormatter.format(new Date(`${iso}T00:00:00Z`));
+const longDayFormatter = new Intl.DateTimeFormat("it-IT", {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+const longDay = (iso: string) => longDayFormatter.format(new Date(`${iso}T00:00:00Z`));
+
+function welfareLine(eur: (n: number) => string, w: NonNullable<DigestInput["welfare"]>) {
+  const when = w.days === 0 ? "oggi" : w.days === 1 ? "domani" : `il ${longDay(w.expiresOn)}`;
+  return `Il credito welfare di ${eur(w.balance)} scade ${when}: usalo prima che vada perso.`;
+}
 
 export function escapeHtml(value: string) {
   return value
@@ -115,6 +128,9 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       input.topCategories.forEach((c) => lines.push(`- ${c.name}: ${eur(c.value)}`));
     }
   }
+  if (input.welfare) {
+    lines.push("", "Da non perdere:", `- ${welfareLine(eur, input.welfare)}`);
+  }
   if (input.claims.length) {
     lines.push("", "Pratiche da seguire:");
     input.claims.forEach((c) =>
@@ -182,6 +198,14 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
         ),
       );
     }
+  }
+  if (input.welfare) {
+    parts.push(
+      section(
+        "Da non perdere",
+        `<p style="margin:0;padding:12px 14px;background:#fffbeb;border-radius:10px;font-size:14px;color:#92400e;">${e(welfareLine(eur, input.welfare))} <a href="${e(input.appUrl)}/ritrovati/radar" style="color:#92400e;font-weight:600;">Apri</a></p>`,
+      ),
+    );
   }
   if (input.claims.length) {
     parts.push(

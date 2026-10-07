@@ -21,6 +21,7 @@ const base: DigestInput = {
   budgets: [],
   upcoming: [],
   claims: [],
+  welfare: null,
   streak: { current: 5, longest: 9 },
   level: { level: 2, name: "Apprendista" },
   appUrl: "https://fintrack.example",
@@ -110,6 +111,18 @@ describe("buildWeeklyDigest", () => {
     expect(text).toContain("https://fintrack.example/ritrovati/pratiche/c1");
     expect(html).toContain("FitLife &lt;Palestra&gt;");
     expect(html).toContain('href="https://fintrack.example/ritrovati/pratiche/c1"');
+  });
+
+  it("reminds of company welfare about to expire", () => {
+    const { text, html } = buildWeeklyDigest({
+      ...base,
+      welfare: { balance: 350, expiresOn: "2026-10-31", days: 24 },
+    });
+    expect(plain(text)).toContain(
+      "Il credito welfare di 350,00 € scade il 31 ottobre: usalo prima che vada perso.",
+    );
+    expect(html).toContain("Da non perdere");
+    expect(html).toContain('href="https://fintrack.example/ritrovati/radar"');
   });
 
   it("leaves the claims out when there are none", () => {

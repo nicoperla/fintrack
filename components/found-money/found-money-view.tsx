@@ -17,6 +17,7 @@ import {
   Landmark,
   Lock,
   PawPrint,
+  Radar,
   School,
   ShieldCheck,
   Sparkles,
@@ -98,7 +99,7 @@ function Section({
   return (
     <section
       id={id}
-      className="bg-card grid scroll-mt-20 gap-4 rounded-2xl border p-5"
+      className="bg-card grid scroll-mt-20 grid-cols-1 gap-4 rounded-2xl border p-5"
       aria-labelledby={`${id}-title`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -548,6 +549,31 @@ function ClaimAction({
   );
 }
 
+/** "Radar dei diritti": the 730 checked against the precompilato, rent and company welfare. */
+function RadarStrip({ year }: { year: number }) {
+  return (
+    <Link
+      href={`/ritrovati/radar?anno=${year}`}
+      className="bg-card hover:bg-muted/40 group flex items-center gap-3 rounded-2xl border p-4 transition-colors"
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-400">
+        <Radar className="size-5" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Radar dei diritti</p>
+        <p className="text-muted-foreground text-sm">
+          Confronta il precompilato con le spese che ho visto, scopri se ti spetta la detrazione per
+          l&apos;affitto e non perdere il welfare aziendale.
+        </p>
+      </div>
+      <ChevronRight
+        className="text-muted-foreground size-5 shrink-0 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
 /** "Riprenditeli": from finding money to getting it back. Always there, as the way in. */
 function ClaimsStrip({ totals }: { totals: ClaimTotals }) {
   const money = useMoney();
@@ -797,10 +823,11 @@ export function FoundMoneyView({
   claims: { marks: ClaimMarks; totals: ClaimTotals };
 }) {
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Hero data={data} />
       <ClaimsStrip totals={claims.totals} />
       <TaxSection data={data} />
+      <RadarStrip year={data.year} />
       <DuplicatesSection data={data} marks={claims.marks} />
       <SubscriptionsSection data={data} marks={claims.marks} />
       <BankFeesSection data={data} marks={claims.marks} />

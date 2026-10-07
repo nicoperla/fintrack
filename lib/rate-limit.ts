@@ -20,6 +20,8 @@ export const RULES = {
   resetSubmit: { limit: 10, windowSeconds: 60 * 60 },
   verifyResend: { limit: 3, windowSeconds: 60 * 60 },
   invites: { limit: 20, windowSeconds: 24 * 60 * 60 },
+  /** Family file links, per user: few are ever needed. */
+  familyShares: { limit: 10, windowSeconds: 24 * 60 * 60 },
   /** Coach chat, per user: a burst limit and a daily allowance. */
   coachBurst: { limit: 5, windowSeconds: 60 },
   coachDaily: {

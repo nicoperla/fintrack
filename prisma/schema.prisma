@@ -93,6 +93,8 @@ model User {
   planCancelsAtEnd   Boolean   @default(false) @map("plan_cancels_at_end")
   /// Dependent children, for the per-child limits of the 730 deductions (school, sport, nursery).
   dependentChildren  Int       @default(0) @map("dependent_children")
+  /// "Radar dei diritti": income band, birth year, rent contract and company welfare (lib/finance/rights.ts).
+  taxProfile         Json?     @map("tax_profile")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -157,6 +159,8 @@ model Household {
   valuations        InvestmentValuation[]
   claims            Claim[]
   bigExpenses       BigExpense[]
+  familyFile        FamilyFile?
+  familyFileShares  FamilyFileShare[]
   reserveAccount    FinancialAccount?     @relation("ReserveAccount", fields: [reserveAccountId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
@@ -512,4 +516,39 @@ model BigExpense {
 
   @@index([householdId])
   @@map("big_expenses")
+}
+
+/// "Il fascicolo di famiglia": what the family should know if the user can't tell them. The
+/// accounts, debts and subscriptions come from the space's data; these are the user's notes.
+model FamilyFile {
+  householdId String   @id @map("household_id")
+  /// Free text by section (lib/family-file.ts): documents, contacts, policies, instructions.
+  notes       Json
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@map("family_files")
+}
+
+/// A read-only link to the family file for a trusted person. It expires, it can be revoked and
+/// only the SHA-256 of its token is stored.
+model FamilyFileShare {
+  id           String    @id @default(cuid())
+  householdId  String    @map("household_id")
+  tokenHash    String    @unique @map("token_hash")
+  /// Who it's for, to recognize it in the list ("Marco, mio fratello").
+  label        String
+  /// Amounts are left out unless the user chooses to show them.
+  showAmounts  Boolean   @default(false) @map("show_amounts")
+  expiresAt    DateTime  @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  views        Int       @default(0)
+  lastViewedAt DateTime? @map("last_viewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("family_file_shares")
 }

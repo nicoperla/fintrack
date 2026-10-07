@@ -28,6 +28,7 @@ export async function GET() {
       workHoursPerWeek: true,
       showWorkTime: true,
       coachProfile: true,
+      taxProfile: true,
       plan: true,
       subscriptionStatus: true,
       planRenewsAt: true,
@@ -49,6 +50,8 @@ export async function GET() {
         settlements,
         claims,
         bigExpenses,
+        familyFile,
+        familyShares,
       ] = await Promise.all([
         prisma.household.findUniqueOrThrow({
           where: { id },
@@ -95,6 +98,21 @@ export async function GET() {
           include: { transaction: { select: { date: true, description: true } } },
         }),
         prisma.bigExpense.findMany({ where: { householdId: id }, orderBy: { createdAt: "asc" } }),
+        prisma.familyFile.findUnique({ where: { householdId: id }, select: { notes: true } }),
+        // Never the token hashes: only what the links were and how they were used.
+        prisma.familyFileShare.findMany({
+          where: { householdId: id },
+          orderBy: { createdAt: "asc" },
+          select: {
+            label: true,
+            showAmounts: true,
+            createdAt: true,
+            expiresAt: true,
+            revokedAt: true,
+            views: true,
+            lastViewedAt: true,
+          },
+        }),
       ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
       const who = (authorId: string | null) =>
@@ -195,6 +213,7 @@ export async function GET() {
             paidThrough: b.paidThrough ? toDateInputValue(b.paidThrough) : null,
           })),
         },
+        familyFile: { notes: familyFile?.notes ?? null, sharedLinks: familyShares },
       };
     }),
   );

@@ -5,6 +5,7 @@ import { getRecurring } from "@/lib/data/intelligence";
 import { claimsToMention, getClaimsOverview } from "@/lib/data/claims";
 import { KIND_LABELS } from "@/lib/finance/claims";
 import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
+import { readTaxProfile, welfareDeadline } from "@/lib/finance/rights";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -44,7 +45,10 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     claims,
     bigExpenses,
   ] = await Promise.all([
-    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } }),
+    prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { name: true, taxProfile: true },
+    }),
     prisma.transaction.groupBy({
       by: ["type"],
       where: { householdId, type: types, date: { gte: start, lt: end } },
@@ -77,6 +81,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
   const total = (type: string) => Number(totals.find((r) => r.type === type)?._sum.baseAmount ?? 0);
   const todayIso = toDateInputValue(today);
   const weekAhead = toDateInputValue(addDays(today, 7));
+  const welfare = welfareDeadline(readTaxProfile(user.taxProfile).welfare, todayIso);
 
   return {
     name: user.name,
@@ -125,6 +130,10 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       step: c.step.text,
       urgent: c.step.tone === "urgent",
     })),
+    welfare:
+      welfare?.state === "soon"
+        ? { balance: welfare.balance, expiresOn: welfare.expiresOn, days: welfare.days }
+        : null,
     streak: { current: gamification.streak.current, longest: gamification.streak.longest },
     level: { level: gamification.level.level, name: gamification.level.name },
     appUrl: getAppUrl(),
