@@ -1,5 +1,6 @@
-import { ArrowLeftRight, Plus, RefreshCw, TrendingUp, Wallet } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowLeftRight, Plus, RefreshCw, ScanSearch, TrendingUp, Wallet } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Amount } from "@/components/amount";
 import { EmptyState } from "@/components/empty-state";
 import { AccountFormDialog } from "@/components/accounts/account-form-dialog";
@@ -51,7 +52,15 @@ export default async function InvestmentsPage() {
             Quanto valgono i tuoi investimenti, separati dai soldi che puoi spendere.
           </p>
         </div>
-        {data.total && <AccountFormDialog defaultType="INVESTMENT" trigger={newInvestmentButton} />}
+        {data.total && (
+          <div className="flex flex-wrap gap-2">
+            <Link href="/investments/costi" className={buttonVariants({ variant: "outline" })}>
+              <ScanSearch data-icon="inline-start" />
+              Radiografia dei costi
+            </Link>
+            <AccountFormDialog defaultType="INVESTMENT" trigger={newInvestmentButton} />
+          </div>
+        )}
       </div>
 
       {!data.total ? (

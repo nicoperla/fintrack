@@ -50,6 +50,11 @@ export default function PrivacyPage() {
             che provi lì non li salviamo.
           </li>
           <li>
+            <strong>Radiografia dei costi</strong>: per i conti investimenti, i costi che copi dal
+            KID (ingresso, uscita, gestione, transazione, performance), il tipo di prodotto e il
+            versamento mensile, se lo scrivi.
+          </li>
+          <li>
             <strong>Il patto</strong>: la categoria, il limite e il periodo, la posta che scegli (il
             nome di chi fa da arbitro, la promessa, la multa e l&apos;obiettivo) e quando l&apos;hai
             pagata. Del link per l&apos;arbitro salviamo solo un&apos;impronta (hash) e quante volte

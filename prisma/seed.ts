@@ -1142,6 +1142,26 @@ async function main() {
   const tariffCount = await seedTariffs(householdId, accountIds.checking, today);
   const decisionCount = await seedMoneyTalk(householdId, user.id, partner.id, today);
   const pactCount = await seedPacts(householdId, user.id, today);
+  // "Radiografia dei costi": the ETF costs little, the pension fund sold at the bank much more.
+  await prisma.investmentCost.createMany({
+    data: [
+      {
+        accountId: accountIds.etf,
+        householdId,
+        category: "etf-equity",
+        ongoingPct: "0.200",
+        transactionPct: "0.020",
+      },
+      {
+        accountId: accountIds.pension,
+        householdId,
+        category: "other",
+        entryPct: "1.000",
+        ongoingPct: "1.650",
+        transactionPct: "0.100",
+      },
+    ],
+  });
   // "Il fascicolo di famiglia": the notes only the family knows; no link is shared in the demo.
   await prisma.familyFile.create({
     data: {

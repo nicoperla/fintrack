@@ -57,6 +57,7 @@ export async function GET() {
         moneyTalks,
         moneyDecisions,
         pacts,
+        investmentCosts,
       ] = await Promise.all([
         prisma.household.findUniqueOrThrow({
           where: { id },
@@ -150,6 +151,10 @@ export async function GET() {
             category: { select: { name: true } },
             goal: { select: { name: true } },
           },
+        }),
+        prisma.investmentCost.findMany({
+          where: { householdId: id },
+          include: { account: { select: { name: true } } },
         }),
       ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
@@ -271,6 +276,16 @@ export async function GET() {
             kwh: c.kwh,
           })),
         },
+        investmentCosts: investmentCosts.map((x) => ({
+          account: x.account.name,
+          category: x.category,
+          entryPct: x.entryPct,
+          exitPct: x.exitPct,
+          ongoingPct: x.ongoingPct,
+          transactionPct: x.transactionPct,
+          performancePct: x.performancePct,
+          monthlyPayment: x.monthly,
+        })),
         pacts: pacts.map((x) => ({
           madeBy: who(x.userId),
           category: x.category.name,

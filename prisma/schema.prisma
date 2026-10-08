@@ -188,6 +188,7 @@ model Household {
   moneyTalks        MoneyTalk[]
   moneyDecisions    MoneyDecision[]
   pacts             Pact[]
+  investmentCosts   InvestmentCost[]
   reserveAccount    FinancialAccount?     @relation("ReserveAccount", fields: [reserveAccountId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
@@ -270,6 +271,7 @@ model FinancialAccount {
   valuations        InvestmentValuation[]
   reserveFor        Household[]           @relation("ReserveAccount")
   tariffChecks      TariffCheck[]
+  costs             InvestmentCost?
 
   @@index([householdId])
   @@map("accounts")
@@ -698,4 +700,29 @@ model Pact {
 
   @@index([householdId, periodTo])
   @@map("pacts")
+}
+
+/// "Radiografia dei costi": the costs an investment account's product declares in its KID, in
+/// percent as written there (lib/finance/fund-costs.ts).
+model InvestmentCost {
+  accountId      String   @id @map("account_id")
+  householdId    String   @map("household_id")
+  /// For the ESMA average of the category (FUND_CATEGORIES); "other": none.
+  category       String
+  /// One-off, on every amount paid in and on what is taken out.
+  entryPct       Decimal  @default(0) @map("entry_pct") @db.Decimal(6, 3)
+  exitPct        Decimal  @default(0) @map("exit_pct") @db.Decimal(6, 3)
+  /// Per year: management and other ongoing costs, transaction costs, performance fees.
+  ongoingPct     Decimal  @map("ongoing_pct") @db.Decimal(6, 3)
+  transactionPct Decimal  @default(0) @map("transaction_pct") @db.Decimal(6, 3)
+  performancePct Decimal  @default(0) @map("performance_pct") @db.Decimal(6, 3)
+  /// Paid in every month, for the projection; null: nothing.
+  monthly        Decimal? @db.Decimal(14, 2)
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  account   FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  household Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("investment_costs")
 }
