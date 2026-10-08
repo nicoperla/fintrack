@@ -12,6 +12,16 @@ export function todayInAppTimeZone() {
   return { year: get("year"), month: get("month") - 1, day: get("day") };
 }
 
+/** The calendar day of a moment in Italy, as YYYY-MM-DD (e.g. when a consent was given). */
+export function dayInAppTimeZone(at: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: APP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(at);
+}
+
 export function utcDate(year: number, month: number, day: number) {
   return new Date(Date.UTC(year, month, day));
 }

@@ -22,6 +22,7 @@ const base: DigestInput = {
   upcoming: [],
   claims: [],
   welfare: null,
+  renewals: [],
   streak: { current: 5, longest: 9 },
   level: { level: 2, name: "Apprendista" },
   appUrl: "https://fintrack.example",
@@ -123,6 +124,27 @@ describe("buildWeeklyDigest", () => {
     );
     expect(html).toContain("Da non perdere");
     expect(html).toContain('href="https://fintrack.example/ritrovati/radar"');
+  });
+
+  it("reminds of the RC auto and the fixed light price about to end", () => {
+    const { text, html } = buildWeeklyDigest({
+      ...base,
+      renewals: [
+        { kind: "ELECTRICITY", label: "Luce di casa", date: "2026-10-08", days: 1 },
+        { kind: "CAR_INSURANCE", label: "Panda <2>", date: "2026-11-01", days: 25 },
+      ],
+    });
+    expect(text).toContain("Da non perdere:");
+    expect(text).toContain(
+      "- Il prezzo bloccato di «Luce di casa» scade domani: confronta le offerte prima che cambi.",
+    );
+    expect(text).toContain(
+      "- La RC auto di «Panda <2>» scade l'1 novembre: chiedi i preventivi prima di rinnovare.",
+    );
+    expect(text).toContain("https://fintrack.example/ritrovati/tariffometro");
+    expect(html).toContain("«Panda &lt;2&gt;»");
+    expect(html).toContain('href="https://fintrack.example/ritrovati/tariffometro"');
+    expect(html).not.toContain("/ritrovati/radar");
   });
 
   it("leaves the claims out when there are none", () => {

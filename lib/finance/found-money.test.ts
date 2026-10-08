@@ -110,10 +110,17 @@ describe("findBankFees", () => {
     tx("2026-09-05", "Canone conto corrente", 7.9),
   ];
 
-  it("annualizes the fees of the months tracked", () => {
+  it("scales the complete months tracked to a year", () => {
+    // July and August are complete; September is still going.
     const result = findBankFees(fees, "2026-09-28", "2026-07-01", new Set())!;
-    expect(result.count).toBe(3);
-    expect(result.yearly).toBeCloseTo((23.7 * 365) / 90, 1);
+    expect(result.count).toBe(2);
+    expect(result.yearly).toBe(94.8);
+  });
+
+  it("leaves out a first month tracked only in part", () => {
+    // Tracked from the 3rd of July: only August counts, still 7,90 € a month.
+    const result = findBankFees(fees, "2026-10-07", "2026-07-03", new Set())!;
+    expect(result).toMatchObject({ count: 2, yearly: 94.8 });
   });
 
   it("stays quiet about trivial fees", () => {

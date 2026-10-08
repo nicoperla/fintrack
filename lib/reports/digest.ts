@@ -20,6 +20,8 @@ export type DigestInput = {
   claims: { id: string; counterparty: string; kind: string; step: string; urgent: boolean }[];
   /** "Radar dei diritti": company welfare credit that expires within a month. */
   welfare: { balance: number; expiresOn: string; days: number } | null;
+  /** "Il Tariffometro": RC auto policies and fixed light prices ending within a month. */
+  renewals: { kind: "CAR_INSURANCE" | "ELECTRICITY"; label: string; date: string; days: number }[];
   streak: { current: number; longest: number };
   level: { level: number; name: string };
   appUrl: string;
@@ -46,10 +48,20 @@ const longDayFormatter = new Intl.DateTimeFormat("it-IT", {
   timeZone: "UTC",
 });
 const longDay = (iso: string) => longDayFormatter.format(new Date(`${iso}T00:00:00Z`));
+// "il 31 ottobre", "l'1 novembre": the numbers read with a leading vowel sound.
+const onLongDay = (iso: string) =>
+  `${[1, 8, 11].includes(Number(iso.slice(8, 10))) ? "l'" : "il "}${longDay(iso)}`;
+const when = (days: number, iso: string) =>
+  days === 0 ? "oggi" : days === 1 ? "domani" : onLongDay(iso);
 
 function welfareLine(eur: (n: number) => string, w: NonNullable<DigestInput["welfare"]>) {
-  const when = w.days === 0 ? "oggi" : w.days === 1 ? "domani" : `il ${longDay(w.expiresOn)}`;
-  return `Il credito welfare di ${eur(w.balance)} scade ${when}: usalo prima che vada perso.`;
+  return `Il credito welfare di ${eur(w.balance)} scade ${when(w.days, w.expiresOn)}: usalo prima che vada perso.`;
+}
+
+function renewalLine(r: DigestInput["renewals"][number]) {
+  return r.kind === "CAR_INSURANCE"
+    ? `La RC auto di «${r.label}» scade ${when(r.days, r.date)}: chiedi i preventivi prima di rinnovare.`
+    : `Il prezzo bloccato di «${r.label}» scade ${when(r.days, r.date)}: confronta le offerte prima che cambi.`;
 }
 
 export function escapeHtml(value: string) {
@@ -128,8 +140,12 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       input.topCategories.forEach((c) => lines.push(`- ${c.name}: ${eur(c.value)}`));
     }
   }
-  if (input.welfare) {
-    lines.push("", "Da non perdere:", `- ${welfareLine(eur, input.welfare)}`);
+  if (input.welfare || input.renewals.length) {
+    lines.push("", "Da non perdere:");
+    if (input.welfare) lines.push(`- ${welfareLine(eur, input.welfare)}`);
+    input.renewals.forEach((r) =>
+      lines.push(`- ${renewalLine(r)}`, `  ${input.appUrl}/ritrovati/tariffometro`),
+    );
   }
   if (input.claims.length) {
     lines.push("", "Pratiche da seguire:");
@@ -199,11 +215,16 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       );
     }
   }
-  if (input.welfare) {
+  if (input.welfare || input.renewals.length) {
+    const notice = (text: string, path: string) =>
+      `<p style="margin:0 0 8px;padding:12px 14px;background:#fffbeb;border-radius:10px;font-size:14px;color:#92400e;">${e(text)} <a href="${e(input.appUrl)}${path}" style="color:#92400e;font-weight:600;">Apri</a></p>`;
     parts.push(
       section(
         "Da non perdere",
-        `<p style="margin:0;padding:12px 14px;background:#fffbeb;border-radius:10px;font-size:14px;color:#92400e;">${e(welfareLine(eur, input.welfare))} <a href="${e(input.appUrl)}/ritrovati/radar" style="color:#92400e;font-weight:600;">Apri</a></p>`,
+        [
+          input.welfare ? notice(welfareLine(eur, input.welfare), "/ritrovati/radar") : "",
+          ...input.renewals.map((r) => notice(renewalLine(r), "/ritrovati/tariffometro")),
+        ].join(""),
       ),
     );
   }

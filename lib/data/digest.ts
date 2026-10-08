@@ -3,6 +3,7 @@ import { getBudgetsWithSpending } from "@/lib/data/budgets";
 import { getGamification } from "@/lib/data/gamification";
 import { getRecurring } from "@/lib/data/intelligence";
 import { claimsToMention, getClaimsOverview } from "@/lib/data/claims";
+import { getTariffRenewals } from "@/lib/data/tariffs";
 import { KIND_LABELS } from "@/lib/finance/claims";
 import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
 import { readTaxProfile, welfareDeadline } from "@/lib/finance/rights";
@@ -44,6 +45,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     gamification,
     claims,
     bigExpenses,
+    renewals,
   ] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -76,6 +78,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       where: { householdId },
       select: { name: true, amount: true, months: true, day: true, paidThrough: true },
     }),
+    getTariffRenewals(householdId, toDateInputValue(today)),
   ]);
 
   const total = (type: string) => Number(totals.find((r) => r.type === type)?._sum.baseAmount ?? 0);
@@ -134,6 +137,11 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       welfare?.state === "soon"
         ? { balance: welfare.balance, expiresOn: welfare.expiresOn, days: welfare.days }
         : null,
+    renewals: renewals.flatMap((r) =>
+      r.kind === "CAR_INSURANCE" || r.kind === "ELECTRICITY"
+        ? [{ kind: r.kind, label: r.label, date: r.date, days: r.days }]
+        : [],
+    ),
     streak: { current: gamification.streak.current, longest: gamification.streak.longest },
     level: { level: gamification.level.level, name: gamification.level.name },
     appUrl: getAppUrl(),

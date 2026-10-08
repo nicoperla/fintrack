@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireSpace } from "@/lib/auth/session";
 import { getFoundMoney } from "@/lib/data/found-money";
 import { claimMarks, getClaimsOverview } from "@/lib/data/claims";
+import { getTariffometro } from "@/lib/data/tariffs";
 import { FoundMoneyView } from "@/components/found-money/found-money-view";
 import { cn } from "@/lib/utils";
 
@@ -11,13 +12,14 @@ type SearchParams = { anno?: string | string[] };
 
 export default async function FoundMoneyPage({ searchParams }: { searchParams: SearchParams }) {
   const space = await requireSpace();
-  const [data, claims] = await Promise.all([
+  const [data, claims, tariffs] = await Promise.all([
     getFoundMoney(
       space.user.id,
       space.id,
       typeof searchParams.anno === "string" ? searchParams.anno : undefined,
     ),
     getClaimsOverview(space.user.id, space.id),
+    getTariffometro(space.id),
   ]);
 
   return (
@@ -51,6 +53,11 @@ export default async function FoundMoneyPage({ searchParams }: { searchParams: S
       <FoundMoneyView
         data={data}
         claims={{ marks: claimMarks(claims.claims), totals: claims.totals }}
+        tariffs={{
+          compared: tariffs.summary.compared,
+          above: tariffs.summary.above.length,
+          overPerYear: tariffs.summary.overPerYear,
+        }}
       />
     </div>
   );

@@ -12,6 +12,7 @@ import {
   Files as Duplicate,
   Download,
   FileText,
+  Gauge,
   HandCoins,
   House,
   Landmark,
@@ -574,6 +575,37 @@ function RadarStrip({ year }: { year: number }) {
   );
 }
 
+export type TariffSummary = { compared: number; above: number; overPerYear: number };
+
+/** "Il Tariffometro": what the user pays against public averages, one step away. */
+function TariffStrip({ summary }: { summary: TariffSummary }) {
+  const money = useMoney();
+  return (
+    <Link
+      href="/ritrovati/tariffometro"
+      className="bg-card hover:bg-muted/40 group flex items-center gap-3 rounded-2xl border p-4 transition-colors"
+    >
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-400">
+        <Gauge className="size-5" aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">Il Tariffometro</p>
+        <p className="text-muted-foreground text-sm">
+          {summary.above > 0
+            ? `${summary.above === 1 ? "Su una voce" : `Su ${summary.above} voci`} paghi più degli altri: circa ${money(summary.overPerYear)} l'anno in più.`
+            : summary.compared > 0
+              ? "RC auto, conto e luce: per ora non paghi più degli altri."
+              : "RC auto, conto e luce: paghi più degli altri? Te lo dico con i dati pubblici di IVASS, Banca d'Italia e ARERA."}
+        </p>
+      </div>
+      <ChevronRight
+        className="text-muted-foreground size-5 shrink-0 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
 /** "Riprenditeli": from finding money to getting it back. Always there, as the way in. */
 function ClaimsStrip({ totals }: { totals: ClaimTotals }) {
   const money = useMoney();
@@ -781,7 +813,18 @@ function BankFeesSection({ data, marks }: { data: FoundMoney; marks: ClaimMarks 
       icon={Landmark}
       title="Commissioni bancarie"
       aside={<span className="font-semibold tabular-nums">{money(fees.yearly)}/anno</span>}
-      subtitle="Canoni, commissioni e bolli che il conto ti costa in un anno. Un conto a zero spese te li farebbe risparmiare."
+      subtitle={
+        <>
+          Canoni, commissioni e bolli che il conto ti costa in un anno. Un conto a zero spese te li
+          farebbe risparmiare.{" "}
+          <Link
+            href="/ritrovati/tariffometro#conto"
+            className="text-foreground font-medium underline-offset-2 hover:underline"
+          >
+            Confronta con la media della Banca d&apos;Italia
+          </Link>
+        </>
+      }
     >
       {data.details?.bankFees ? (
         <div className="flex flex-wrap items-center gap-3 text-sm">
@@ -817,10 +860,12 @@ function BankFeesSection({ data, marks }: { data: FoundMoney; marks: ClaimMarks 
 export function FoundMoneyView({
   data,
   claims,
+  tariffs,
 }: {
   data: FoundMoney;
   /** "Riprenditeli": which findings already have a claim, and how it's going overall. */
   claims: { marks: ClaimMarks; totals: ClaimTotals };
+  tariffs: TariffSummary;
 }) {
   return (
     <div className="grid grid-cols-1 gap-6">
@@ -828,6 +873,7 @@ export function FoundMoneyView({
       <ClaimsStrip totals={claims.totals} />
       <TaxSection data={data} />
       <RadarStrip year={data.year} />
+      <TariffStrip summary={tariffs} />
       <DuplicatesSection data={data} marks={claims.marks} />
       <SubscriptionsSection data={data} marks={claims.marks} />
       <BankFeesSection data={data} marks={claims.marks} />

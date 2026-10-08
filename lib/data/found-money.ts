@@ -74,11 +74,12 @@ export const getFoundMoney = cache(
           category: { select: { name: true, parent: { select: { name: true } } } },
         },
       }),
+      // From the start of the month a year ago: the bank fees count whole months.
       prisma.transaction.findMany({
         where: {
           householdId,
           type: "EXPENSE",
-          date: { gte: new Date(todayDate.getTime() - 365 * DAY_MS), lte: todayDate },
+          date: { gte: utcDate(t.year, t.month - 12, 1), lte: todayDate },
         },
         select: {
           id: true,

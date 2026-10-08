@@ -38,6 +38,13 @@ export default function PrivacyPage() {
             tuo browser: non li riceviamo.
           </li>
           <li>
+            <strong>Il Tariffometro</strong>: la provincia e, se lo indichi, quante persone vivono
+            in casa; i premi RC auto con scadenza, classe di merito e fascia d&apos;età; il tipo e
+            il costo dei conti correnti; le bollette della luce (totale, kWh e periodo). Il
+            confronto con le medie pubbliche di IVASS, Banca d&apos;Italia e ARERA lo facciamo noi:
+            a quegli enti non inviamo niente.
+          </li>
+          <li>
             <strong>Fascicolo di famiglia</strong>: le note che scrivi (dove sono i documenti, chi
             chiamare). Se crei un link per una persona di fiducia, del link salviamo solo
             un&apos;impronta (hash), la scadenza, per chi l&apos;hai indicato e quante volte viene
@@ -80,6 +87,10 @@ export default function PrivacyPage() {
           </li>
           <li>Il coach AI: solo con il tuo consenso esplicito, art. 6.1.a GDPR (vedi sotto).</li>
           <li>
+            Il confronto anonimo tra utenti del Tariffometro: solo con il consenso esplicito, art.
+            6.1.a GDPR (vedi sotto).
+          </li>
+          <li>
             Abbonamento a pagamento e relativi obblighi fiscali: contratto e obbligo di legge, art.
             6.1.b e 6.1.c GDPR.
           </li>
@@ -110,6 +121,23 @@ export default function PrivacyPage() {
           trattamento. Lo facciamo solo dopo che hai premuto «Accetto, attiva il coach AI». Puoi
           revocare il consenso in qualsiasi momento da <Link href="/settings">Impostazioni</Link>:
           da quel momento non inviamo più niente.
+        </p>
+      </section>
+
+      <section id="confronto">
+        <h2>Il confronto anonimo tra utenti</h2>
+        <p>
+          Il Tariffometro confronta quello che paghi con medie pubbliche. Più avanti mostrerà anche
+          quanto pagano le famiglie FinTrack della tua provincia. Per costruire quel confronto
+          usiamo solo i dati degli spazi in cui qualcuno ha scelto «Partecipo»: importi del
+          Tariffometro, provincia e numero di persone in casa.
+        </p>
+        <p>
+          Agli altri utenti mostreremo solo medie di almeno 20 famiglie, con un piccolo scarto
+          casuale: mai nomi, mai i singoli importi. Finché il confronto non parte, questi dati non
+          vengono usati per nient&apos;altro. La scelta vale per tutto lo spazio e chiunque ne
+          faccia parte può ritirarla dal Tariffometro: da quel momento i dati dello spazio non
+          entrano più nelle statistiche.
         </p>
       </section>
 
@@ -160,7 +188,10 @@ export default function PrivacyPage() {
         <ul>
           <li>«Scarica i tuoi dati»: un file con tutti i tuoi dati in formato leggibile (JSON).</li>
           <li>«Elimina account»: cancella account e dati.</li>
-          <li>Revoca del consenso al coach AI e disattivazione del riepilogo settimanale.</li>
+          <li>
+            Revoca del consenso al coach AI e al confronto anonimo del Tariffometro, disattivazione
+            del riepilogo settimanale.
+          </li>
         </ul>
         <p>
           Per il resto puoi farlo <ContactLine />. Hai anche diritto di proporre reclamo al Garante

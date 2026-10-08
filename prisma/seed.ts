@@ -752,6 +752,52 @@ async function seedTrueSalary(householdId: string, now: Date) {
   return bigExpenses.length;
 }
 
+/**
+ * "Il Tariffometro": a couple in Milan (the ATM pass) with the RC auto above the province's
+ * average, the branch account read from its monthly fee, and last month's light bill above
+ * ARERA's reference, its fixed price about to end. The anonymous comparison is left to choose.
+ */
+async function seedTariffs(householdId: string, checkingId: string, today: Date) {
+  const year = today.getUTCFullYear();
+  const month = today.getUTCMonth();
+  const march = utcDate(year, 2, 15);
+  await prisma.household.update({
+    where: { id: householdId },
+    data: { province: "MI", householdSize: 2 },
+  });
+  const checks = [
+    {
+      householdId,
+      kind: "CAR_INSURANCE" as const,
+      label: "Panda",
+      // The same premium as the big expense of "Lo stipendio vero".
+      amount: money(480),
+      renewsOn: march > today ? march : utcDate(year + 1, 2, 15),
+      bonusMalus: 1,
+      ageBand: "35-44",
+    },
+    {
+      householdId,
+      kind: "BANK_ACCOUNT" as const,
+      label: "Conto corrente",
+      accountId: checkingId,
+      accountKind: "tradizionale",
+    },
+    {
+      householdId,
+      kind: "ELECTRICITY" as const,
+      label: "Luce di casa",
+      amount: money(71.6),
+      kwh: 198,
+      periodFrom: utcDate(year, month - 1, 1),
+      periodTo: utcDate(year, month, 0),
+      renewsOn: utcDate(year, month, today.getUTCDate() + 24),
+    },
+  ];
+  await prisma.tariffCheck.createMany({ data: checks });
+  return checks.length;
+}
+
 async function main() {
   const now = new Date();
   const today = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -961,6 +1007,7 @@ async function main() {
 
   const claimCount = await seedClaims(householdId, user, today, transactions);
   const bigExpenseCount = await seedTrueSalary(householdId, now);
+  const tariffCount = await seedTariffs(householdId, accountIds.checking, today);
   // "Il fascicolo di famiglia": the notes only the family knows; no link is shared in the demo.
   await prisma.familyFile.create({
     data: {
@@ -997,7 +1044,7 @@ async function main() {
   });
 
   console.log(
-    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate.`,
+    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate, ${tariffCount} voci del Tariffometro.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
   console.log(

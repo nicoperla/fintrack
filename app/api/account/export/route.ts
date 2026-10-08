@@ -52,6 +52,7 @@ export async function GET() {
         bigExpenses,
         familyFile,
         familyShares,
+        tariffChecks,
       ] = await Promise.all([
         prisma.household.findUniqueOrThrow({
           where: { id },
@@ -66,6 +67,9 @@ export async function GET() {
             thirteenthSalary: true,
             fourteenthSalary: true,
             reserveAccount: { select: { name: true } },
+            province: true,
+            householdSize: true,
+            tariffPoolSince: true,
             members: {
               select: { role: true, user: { select: { id: true, name: true } } },
             },
@@ -112,6 +116,11 @@ export async function GET() {
             views: true,
             lastViewedAt: true,
           },
+        }),
+        prisma.tariffCheck.findMany({
+          where: { householdId: id },
+          orderBy: { createdAt: "asc" },
+          include: { account: { select: { name: true } } },
         }),
       ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
@@ -214,6 +223,25 @@ export async function GET() {
           })),
         },
         familyFile: { notes: familyFile?.notes ?? null, sharedLinks: familyShares },
+        tariffometro: {
+          province: household.province,
+          householdSize: household.householdSize,
+          anonymousComparisonSince: household.tariffPoolSince,
+          checks: tariffChecks.map((c) => ({
+            kind: c.kind,
+            label: c.label,
+            amount: c.amount,
+            previousAmount: c.previousAmount,
+            renewsOn: c.renewsOn ? toDateInputValue(c.renewsOn) : null,
+            bonusMalus: c.bonusMalus,
+            ageBand: c.ageBand,
+            account: c.account?.name ?? null,
+            accountKind: c.accountKind,
+            periodFrom: c.periodFrom ? toDateInputValue(c.periodFrom) : null,
+            periodTo: c.periodTo ? toDateInputValue(c.periodTo) : null,
+            kwh: c.kwh,
+          })),
+        },
       };
     }),
   );

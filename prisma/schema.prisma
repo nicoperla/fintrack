@@ -63,6 +63,16 @@ enum ClaimStatus {
   DROPPED
 }
 
+/// What a "Tariffometro" check compares (lib/finance/tariffs.ts).
+enum TariffKind {
+  /// RC auto: the yearly premium against the province's average (IVASS).
+  CAR_INSURANCE
+  /// A current account: what a year of it costs against the Banca d'Italia survey.
+  BANK_ACCOUNT
+  /// Electricity: a bill's cost per kWh against ARERA's reference price.
+  ELECTRICITY
+}
+
 model User {
   id                 String    @id @default(cuid())
   email              String    @unique
@@ -144,6 +154,14 @@ model Household {
   /// Where the money for the big expenses is set aside; null: on the everyday accounts.
   reserveAccountId String?   @map("reserve_account_id")
 
+  // "Il Tariffometro" (lib/finance/tariffs.ts).
+  /// Province abbreviation (MI, NA…), to compare the RC auto with the province's prices.
+  province        String?
+  /// People living in the home, for the comparison with similar households.
+  householdSize   Int?      @map("household_size")
+  /// Consent to add the space's figures, anonymously, to the comparison between users; null: no.
+  tariffPoolSince DateTime? @map("tariff_pool_since")
+
   owner             User                  @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
   activeFor         User[]                @relation("ActiveHousehold")
   members           HouseholdMember[]
@@ -161,6 +179,7 @@ model Household {
   bigExpenses       BigExpense[]
   familyFile        FamilyFile?
   familyFileShares  FamilyFileShare[]
+  tariffChecks      TariffCheck[]
   reserveAccount    FinancialAccount?     @relation("ReserveAccount", fields: [reserveAccountId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
@@ -242,6 +261,7 @@ model FinancialAccount {
   incomingTransfers Transaction[]         @relation("TransferDestination")
   valuations        InvestmentValuation[]
   reserveFor        Household[]           @relation("ReserveAccount")
+  tariffChecks      TariffCheck[]
 
   @@index([householdId])
   @@map("accounts")
@@ -551,4 +571,42 @@ model FamilyFileShare {
 
   @@index([householdId])
   @@map("family_file_shares")
+}
+
+/// "Il Tariffometro": a contract the space compares with what others pay. Amounts are in the
+/// space currency; the public prices they're compared with are in euro.
+model TariffCheck {
+  id             String     @id @default(cuid())
+  householdId    String     @map("household_id")
+  kind           TariffKind
+  /// The user's name for it ("Panda", "Luce di casa"); for an account, the account's name.
+  label          String
+  /// CAR_INSURANCE: the yearly premium. BANK_ACCOUNT: the yearly cost read in the bank's
+  /// "Riepilogo delle spese" (null: worked out from the movements). ELECTRICITY: the bill total.
+  amount         Decimal?   @db.Decimal(14, 2)
+  /// CAR_INSURANCE: the premium of the previous policy year, to show what changing saved.
+  previousAmount Decimal?   @map("previous_amount") @db.Decimal(14, 2)
+  /// CAR_INSURANCE: when the policy ends (it doesn't renew by itself). ELECTRICITY: when the
+  /// fixed price runs out. A reminder comes a month before.
+  renewsOn       DateTime?  @map("renews_on") @db.Date
+  /// CAR_INSURANCE: bonus-malus class (1–18) and age band of the policyholder (AGE_BANDS).
+  bonusMalus     Int?       @map("bonus_malus")
+  ageBand        String?    @map("age_band")
+  /// BANK_ACCOUNT: the account, and where it's held (BANK_ACCOUNT_KINDS).
+  accountId      String?    @map("account_id")
+  accountKind    String?    @map("account_kind")
+  /// ELECTRICITY: the bill's period and the kWh billed.
+  periodFrom     DateTime?  @map("period_from") @db.Date
+  periodTo       DateTime?  @map("period_to") @db.Date
+  kwh            Int?
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  household Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account   FinancialAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// One check per account (NULLs don't collide in Postgres, so cars and bills are free).
+  @@unique([householdId, accountId])
+  @@index([householdId, kind])
+  @@map("tariff_checks")
 }

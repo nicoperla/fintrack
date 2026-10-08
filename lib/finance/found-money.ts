@@ -155,11 +155,43 @@ export function looksLikeBankFee(description: string, category: string | null) {
   );
 }
 
+const monthStart = (year: number, month: number) =>
+  new Date(Date.UTC(year, month, 1)).toISOString().slice(0, 10);
+const monthIndex = (iso: string) => Number(iso.slice(0, 4)) * 12 + Number(iso.slice(5, 7)) - 1;
+
+/**
+ * What some charges add up to in a year, counting whole months only: the last twelve complete
+ * months, or the complete months tracked so far, scaled to twelve. The month in course and a
+ * first month tracked only in part stay out, or a monthly fee counted once too often would make
+ * a short history look much more expensive. Null without a complete month to go by.
+ */
+export function yearlyFromMonths<T extends { date: string; amount: number }>(
+  charges: T[],
+  today: string,
+  trackedSince: string | null,
+) {
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(5, 7)) - 1;
+  const end = monthStart(year, month);
+  let start = monthStart(year, month - 12);
+  if (trackedSince) {
+    const y = Number(trackedSince.slice(0, 4));
+    const m = Number(trackedSince.slice(5, 7)) - 1;
+    const firstFull = trackedSince.endsWith("-01") ? monthStart(y, m) : monthStart(y, m + 1);
+    if (firstFull > start) start = firstFull;
+  }
+  const months = monthIndex(end) - monthIndex(start);
+  if (months <= 0) return null;
+  const counted = charges.filter((c) => c.date >= start && c.date < end);
+  const total = counted.reduce((s, c) => s + c.amount, 0);
+  return { yearly: cents((total * 12) / months), months, counted };
+}
+
 export type BankFees = { key: string; yearly: number; count: number; examples: string[] };
 
 /**
- * What the bank costs in a year, from the last twelve months (annualized when there's less
- * history). Below 24 € a year there's nothing worth switching for.
+ * What the bank costs in a year, from the last twelve complete months (scaled up when there's
+ * less history). Below 24 € a year there's nothing worth switching for.
  */
 export function findBankFees(
   transactions: FoundTx[],
@@ -168,22 +200,17 @@ export function findBankFees(
   dismissed: Set<string>,
 ): BankFees | null {
   if (dismissed.has("fees")) return null;
-  const since = toTime(today) - 365 * DAY_MS;
-  const fees = transactions.filter(
-    (t) => toTime(t.date) >= since && looksLikeBankFee(t.description, t.category),
+  const estimate = yearlyFromMonths(
+    transactions.filter((t) => looksLikeBankFee(t.description, t.category)),
+    today,
+    trackedSince,
   );
-  if (fees.length === 0) return null;
-  const total = fees.reduce((s, t) => s + t.amount, 0);
-  const days = trackedSince
-    ? Math.max(30, Math.min(365, (toTime(today) - toTime(trackedSince)) / DAY_MS + 1))
-    : 365;
-  const yearly = cents((total * 365) / days);
-  if (yearly < 24) return null;
+  if (!estimate || estimate.counted.length === 0 || estimate.yearly < 24) return null;
   return {
     key: "fees",
-    yearly,
-    count: fees.length,
-    examples: Array.from(new Set(fees.map((f) => f.description))).slice(0, 3),
+    yearly: estimate.yearly,
+    count: estimate.counted.length,
+    examples: Array.from(new Set(estimate.counted.map((f) => f.description))).slice(0, 3),
   };
 }
 
