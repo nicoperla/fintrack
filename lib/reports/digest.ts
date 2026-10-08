@@ -1,4 +1,5 @@
 import { formatCurrency } from "@/lib/format";
+import { ilPct } from "@/lib/finance/insights";
 
 export type DigestInput = {
   name: string | null;
@@ -24,6 +25,14 @@ export type DigestInput = {
   renewals: { kind: "CAR_INSURANCE" | "ELECTRICITY"; label: string; date: string; days: number }[];
   /** "Il caffè dei conti": last month's talk is ready and not done yet (shared spaces). */
   talk: { monthName: string } | null;
+  /** "Il patto": the user's pacts running, or over in the last week. */
+  pacts: {
+    category: string;
+    state: "active" | "won" | "lost";
+    used: number;
+    daysLeft: number;
+    finePending: boolean;
+  }[];
   streak: { current: number; longest: number };
   level: { level: number; name: string };
   appUrl: string;
@@ -62,6 +71,15 @@ function welfareLine(eur: (n: number) => string, w: NonNullable<DigestInput["wel
 
 function talkLine(talk: NonNullable<DigestInput["talk"]>) {
   return `Il caffè dei conti di ${talk.monthName} è pronto: un quarto d'ora insieme per chiudere il mese.`;
+}
+
+function pactLine(p: DigestInput["pacts"][number]) {
+  if (p.state === "won") return `Patto «${p.category}» rispettato: complimenti.`;
+  if (p.state === "lost") {
+    return `Patto «${p.category}» perso.${p.finePending ? " Ricordati la multa: mettila da parte nel tuo obiettivo." : ""}`;
+  }
+  const left = p.daysLeft === 1 ? "oggi è l'ultimo giorno" : `mancano ${p.daysLeft} giorni`;
+  return `Patto «${p.category}»: hai usato ${ilPct(p.used * 100)} del limite, ${left}.`;
 }
 
 function renewalLine(r: DigestInput["renewals"][number]) {
@@ -154,6 +172,11 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       lines.push(`- ${renewalLine(r)}`, `  ${input.appUrl}/ritrovati/tariffometro`),
     );
   }
+  if (input.pacts.length) {
+    lines.push("", input.pacts.length === 1 ? "Il tuo patto:" : "I tuoi patti:");
+    input.pacts.forEach((x) => lines.push(`- ${pactLine(x)}`));
+    lines.push(`  ${input.appUrl}/patto`);
+  }
   if (input.claims.length) {
     lines.push("", "Pratiche da seguire:");
     input.claims.forEach((c) =>
@@ -233,6 +256,20 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
           input.welfare ? notice(welfareLine(eur, input.welfare), "/ritrovati/radar") : "",
           ...input.renewals.map((r) => notice(renewalLine(r), "/ritrovati/tariffometro")),
         ].join(""),
+      ),
+    );
+  }
+  if (input.pacts.length) {
+    parts.push(
+      section(
+        input.pacts.length === 1 ? "Il tuo patto" : "I tuoi patti",
+        input.pacts
+          .map(
+            (x) =>
+              `<p style="margin:0 0 6px;font-size:14px;${x.state === "lost" ? "color:#b91c1c;" : x.state === "won" ? "color:#047857;" : ""}">${e(pactLine(x))}</p>`,
+          )
+          .join("") +
+          `<p style="margin:4px 0 0;font-size:13px;"><a href="${e(input.appUrl)}/patto" style="color:#047857;font-weight:600;">Apri i patti</a></p>`,
       ),
     );
   }

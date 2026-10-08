@@ -6,6 +6,7 @@ import { claimLetter } from "../lib/claims/letters";
 import { answerDeadline, findingKey } from "../lib/finance/claims";
 import { normalizeDescription } from "../lib/finance/recurring";
 import { toDateInputValue } from "../lib/format";
+import { newShareToken } from "../lib/family-file-tokens";
 
 const prisma = new PrismaClient();
 
@@ -837,6 +838,96 @@ async function seedMoneyTalk(householdId: string, userId: string, partnerId: str
   return 2;
 }
 
+/**
+ * "Il patto": one running this month with Marco as referee, last month's lost with the fine still
+ * to set aside, and an older one kept. Limits are set from what the demo actually spent, so the
+ * outcomes are the same on every run.
+ */
+async function seedPacts(householdId: string, userId: string, today: Date) {
+  const year = today.getUTCFullYear();
+  const month = today.getUTCMonth();
+  const spentIn = async (name: string, from: Date, to: Date) => {
+    const category = await prisma.category.findFirstOrThrow({
+      where: { householdId, name, parentId: null },
+      select: { id: true, children: { select: { id: true } } },
+    });
+    const sum = await prisma.transaction.aggregate({
+      where: {
+        householdId,
+        userId,
+        type: "EXPENSE",
+        categoryId: { in: [category.id, ...category.children.map((c) => c.id)] },
+        date: { gte: from, lte: to },
+      },
+      _sum: { baseAmount: true },
+    });
+    return { id: category.id, spent: Number(sum._sum.baseAmount ?? 0) };
+  };
+  const tens = (n: number) => Math.max(10, Math.round(n / 10) * 10);
+  const goal = await prisma.goal.findFirst({
+    where: { householdId, name: "Vacanza in Giappone" },
+    select: { id: true },
+  });
+
+  const thisFrom = utcDate(year, month, 1);
+  const thisTo = utcDate(year, month + 1, 0);
+  const lastFrom = utcDate(year, month - 1, 1);
+  const lastTo = utcDate(year, month, 0);
+  const olderFrom = utcDate(year, month - 2, 1);
+  const olderTo = utcDate(year, month - 1, 0);
+  const [eating, shopping, transport] = await Promise.all([
+    spentIn("Ristoranti e bar", thisFrom, today),
+    spentIn("Shopping", lastFrom, lastTo),
+    spentIn("Trasporti", olderFrom, olderTo),
+  ]);
+  // The referee's link isn't shown anywhere: "Nuovo link" makes one to try.
+  const { hash } = newShareToken();
+
+  await prisma.pact.createMany({
+    data: [
+      {
+        householdId,
+        userId,
+        categoryId: eating.id,
+        // Room for the rest of the month at the pace so far, and a bit more.
+        limit: money(tens(Math.max(120, eating.spent * 2.5))),
+        periodFrom: thisFrom,
+        periodTo: thisTo,
+        refereeName: "Marco",
+        refereeTokenHash: hash,
+        refereeViews: 2,
+        refereeLastViewedAt: new Date(today.getTime() - 86_400_000),
+        promise: "Offro la pizza a Marco",
+        createdAt: thisFrom,
+      },
+      {
+        householdId,
+        userId,
+        categoryId: shopping.id,
+        // Just under what went: lost, with the fine still to set aside.
+        limit: money(tens(Math.max(20, shopping.spent * 0.8))),
+        periodFrom: lastFrom,
+        periodTo: lastTo,
+        promise: "Niente acquisti online per una settimana",
+        fineAmount: goal ? money(30) : null,
+        goalId: goal?.id ?? null,
+        createdAt: lastFrom,
+      },
+      {
+        householdId,
+        userId,
+        categoryId: transport.id,
+        limit: money(tens(transport.spent + 40)),
+        periodFrom: olderFrom,
+        periodTo: olderTo,
+        promise: "Una settimana in bici",
+        createdAt: olderFrom,
+      },
+    ],
+  });
+  return 3;
+}
+
 async function main() {
   const now = new Date();
   const today = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -1050,6 +1141,7 @@ async function main() {
   const bigExpenseCount = await seedTrueSalary(householdId, now);
   const tariffCount = await seedTariffs(householdId, accountIds.checking, today);
   const decisionCount = await seedMoneyTalk(householdId, user.id, partner.id, today);
+  const pactCount = await seedPacts(householdId, user.id, today);
   // "Il fascicolo di famiglia": the notes only the family knows; no link is shared in the demo.
   await prisma.familyFile.create({
     data: {
@@ -1086,7 +1178,7 @@ async function main() {
   });
 
   console.log(
-    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate, ${tariffCount} voci del Tariffometro, ${decisionCount} decisioni del caffè dei conti.`,
+    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate, ${tariffCount} voci del Tariffometro, ${decisionCount} decisioni del caffè dei conti, ${pactCount} patti.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
   console.log(

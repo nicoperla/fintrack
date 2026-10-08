@@ -10,6 +10,6 @@ export default withAuth({
 // assets (landing/: the landing page media), so new pages are protected by default.
 export const config = {
   matcher: [
-    "/((?!login|register|forgot-password|reset-password|verify-email|privacy|terms|api/auth|api/cron|api/billing/webhook|invite|fascicolo/condiviso/|api/digest/unsubscribe|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|icons/|landing/|apple-icon|opengraph-image).+)",
+    "/((?!login|register|forgot-password|reset-password|verify-email|privacy|terms|api/auth|api/cron|api/billing/webhook|invite|fascicolo/condiviso/|patto/arbitro/|api/digest/unsubscribe|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|icons/|landing/|apple-icon|opengraph-image).+)",
   ],
 };

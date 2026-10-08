@@ -24,6 +24,7 @@ const base: DigestInput = {
   welfare: null,
   renewals: [],
   talk: null,
+  pacts: [],
   streak: { current: 5, longest: 9 },
   level: { level: 2, name: "Apprendista" },
   appUrl: "https://fintrack.example",
@@ -157,6 +158,26 @@ describe("buildWeeklyDigest", () => {
     expect(html).toContain("Da non perdere");
     expect(html).toContain('href="https://fintrack.example/caffe"');
     expect(buildWeeklyDigest(base).text).not.toContain("caffè");
+  });
+
+  it("follows the pacts: running, kept and lost with the fine to set aside", () => {
+    const { text, html } = buildWeeklyDigest({
+      ...base,
+      pacts: [
+        { category: "Ristoranti", state: "active", used: 0.8, daysLeft: 9, finePending: false },
+        { category: "Shopping", state: "lost", used: 1.2, daysLeft: 0, finePending: true },
+        { category: "Svago", state: "won", used: 0.6, daysLeft: 0, finePending: false },
+      ],
+    });
+    expect(text).toContain("I tuoi patti:");
+    expect(text).toContain("- Patto «Ristoranti»: hai usato l'80% del limite, mancano 9 giorni.");
+    expect(text).toContain(
+      "- Patto «Shopping» perso. Ricordati la multa: mettila da parte nel tuo obiettivo.",
+    );
+    expect(text).toContain("- Patto «Svago» rispettato: complimenti.");
+    expect(text).toContain("https://fintrack.example/patto");
+    expect(html).toContain("Patto «Ristoranti»: hai usato l&#39;80% del limite");
+    expect(buildWeeklyDigest(base).text).not.toContain("patto");
   });
 
   it("leaves the claims out when there are none", () => {

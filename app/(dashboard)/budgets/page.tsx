@@ -1,4 +1,5 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Gavel, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { BudgetCard } from "@/components/planning/budget-card";
@@ -46,7 +47,21 @@ export default async function BudgetsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
-          <p className="text-muted-foreground text-sm">{formatMonthYear(month.start)}</p>
+          <p className="text-muted-foreground text-sm">
+            {formatMonthYear(month.start)}
+            {overCount > 0 && (
+              <>
+                {" · "}
+                <Link
+                  href="/patto"
+                  className="hover:text-foreground inline-flex items-center gap-1 underline-offset-2 hover:underline"
+                >
+                  <Gavel className="size-3.5" aria-hidden /> Un budget che salta sempre? Fai un
+                  patto
+                </Link>
+              </>
+            )}
+          </p>
         </div>
         {budgets.length > 0 && (
           <BudgetFormDialog

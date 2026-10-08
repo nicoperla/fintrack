@@ -5,6 +5,7 @@ import { getRecurring } from "@/lib/data/intelligence";
 import { claimsToMention, getClaimsOverview } from "@/lib/data/claims";
 import { getTariffRenewals } from "@/lib/data/tariffs";
 import { getTalkReminder } from "@/lib/data/money-talk";
+import { getPactsForDigest } from "@/lib/data/pacts";
 import { KIND_LABELS } from "@/lib/finance/claims";
 import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
 import { readTaxProfile, welfareDeadline } from "@/lib/finance/rights";
@@ -49,6 +50,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     bigExpenses,
     renewals,
     talk,
+    pacts,
   ] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -84,6 +86,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     getTariffRenewals(householdId, toDateInputValue(today)),
     // The talk is news in the first two weeks of the month; after that it would nag.
     today.getUTCDate() <= TALK_REMINDER_DAYS ? getTalkReminder(householdId) : null,
+    getPactsForDigest(userId, householdId),
   ]);
 
   const total = (type: string) => Number(totals.find((r) => r.type === type)?._sum.baseAmount ?? 0);
@@ -148,6 +151,13 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
         : [],
     ),
     talk: talk ? { monthName: talk.name } : null,
+    pacts: pacts.map((x) => ({
+      category: x.category,
+      state: x.state,
+      used: x.used,
+      daysLeft: x.daysLeft,
+      finePending: x.finePending,
+    })),
     streak: { current: gamification.streak.current, longest: gamification.streak.longest },
     level: { level: gamification.level.level, name: gamification.level.name },
     appUrl: getAppUrl(),

@@ -56,6 +56,7 @@ export async function GET() {
         tariffChecks,
         moneyTalks,
         moneyDecisions,
+        pacts,
       ] = await Promise.all([
         prisma.household.findUniqueOrThrow({
           where: { id },
@@ -129,6 +130,26 @@ export async function GET() {
         prisma.moneyDecision.findMany({
           where: { householdId: id },
           orderBy: [{ month: "asc" }, { createdAt: "asc" }],
+        }),
+        // Never the referee's token hash.
+        prisma.pact.findMany({
+          where: { householdId: id },
+          orderBy: { createdAt: "asc" },
+          select: {
+            userId: true,
+            limit: true,
+            periodFrom: true,
+            periodTo: true,
+            onlyMine: true,
+            refereeName: true,
+            refereeViews: true,
+            promise: true,
+            fineAmount: true,
+            finePaidAt: true,
+            createdAt: true,
+            category: { select: { name: true } },
+            goal: { select: { name: true } },
+          },
         }),
       ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
@@ -250,6 +271,21 @@ export async function GET() {
             kwh: c.kwh,
           })),
         },
+        pacts: pacts.map((x) => ({
+          madeBy: who(x.userId),
+          category: x.category.name,
+          limit: x.limit,
+          from: toDateInputValue(x.periodFrom),
+          to: toDateInputValue(x.periodTo),
+          onlyTheirMovements: x.onlyMine,
+          referee: x.refereeName,
+          refereeLinkViews: x.refereeViews,
+          promise: x.promise,
+          fine: x.fineAmount,
+          fineGoal: x.goal?.name ?? null,
+          finePaidAt: x.finePaidAt,
+          madeAt: x.createdAt,
+        })),
         moneyTalks: {
           monthsTalkedAbout: moneyTalks.map((t) => ({
             month: toDateInputValue(t.month).slice(0, 7),

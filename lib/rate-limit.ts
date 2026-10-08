@@ -22,6 +22,8 @@ export const RULES = {
   invites: { limit: 20, windowSeconds: 24 * 60 * 60 },
   /** Family file links, per user: few are ever needed. */
   familyShares: { limit: 10, windowSeconds: 24 * 60 * 60 },
+  /** Pacts and their referee links, per user. */
+  pacts: { limit: 10, windowSeconds: 24 * 60 * 60 },
   /** Coach chat, per user: a burst limit and a daily allowance. */
   coachBurst: { limit: 5, windowSeconds: 60 },
   coachDaily: {

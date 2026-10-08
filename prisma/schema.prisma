@@ -128,6 +128,7 @@ model User {
   claims              Claim[]
   moneyTalksHeld      MoneyTalk[]              @relation("MoneyTalkHeldBy")
   decisionsOwned      MoneyDecision[]          @relation("MoneyDecisionOwner")
+  pacts               Pact[]
 
   @@map("users")
 }
@@ -186,6 +187,7 @@ model Household {
   tariffChecks      TariffCheck[]
   moneyTalks        MoneyTalk[]
   moneyDecisions    MoneyDecision[]
+  pacts             Pact[]
   reserveAccount    FinancialAccount?     @relation("ReserveAccount", fields: [reserveAccountId], references: [id], onDelete: SetNull)
 
   @@index([ownerId])
@@ -291,6 +293,7 @@ model Category {
   children     Category[]    @relation("CategoryHierarchy")
   transactions Transaction[]
   budget       Budget?
+  pacts        Pact[]
 
   @@index([householdId])
   @@index([parentId])
@@ -333,6 +336,7 @@ model Goal {
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pacts     Pact[]
 
   @@index([householdId])
   @@map("goals")
@@ -657,4 +661,41 @@ model MoneyDecision {
 
   @@index([householdId, month])
   @@map("money_decisions")
+}
+
+/// "Il patto": a spending limit on a category for a period, with a stake, checked at the end on
+/// the movements (lib/finance/pacts.ts). The stake is only social: FinTrack never moves money.
+model Pact {
+  id                  String    @id @default(cuid())
+  householdId         String    @map("household_id")
+  /// Who made it: a pact is personal and goes with the account.
+  userId              String    @map("user_id")
+  /// A top-level category covers its subcategories.
+  categoryId          String    @map("category_id")
+  limit               Decimal   @db.Decimal(14, 2)
+  periodFrom          DateTime  @map("period_from") @db.Date
+  periodTo            DateTime  @map("period_to") @db.Date
+  /// Count only the movements its author recorded (false: the whole space's).
+  onlyMine            Boolean   @default(true) @map("only_mine")
+  /// The stake. A friend who referees, by first name, through a link without an account.
+  refereeName         String?   @map("referee_name")
+  /// SHA-256 of the referee's link token; null once revoked.
+  refereeTokenHash    String?   @unique @map("referee_token_hash")
+  refereeViews        Int       @default(0) @map("referee_views")
+  refereeLastViewedAt DateTime? @map("referee_last_viewed_at")
+  /// What the author promised to do if it goes wrong ("offro la pizza a Marco").
+  promise             String?
+  /// A fine to put in a savings goal if it goes wrong, marked by the author once done.
+  fineAmount          Decimal?  @map("fine_amount") @db.Decimal(14, 2)
+  goalId              String?   @map("goal_id")
+  finePaidAt          DateTime? @map("fine_paid_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  goal      Goal?     @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([householdId, periodTo])
+  @@map("pacts")
 }

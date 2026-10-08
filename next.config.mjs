@@ -25,6 +25,15 @@ const nextConfig = {
           { key: "Cache-Control", value: "private, no-store" },
         ],
       },
+      {
+        // The referee's view of a pact: same rules, the token is in the URL here too.
+        source: "/patto/arbitro/:path*",
+        headers: [
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "Cache-Control", value: "private, no-store" },
+        ],
+      },
     ];
   },
 };

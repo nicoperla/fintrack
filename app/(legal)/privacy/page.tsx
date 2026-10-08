@@ -50,6 +50,13 @@ export default function PrivacyPage() {
             che provi lì non li salviamo.
           </li>
           <li>
+            <strong>Il patto</strong>: la categoria, il limite e il periodo, la posta che scegli (il
+            nome di chi fa da arbitro, la promessa, la multa e l&apos;obiettivo) e quando l&apos;hai
+            pagata. Del link per l&apos;arbitro salviamo solo un&apos;impronta (hash) e quante volte
+            viene aperto: chi lo apre vede il limite, la percentuale usata e l&apos;esito, mai i
+            movimenti. Il link smette di funzionare un mese dopo la fine del patto.
+          </li>
+          <li>
             <strong>Il caffè dei conti</strong>, negli spazi condivisi: i mesi di cui avete parlato
             e chi l&apos;ha segnato, le decisioni che scrivete con chi se ne occupa, la scadenza e
             quando è stata fatta. Le vedono tutte le persone dello spazio.
