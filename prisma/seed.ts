@@ -981,10 +981,12 @@ async function main() {
       })),
   });
 
-  // A coach already set up, so the demo shows advice instead of the first-run questions.
+  // A coach already set up, so the demo shows advice instead of the first-run questions; the job
+  // for the crash test already written, so the NASpI is there at first sight.
   await prisma.user.update({
     where: { id: user.id },
     data: {
+      crashProfile: { work: "employee", ral: 32000, since: "2019-03" },
       coachProfile: {
         method: "paga-te-stesso",
         savingsTarget: 15,

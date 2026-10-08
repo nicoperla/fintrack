@@ -105,6 +105,8 @@ model User {
   dependentChildren  Int       @default(0) @map("dependent_children")
   /// "Radar dei diritti": income band, birth year, rent contract and company welfare (lib/finance/rights.ts).
   taxProfile         Json?     @map("tax_profile")
+  /// "Il crash test": the job, for the NASpI: kind of work, RAL and since when (lib/finance/crash-test.ts).
+  crashProfile       Json?     @map("crash_profile")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 

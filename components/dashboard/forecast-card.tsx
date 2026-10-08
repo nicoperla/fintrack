@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, CalendarClock, TrendingDown } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, CalendarClock, LifeBuoy, TrendingDown } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -206,6 +207,12 @@ export function ForecastCard({ data }: { data: ForecastData }) {
         Stima: saldo di oggi {money(start)}, entrate e uscite ricorrenti nei loro giorni e circa{" "}
         {money(data.dailySpend)} al giorno di spese abituali. Esclusi risparmi e investimenti.
       </p>
+      <Link
+        href="/crash-test"
+        className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 justify-self-start text-sm"
+      >
+        <LifeBuoy className="size-4" aria-hidden /> E se perdessi il lavoro? Fai il crash test
+      </Link>
     </section>
   );
 }

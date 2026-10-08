@@ -18,6 +18,7 @@ import {
   Handshake,
   Landmark,
   LayoutDashboard,
+  LifeBuoy,
   Lightbulb,
   Repeat,
   Sparkles,
@@ -51,6 +52,7 @@ const PRIMARY: NavItem[] = [
 
 const TOOLS: NavItem[] = [
   { href: "/stipendio-vero", label: "Stipendio vero", icon: BadgeEuro },
+  { href: "/crash-test", label: "Crash test", icon: LifeBuoy },
   { href: "/investments", label: "Investimenti", icon: TrendingUp },
   { href: "/ritrovati", label: "Soldi ritrovati", icon: HandCoins },
   { href: "/split", label: "Conti chiari", icon: Handshake },

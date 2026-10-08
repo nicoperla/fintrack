@@ -45,6 +45,11 @@ export default function PrivacyPage() {
             a quegli enti non inviamo niente.
           </li>
           <li>
+            <strong>Il crash test</strong>: se li scrivi e scegli di ricordarli, che lavoro fai, la
+            RAL, da quando lavori e l&apos;anno di nascita, per stimare la NASpI. I numeri del mutuo
+            che provi lì non li salviamo.
+          </li>
+          <li>
             <strong>Il caffè dei conti</strong>, negli spazi condivisi: i mesi di cui avete parlato
             e chi l&apos;ha segnato, le decisioni che scrivete con chi se ne occupa, la scadenza e
             quando è stata fatta. Le vedono tutte le persone dello spazio.

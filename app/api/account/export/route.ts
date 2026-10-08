@@ -29,6 +29,7 @@ export async function GET() {
       showWorkTime: true,
       coachProfile: true,
       taxProfile: true,
+      crashProfile: true,
       plan: true,
       subscriptionStatus: true,
       planRenewsAt: true,
