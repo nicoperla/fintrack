@@ -4,6 +4,7 @@ import { getGamification } from "@/lib/data/gamification";
 import { getRecurring } from "@/lib/data/intelligence";
 import { claimsToMention, getClaimsOverview } from "@/lib/data/claims";
 import { getTariffRenewals } from "@/lib/data/tariffs";
+import { getTalkReminder } from "@/lib/data/money-talk";
 import { KIND_LABELS } from "@/lib/finance/claims";
 import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
 import { readTaxProfile, welfareDeadline } from "@/lib/finance/rights";
@@ -16,6 +17,7 @@ import { unsubscribeUrl } from "@/lib/reports/unsubscribe";
 import { weekRangeLabel, type DigestInput } from "@/lib/reports/digest";
 
 const DAY_MS = 86_400_000;
+const TALK_REMINDER_DAYS = 14;
 const addDays = (d: Date, n: number) => new Date(d.getTime() + n * DAY_MS);
 
 /** The last complete Monday–Sunday week in Italy, as UTC-midnight dates. */
@@ -46,6 +48,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
     claims,
     bigExpenses,
     renewals,
+    talk,
   ] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
@@ -79,6 +82,8 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       select: { name: true, amount: true, months: true, day: true, paidThrough: true },
     }),
     getTariffRenewals(householdId, toDateInputValue(today)),
+    // The talk is news in the first two weeks of the month; after that it would nag.
+    today.getUTCDate() <= TALK_REMINDER_DAYS ? getTalkReminder(householdId) : null,
   ]);
 
   const total = (type: string) => Number(totals.find((r) => r.type === type)?._sum.baseAmount ?? 0);
@@ -142,6 +147,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
         ? [{ kind: r.kind, label: r.label, date: r.date, days: r.days }]
         : [],
     ),
+    talk: talk ? { monthName: talk.name } : null,
     streak: { current: gamification.streak.current, longest: gamification.streak.longest },
     level: { level: gamification.level.level, name: gamification.level.name },
     appUrl: getAppUrl(),

@@ -45,6 +45,11 @@ export default function PrivacyPage() {
             a quegli enti non inviamo niente.
           </li>
           <li>
+            <strong>Il caffè dei conti</strong>, negli spazi condivisi: i mesi di cui avete parlato
+            e chi l&apos;ha segnato, le decisioni che scrivete con chi se ne occupa, la scadenza e
+            quando è stata fatta. Le vedono tutte le persone dello spazio.
+          </li>
+          <li>
             <strong>Fascicolo di famiglia</strong>: le note che scrivi (dove sono i documenti, chi
             chiamare). Se crei un link per una persona di fiducia, del link salviamo solo
             un&apos;impronta (hash), la scadenza, per chi l&apos;hai indicato e quante volte viene

@@ -53,6 +53,8 @@ export async function GET() {
         familyFile,
         familyShares,
         tariffChecks,
+        moneyTalks,
+        moneyDecisions,
       ] = await Promise.all([
         prisma.household.findUniqueOrThrow({
           where: { id },
@@ -121,6 +123,11 @@ export async function GET() {
           where: { householdId: id },
           orderBy: { createdAt: "asc" },
           include: { account: { select: { name: true } } },
+        }),
+        prisma.moneyTalk.findMany({ where: { householdId: id }, orderBy: { month: "asc" } }),
+        prisma.moneyDecision.findMany({
+          where: { householdId: id },
+          orderBy: [{ month: "asc" }, { createdAt: "asc" }],
         }),
       ]);
       const names = new Map(household.members.map((m) => [m.user.id, m.user.name ?? "Membro"]));
@@ -240,6 +247,22 @@ export async function GET() {
             periodFrom: c.periodFrom ? toDateInputValue(c.periodFrom) : null,
             periodTo: c.periodTo ? toDateInputValue(c.periodTo) : null,
             kwh: c.kwh,
+          })),
+        },
+        moneyTalks: {
+          monthsTalkedAbout: moneyTalks.map((t) => ({
+            month: toDateInputValue(t.month).slice(0, 7),
+            markedBy: t.heldById ? who(t.heldById) : "ex membro",
+            markedAt: t.heldAt,
+          })),
+          decisions: moneyDecisions.map((d) => ({
+            month: toDateInputValue(d.month).slice(0, 7),
+            topic: d.topic,
+            decision: d.text,
+            takenCareOfBy: d.ownerId ? who(d.ownerId) : "insieme",
+            dueOn: d.dueOn ? toDateInputValue(d.dueOn) : null,
+            doneAt: d.doneAt,
+            writtenAt: d.createdAt,
           })),
         },
       };

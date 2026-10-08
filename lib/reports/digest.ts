@@ -22,6 +22,8 @@ export type DigestInput = {
   welfare: { balance: number; expiresOn: string; days: number } | null;
   /** "Il Tariffometro": RC auto policies and fixed light prices ending within a month. */
   renewals: { kind: "CAR_INSURANCE" | "ELECTRICITY"; label: string; date: string; days: number }[];
+  /** "Il caffè dei conti": last month's talk is ready and not done yet (shared spaces). */
+  talk: { monthName: string } | null;
   streak: { current: number; longest: number };
   level: { level: number; name: string };
   appUrl: string;
@@ -56,6 +58,10 @@ const when = (days: number, iso: string) =>
 
 function welfareLine(eur: (n: number) => string, w: NonNullable<DigestInput["welfare"]>) {
   return `Il credito welfare di ${eur(w.balance)} scade ${when(w.days, w.expiresOn)}: usalo prima che vada perso.`;
+}
+
+function talkLine(talk: NonNullable<DigestInput["talk"]>) {
+  return `Il caffè dei conti di ${talk.monthName} è pronto: un quarto d'ora insieme per chiudere il mese.`;
 }
 
 function renewalLine(r: DigestInput["renewals"][number]) {
@@ -140,8 +146,9 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       input.topCategories.forEach((c) => lines.push(`- ${c.name}: ${eur(c.value)}`));
     }
   }
-  if (input.welfare || input.renewals.length) {
+  if (input.talk || input.welfare || input.renewals.length) {
     lines.push("", "Da non perdere:");
+    if (input.talk) lines.push(`- ${talkLine(input.talk)}`, `  ${input.appUrl}/caffe`);
     if (input.welfare) lines.push(`- ${welfareLine(eur, input.welfare)}`);
     input.renewals.forEach((r) =>
       lines.push(`- ${renewalLine(r)}`, `  ${input.appUrl}/ritrovati/tariffometro`),
@@ -215,13 +222,14 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       );
     }
   }
-  if (input.welfare || input.renewals.length) {
+  if (input.talk || input.welfare || input.renewals.length) {
     const notice = (text: string, path: string) =>
       `<p style="margin:0 0 8px;padding:12px 14px;background:#fffbeb;border-radius:10px;font-size:14px;color:#92400e;">${e(text)} <a href="${e(input.appUrl)}${path}" style="color:#92400e;font-weight:600;">Apri</a></p>`;
     parts.push(
       section(
         "Da non perdere",
         [
+          input.talk ? notice(talkLine(input.talk), "/caffe") : "",
           input.welfare ? notice(welfareLine(eur, input.welfare), "/ritrovati/radar") : "",
           ...input.renewals.map((r) => notice(renewalLine(r), "/ritrovati/tariffometro")),
         ].join(""),

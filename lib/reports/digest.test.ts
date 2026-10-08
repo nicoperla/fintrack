@@ -23,6 +23,7 @@ const base: DigestInput = {
   claims: [],
   welfare: null,
   renewals: [],
+  talk: null,
   streak: { current: 5, longest: 9 },
   level: { level: 2, name: "Apprendista" },
   appUrl: "https://fintrack.example",
@@ -145,6 +146,17 @@ describe("buildWeeklyDigest", () => {
     expect(html).toContain("«Panda &lt;2&gt;»");
     expect(html).toContain('href="https://fintrack.example/ritrovati/tariffometro"');
     expect(html).not.toContain("/ritrovati/radar");
+  });
+
+  it("says when the talk about last month is ready", () => {
+    const { text, html } = buildWeeklyDigest({ ...base, talk: { monthName: "settembre" } });
+    expect(text).toContain(
+      "- Il caffè dei conti di settembre è pronto: un quarto d'ora insieme per chiudere il mese.",
+    );
+    expect(text).toContain("https://fintrack.example/caffe");
+    expect(html).toContain("Da non perdere");
+    expect(html).toContain('href="https://fintrack.example/caffe"');
+    expect(buildWeeklyDigest(base).text).not.toContain("caffè");
   });
 
   it("leaves the claims out when there are none", () => {

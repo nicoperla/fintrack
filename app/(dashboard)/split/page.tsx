@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Coffee } from "lucide-react";
 import { requireSpace } from "@/lib/auth/session";
 import { getSplit } from "@/lib/data/split";
 import { EmptyState } from "@/components/empty-state";
@@ -13,11 +14,21 @@ export default async function SplitPage() {
 
   return (
     <div className="grid grid-cols-1 gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Conti chiari</h1>
-        <p className="text-muted-foreground text-sm">
-          Chi ha pagato cosa per le spese comuni, e quanto deve ciascuno per essere pari.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Conti chiari</h1>
+          <p className="text-muted-foreground text-sm">
+            Chi ha pagato cosa per le spese comuni, e quanto deve ciascuno per essere pari.
+          </p>
+        </div>
+        {memberCount >= 2 && (
+          <Link
+            href="/caffe"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm"
+          >
+            <Coffee className="size-4" aria-hidden /> Il caffè dei conti
+          </Link>
+        )}
       </div>
       {memberCount < 2 ? (
         <EmptyState

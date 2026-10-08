@@ -798,6 +798,45 @@ async function seedTariffs(householdId: string, checkingId: string, today: Date)
   return checks.length;
 }
 
+/**
+ * "Il caffè dei conti": Demo and Sara talked about the month before last and took two decisions,
+ * one done and one still open; last month's talk is ready, waiting for them.
+ */
+async function seedMoneyTalk(householdId: string, userId: string, partnerId: string, today: Date) {
+  const year = today.getUTCFullYear();
+  const month = today.getUTCMonth();
+  const talked = utcDate(year, month - 2, 1);
+  const heldAt = new Date(Date.UTC(year, month - 1, 3, 19, 30));
+  await prisma.moneyTalk.create({
+    data: { householdId, month: talked, heldById: partnerId, heldAt },
+  });
+  const march = utcDate(year, 2, 1);
+  await prisma.moneyDecision.createMany({
+    data: [
+      {
+        householdId,
+        month: talked,
+        topic: "Budget «Spesa»",
+        text: "Spesa online una volta a settimana, con la lista",
+        ownerId: partnerId,
+        doneAt: new Date(Date.UTC(year, month - 1, 20, 18)),
+        createdAt: heldAt,
+      },
+      {
+        householdId,
+        month: talked,
+        topic: "RC auto «Panda»",
+        text: "Chiedere tre preventivi per la RC auto prima di rinnovare",
+        ownerId: userId,
+        // A couple of weeks before the policy ends (see seedTariffs).
+        dueOn: march > today ? march : utcDate(year + 1, 2, 1),
+        createdAt: heldAt,
+      },
+    ],
+  });
+  return 2;
+}
+
 async function main() {
   const now = new Date();
   const today = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -1008,6 +1047,7 @@ async function main() {
   const claimCount = await seedClaims(householdId, user, today, transactions);
   const bigExpenseCount = await seedTrueSalary(householdId, now);
   const tariffCount = await seedTariffs(householdId, accountIds.checking, today);
+  const decisionCount = await seedMoneyTalk(householdId, user.id, partner.id, today);
   // "Il fascicolo di famiglia": the notes only the family knows; no link is shared in the demo.
   await prisma.familyFile.create({
     data: {
@@ -1044,7 +1084,7 @@ async function main() {
   });
 
   console.log(
-    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate, ${tariffCount} voci del Tariffometro.`,
+    `Seed completato: ${accounts.length} conti, ${categoryIds.size} categorie, ${transactions.length} transazioni, ${BUDGETS.length} budget, ${GOALS.length} obiettivi, ${DEBTS.length} debiti, ${claimCount} pratiche, ${bigExpenseCount} stangate, ${tariffCount} voci del Tariffometro, ${decisionCount} decisioni del caffè dei conti.`,
   );
   console.log(`Login demo -> email: ${DEMO_EMAIL}  password: ${DEMO_PASSWORD}`);
   console.log(

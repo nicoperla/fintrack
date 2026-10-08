@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight, HandCoins, Sparkles } from "lucide-react";
+import { ChevronRight, Coffee, HandCoins, Sparkles } from "lucide-react";
 import { useMoney } from "@/components/currency-provider";
 import { MaskedText } from "@/components/amount";
 import { ScoreRing } from "@/components/coach/coach-overview";
@@ -66,6 +66,28 @@ export function StoryBubble({ monthKey, monthName }: { monthKey: string; monthNa
       <span className="leading-tight">
         <span className="text-muted-foreground block text-xs">Il tuo {monthName}</span>
         <span className="font-medium">in storie</span>
+      </span>
+    </Link>
+  );
+}
+
+/** "Il caffè dei conti" about last month is ready and not done yet (shared spaces only). */
+export function TalkBubble({ monthName }: { monthName: string }) {
+  return (
+    <Link
+      href="/caffe"
+      className="group flex items-center gap-2.5 rounded-full pr-3 text-sm"
+      aria-label={`Il caffè dei conti di ${monthName} è pronto`}
+    >
+      <span
+        className="flex size-[45px] items-center justify-center rounded-full text-white transition-transform group-hover:scale-105"
+        style={{ background: "linear-gradient(160deg, #431407, #9a3412 55%, #b45309)" }}
+      >
+        <Coffee className="size-5" aria-hidden />
+      </span>
+      <span className="leading-tight">
+        <span className="text-muted-foreground block text-xs">Il caffè di {monthName}</span>
+        <span className="font-medium">è pronto</span>
       </span>
     </Link>
   );
