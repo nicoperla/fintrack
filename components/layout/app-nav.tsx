@@ -28,6 +28,7 @@ import {
   Trophy,
   TrendingUp,
   Upload,
+  UsersRound,
   Wallet,
   type LucideIcon,
 } from "lucide-react";
@@ -56,6 +57,7 @@ const TOOLS: NavItem[] = [
   { href: "/crash-test", label: "Crash test", icon: LifeBuoy },
   { href: "/investments", label: "Investimenti", icon: TrendingUp },
   { href: "/ritrovati", label: "Soldi ritrovati", icon: HandCoins },
+  { href: "/insieme", label: "Mio, tuo, nostro", icon: UsersRound },
   { href: "/split", label: "Conti chiari", icon: Handshake },
   { href: "/caffe", label: "Il caffè dei conti", icon: Coffee },
   { href: "/patto", label: "Il patto", icon: Gavel },

@@ -200,6 +200,9 @@ model HouseholdMember {
   userId      String        @map("user_id")
   role        HouseholdRole @default(MEMBER)
   joinedAt    DateTime      @default(now()) @map("joined_at")
+  /// "Mio, tuo, nostro": the totals of their own personal space this member shows to the others
+  /// here (lib/finance/together.ts). Empty: nothing, the default.
+  shares      String[]      @default([])
 
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)

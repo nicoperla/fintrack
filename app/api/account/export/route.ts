@@ -33,7 +33,7 @@ export async function GET() {
       plan: true,
       subscriptionStatus: true,
       planRenewsAt: true,
-      memberships: { select: { role: true, joinedAt: true, householdId: true } },
+      memberships: { select: { role: true, joinedAt: true, householdId: true, shares: true } },
     },
   });
 
@@ -166,6 +166,7 @@ export async function GET() {
         currency: household.currency,
         yourRole: membership.role,
         joinedAt: membership.joinedAt,
+        whatYouShowOfYourPersonalSpace: membership.shares,
         members: household.members.map((m) => ({
           name: m.user.id === userId ? "tu" : (m.user.name ?? "Membro"),
           role: m.role,

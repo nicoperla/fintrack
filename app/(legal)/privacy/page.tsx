@@ -62,6 +62,12 @@ export default function PrivacyPage() {
             movimenti. Il link smette di funzionare un mese dopo la fine del patto.
           </li>
           <li>
+            <strong>Mio, tuo, nostro</strong>: cosa del tuo spazio personale scegli di mostrare a
+            chi è con te in uno spazio condiviso. Di base niente; se lo scegli, gli altri vedono
+            solo quei totali (saldo, risparmio del mese, investimenti, percentuale degli obiettivi),
+            mai i tuoi conti o i tuoi movimenti, e smettono di vederli appena togli la scelta.
+          </li>
+          <li>
             <strong>Il caffè dei conti</strong>, negli spazi condivisi: i mesi di cui avete parlato
             e chi l&apos;ha segnato, le decisioni che scrivete con chi se ne occupa, la scadenza e
             quando è stata fatta. Le vedono tutte le persone dello spazio.

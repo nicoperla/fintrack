@@ -928,6 +928,63 @@ async function seedPacts(householdId: string, userId: string, today: Date) {
   return 3;
 }
 
+/**
+ * "Mio, tuo, nostro": Sara keeps a personal account and a goal in her own space and shows Demo
+ * the balance and the goals, not the rest. Demo's own space is the shared one: no "mine" yet.
+ */
+async function seedTogether(sharedId: string, partnerId: string, today: Date) {
+  const year = today.getUTCFullYear();
+  const month = today.getUTCMonth();
+  const account = await prisma.financialAccount.create({
+    data: {
+      householdId: partnerId,
+      userId: partnerId,
+      name: "Conto personale",
+      type: AccountType.CHECKING,
+      initialBalance: money(2100),
+      currency: "EUR",
+    },
+  });
+  await prisma.transaction.createMany({
+    data: [
+      {
+        date: utcDate(year, month - 1, 27),
+        type: TransactionType.INCOME,
+        amount: 1650,
+        description: "Stipendio",
+      },
+      {
+        date: utcDate(year, month - 1, 5),
+        type: TransactionType.EXPENSE,
+        amount: 420,
+        description: "Spese personali",
+      },
+    ].map((t) => ({
+      ...t,
+      householdId: partnerId,
+      userId: partnerId,
+      accountId: account.id,
+      amount: money(t.amount),
+      baseAmount: money(t.amount),
+    })),
+  });
+  await prisma.goal.create({
+    data: {
+      householdId: partnerId,
+      userId: partnerId,
+      name: "Corso di fotografia",
+      targetAmount: money(800),
+      currentAmount: money(320),
+      icon: "graduation-cap",
+      color: "#0ea5e9",
+    },
+  });
+  await prisma.householdMember.update({
+    where: { householdId_userId: { householdId: sharedId, userId: partnerId } },
+    data: { shares: ["balance", "goals"] },
+  });
+}
+
 async function main() {
   const now = new Date();
   const today = utcDate(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
@@ -1142,6 +1199,7 @@ async function main() {
   const tariffCount = await seedTariffs(householdId, accountIds.checking, today);
   const decisionCount = await seedMoneyTalk(householdId, user.id, partner.id, today);
   const pactCount = await seedPacts(householdId, user.id, today);
+  await seedTogether(householdId, partner.id, today);
   // "Radiografia dei costi": the ETF costs little, the pension fund sold at the bank much more.
   await prisma.investmentCost.createMany({
     data: [
