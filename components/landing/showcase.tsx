@@ -8,10 +8,12 @@ import {
   ChevronLeft,
   ChevronRight,
   CloudOff,
+  Coffee,
   Coins,
   Eye,
   EyeOff,
   FileText,
+  FolderHeart,
   GalleryVerticalEnd,
   Handshake,
   HandCoins,
@@ -22,12 +24,14 @@ import {
   PiggyBank,
   Receipt,
   Repeat,
+  ShieldCheck,
   ShoppingBag,
   Sparkles,
   Target,
   Trophy,
   TrendingUp,
   Upload,
+  Users,
   Wallet,
   X,
   Zap,
@@ -82,22 +86,27 @@ export function SectionTitle({
 
 const FEATURES: { icon: LucideIcon; label: string }[] = [
   { icon: Mic, label: "Inserimento a voce" },
+  { icon: Wallet, label: "Lo stipendio vero" },
+  { icon: HandCoins, label: "Soldi ritrovati" },
+  { icon: Receipt, label: "Riprenditeli: lettere e rimborsi" },
+  { icon: FileText, label: "Radar dei diritti e 730" },
+  { icon: Coins, label: "Tariffometro: RC auto, conto, luce" },
+  { icon: ShieldCheck, label: "Il crash test" },
+  { icon: Sparkles, label: "Coach con le tue regole" },
+  { icon: Target, label: "Il patto" },
+  { icon: ShoppingBag, label: "Posso permettermelo?" },
   { icon: Hourglass, label: "Il prezzo in ore di lavoro" },
   { icon: CalendarClock, label: "Previsione a 45 giorni" },
-  { icon: TrendingUp, label: "Investimenti a parte" },
-  { icon: Sparkles, label: "Coach con le tue regole" },
-  { icon: ShoppingBag, label: "Posso permettermelo?" },
-  { icon: HandCoins, label: "Il 730 che si scrive da solo" },
-  { icon: Receipt, label: "Doppi addebiti" },
+  { icon: TrendingUp, label: "Radiografia dei costi" },
   { icon: Repeat, label: "Abbonamenti e disdette" },
-  { icon: GalleryVerticalEnd, label: "Il mese in storie" },
   { icon: Handshake, label: "Conti chiari in coppia" },
+  { icon: Coffee, label: "Il caffè dei conti" },
+  { icon: Users, label: "Mio, tuo, nostro" },
+  { icon: FolderHeart, label: "Fascicolo di famiglia" },
+  { icon: GalleryVerticalEnd, label: "Il mese in storie" },
   { icon: EyeOff, label: "Modalità discreta" },
   { icon: CloudOff, label: "Funziona offline" },
-  { icon: Coins, label: "30 valute" },
-  { icon: FileText, label: "Report PDF" },
   { icon: Upload, label: "Import CSV" },
-  { icon: Target, label: "Budget e obiettivi" },
   { icon: Landmark, label: "Piano debiti" },
   { icon: Trophy, label: "Traguardi" },
 ];
@@ -114,9 +123,9 @@ export function FeatureMarquee() {
   );
   return (
     <section aria-label="Tutte le funzioni" className="grid gap-4 py-6">
-      <Marquee seconds={55}>{FEATURES.slice(0, 9).map(pill)}</Marquee>
-      <Marquee seconds={60} reverse>
-        {FEATURES.slice(9).map(pill)}
+      <Marquee seconds={60}>{FEATURES.slice(0, 12).map(pill)}</Marquee>
+      <Marquee seconds={65} reverse>
+        {FEATURES.slice(12).map(pill)}
       </Marquee>
     </section>
   );
@@ -167,15 +176,15 @@ const STEPS: {
   },
   {
     icon: CalendarClock,
-    title: "Vedi il futuro del saldo.",
-    text: "I soldi che puoi spendere, gli investimenti a parte, entrate, uscite e la previsione dei prossimi 45 giorni, con stipendio e bollette nei loro giorni. Ti avvisa prima di andare in rosso.",
+    title: "Sai quanto puoi spendere.",
+    text: "Lo stipendio vero: quanto puoi spendere fino al prossimo stipendio, con le spese grosse dell'anno già messe da parte. Più la previsione dei prossimi 45 giorni, che ti avvisa prima di andare in rosso.",
     image: SHOTS.mobileDashboard,
     alt: "La dashboard di FinTrack sul telefono con i soldi disponibili e gli investimenti",
   },
   {
     icon: HandCoins,
-    title: "Soldi ritrovati.",
-    text: "Rimborsi del 730, doppi addebiti, abbonamenti aumentati e commissioni: un contatore dei soldi che puoi farti restituire o smettere di perdere.",
+    title: "Soldi ritrovati, e ripresi.",
+    text: "Rimborsi del 730, doppi addebiti, abbonamenti aumentati e commissioni: un contatore dei soldi che puoi farti restituire. Con Riprenditeli prepari la lettera e segui la pratica fino al rimborso.",
     image: SHOTS.mobileRitrovati,
     alt: "Soldi ritrovati: 221,85 € trovati, con il rimborso 730 stimato",
   },
@@ -214,12 +223,12 @@ export function StoryScroll() {
   }, []);
 
   return (
-    <section id="funzioni" className="relative mx-auto max-w-6xl scroll-mt-24 px-4 py-24">
+    <section id="come-funziona" className="relative mx-auto max-w-6xl scroll-mt-24 px-4 py-24">
       <SectionTitle
         eyebrow="Dentro FinTrack"
         title={
           <>
-            Cinque superpoteri, <span className="lp-gradient-text">in tasca.</span>
+            Come funziona, <span className="lp-gradient-text">in cinque passi.</span>
           </>
         }
         text="Non un altro foglio Excel: FinTrack fa i conti al posto tuo e te li racconta in modo che restino in testa."

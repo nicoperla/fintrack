@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import {
+  BadgeCheck,
   Check,
   ChevronDown,
   FileText,
@@ -13,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { CountUp, Reveal, SpotlightCard } from "@/components/landing/effects";
@@ -40,17 +42,19 @@ export function Found730() {
           eyebrow="Soldi ritrovati"
           title={
             <>
-              Il 730 che <span className="lp-gradient-text">si scrive da solo.</span>
+              Il 730, con le spese{" "}
+              <span className="lp-gradient-text">che il precompilato non sa.</span>
             </>
           }
-          text="Farmacia, visite, dentista, veterinario, scuola e sport dei figli, abbonamento ai mezzi: mentre registri le spese, FinTrack mette da parte quelle detraibili e ti dice quanto ti torna. A maggio scarichi il dossier per il CAF."
+          text="Farmacia, visite, dentista, veterinario, scuola e sport dei figli, abbonamento ai mezzi: mentre registri le spese, FinTrack mette da parte quelle detraibili e ti dice quanto ti torna. Quando esce il precompilato, il Radar dei diritti le confronta con il tuo e ti mostra cosa manca."
         />
         <Reveal delay={0.1}>
           <ul className="grid gap-3 text-white/75">
             {[
               "Ti avvisa se paghi in contanti una spesa che deve essere tracciabile",
-              "Trova i doppi addebiti, gli abbonamenti aumentati e quelli in scadenza",
-              "Prepara la lettera di disdetta: la copi e la mandi",
+              "Calcola la detrazione per l'affitto, che nel precompilato di solito manca",
+              "Ti ricorda il credito welfare aziendale prima che scada",
+              "Con Pro scarichi il dossier per il CAF, spesa per spesa",
             ].map((item) => (
               <li key={item} className="flex gap-3">
                 <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-400/15">
@@ -135,6 +139,62 @@ export function Found730() {
   );
 }
 
+const FREE_PLAN = [
+  "Movimenti, conti, budget, obiettivi, debiti e investimenti, senza limiti",
+  "Inserimento rapido e a voce, import CSV, 30 valute, anche offline",
+  "Lo stipendio vero, la previsione a 45 giorni e il crash test",
+  "Coach con punteggio, piano e consigli; il patto e il mese in storie",
+  "Tariffometro, Radar dei diritti e Radiografia dei costi",
+  "In coppia: Conti chiari, il caffè dei conti, Mio tuo nostro",
+  "Soldi ritrovati: quanto puoi recuperare, e una pratica alla volta",
+];
+
+const PRO_PLAN = [
+  "Tutto il piano gratuito",
+  "Soldi ritrovati in dettaglio: ogni spesa detraibile, ogni doppio addebito, ogni aumento",
+  "Il dossier 730 in PDF e le lettere di disdetta pronte",
+  "Riprenditeli senza limiti, con le lettere in PDF per la raccomandata",
+  "Il coach AI: chiedi qualsiasi cosa, risponde con i tuoi numeri",
+  "Il fascicolo di famiglia in PDF e da condividere con chi ti fidi",
+];
+
+/** Free and Pro side by side, row by row. true: included; a string: how much. */
+const COMPARE: { label: string; free: boolean | string; pro: boolean | string }[] = [
+  { label: "Conti, movimenti, budget, obiettivi, debiti, investimenti", free: true, pro: true },
+  { label: "Inserimento a voce, import CSV, offline, 30 valute", free: true, pro: true },
+  { label: "Lo stipendio vero, previsione, crash test", free: true, pro: true },
+  { label: "Coach: punteggio, piano e consigli", free: true, pro: true },
+  { label: "Coach AI: domande libere sui tuoi soldi", free: false, pro: "30 al giorno" },
+  { label: "Tariffometro, Radar dei diritti, Radiografia dei costi", free: true, pro: true },
+  { label: "Soldi ritrovati: il totale da recuperare", free: true, pro: true },
+  { label: "Soldi ritrovati: le voci una per una", free: false, pro: true },
+  { label: "Dossier 730 in PDF per il CAF", free: false, pro: true },
+  { label: "Riprenditeli: pratiche in corso", free: "1 alla volta", pro: "Senza limiti" },
+  { label: "Lettere in PDF per la raccomandata", free: false, pro: true },
+  { label: "Fascicolo di famiglia", free: "Da consultare", pro: "PDF e link" },
+  { label: "Spazi in coppia, Conti chiari, caffè dei conti", free: true, pro: true },
+  { label: "Il patto, il mese in storie, traguardi, report PDF", free: true, pro: true },
+];
+
+function Cell({ value, pro }: { value: boolean | string; pro?: boolean }) {
+  if (value === true) {
+    return (
+      <Check
+        className={cn("mx-auto size-4", pro ? "text-fuchsia-300" : "text-emerald-300")}
+        aria-label="Incluso"
+      />
+    );
+  }
+  if (value === false) {
+    return (
+      <span className="text-white/25" aria-label="Non incluso">
+        —
+      </span>
+    );
+  }
+  return <span className={cn("text-xs", pro ? "text-white" : "text-white/60")}>{value}</span>;
+}
+
 export function Pricing({ priceLabel }: { priceLabel: string | null }) {
   return (
     <section id="prezzi" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-24">
@@ -142,10 +202,11 @@ export function Pricing({ priceLabel }: { priceLabel: string | null }) {
         eyebrow="Prezzi"
         title={
           <>
-            Gratis. <span className="lp-gradient-text">Pro per recuperare di più.</span>
+            Gratis per tenere i conti.{" "}
+            <span className="lp-gradient-text">Pro per riprenderti i soldi.</span>
           </>
         }
-        text="Tutta l'app è gratuita e ti mostra quanti soldi puoi recuperare. Con Pro vedi esattamente quali, scarichi il dossier 730 e chiedi qualsiasi cosa al coach AI."
+        text="Il piano gratuito ha tutta l'app e ti dice quanto puoi recuperare. Pro ti dà gli strumenti per farlo davvero: le voci una per una, le lettere, le pratiche senza limiti e il coach AI."
       />
       <div className="mx-auto mt-14 grid max-w-4xl gap-5 md:grid-cols-2">
         <Reveal>
@@ -153,17 +214,10 @@ export function Pricing({ priceLabel }: { priceLabel: string | null }) {
             <div>
               <h3 className={cn(DISPLAY, "text-xl font-semibold text-white")}>Gratis</h3>
               <p className={cn(DISPLAY, "mt-2 text-5xl font-semibold text-white")}>0 €</p>
-              <p className="mt-1 text-sm text-white/50">per sempre</p>
+              <p className="mt-1 text-sm text-white/50">per sempre, senza carta di credito</p>
             </div>
             <ul className="grid flex-1 gap-2.5 text-sm text-white/75">
-              {[
-                "Movimenti, conti, budget, obiettivi e debiti illimitati",
-                "Inserimento rapido e a voce, import CSV",
-                "Previsione, ore di lavoro, analisi e report PDF",
-                "Coach con punteggio, consigli e «Posso permettermelo?»",
-                "Il mese in storie e conti chiari in coppia",
-                "Soldi ritrovati: il totale da recuperare",
-              ].map((item) => (
+              {FREE_PLAN.map((item) => (
                 <li key={item} className="flex gap-2.5">
                   <Check className="mt-0.5 size-4 shrink-0 text-emerald-300" aria-hidden />
                   {item}
@@ -174,7 +228,7 @@ export function Pricing({ priceLabel }: { priceLabel: string | null }) {
               href="/register"
               className="inline-flex h-11 items-center justify-center rounded-full border border-white/15 bg-white/5 font-medium text-white transition-colors hover:bg-white/10"
             >
-              Crea un account
+              Crea un account gratis
             </Link>
           </SpotlightCard>
         </Reveal>
@@ -189,23 +243,21 @@ export function Pricing({ priceLabel }: { priceLabel: string | null }) {
                   )}
                 >
                   Pro <Sparkles className="size-4 text-fuchsia-300" aria-hidden />
+                  <span className="rounded-full bg-fuchsia-400/15 px-2 py-0.5 text-xs font-medium text-fuchsia-200">
+                    Si ripaga
+                  </span>
                 </h3>
                 <p className={cn(DISPLAY, "mt-2 text-5xl font-semibold text-white")}>
                   {priceLabel ?? "Presto"}
                 </p>
                 <p className="mt-1 text-sm text-white/50">
                   {priceLabel
-                    ? "disdici quando vuoi, in due clic"
+                    ? "disdici quando vuoi, in due clic, e resti Pro fino a fine periodo"
                     : "i pagamenti apriranno a breve"}
                 </p>
               </div>
               <ul className="grid flex-1 gap-2.5 text-sm text-white/80">
-                {[
-                  "Tutto quello che c'è nel piano gratuito",
-                  "Soldi ritrovati in dettaglio: le spese detraibili una per una e il dossier 730",
-                  "Doppi addebiti, aumenti e rinnovi, con le lettere di disdetta pronte",
-                  "Coach AI: chiedi qualsiasi cosa, risponde con i tuoi numeri",
-                ].map((item) => (
+                {PRO_PLAN.map((item) => (
                   <li key={item} className="flex gap-2.5">
                     <Check className="mt-0.5 size-4 shrink-0 text-fuchsia-300" aria-hidden />
                     {item}
@@ -219,6 +271,57 @@ export function Pricing({ priceLabel }: { priceLabel: string | null }) {
           </div>
         </Reveal>
       </div>
+
+      <Reveal className="mx-auto mt-8 max-w-4xl">
+        <div className="flex gap-3 rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.06] p-5 text-sm text-white/75">
+          <HandCoins className="mt-0.5 size-5 shrink-0 text-emerald-300" aria-hidden />
+          <p>
+            <span className="font-semibold text-white">Perché conviene.</span> Un abbonamento
+            dimenticato da 9,99 € al mese sono 119,88 € l&apos;anno. Un addebito contestato, una
+            commissione restituita, una spesa medica che il precompilato non aveva: spesso ne basta
+            una per ripagare Pro. E il contatore del piano gratuito ti dice prima quanto c&apos;è da
+            recuperare.
+          </p>
+        </div>
+      </Reveal>
+
+      <Reveal className="mx-auto mt-12 max-w-4xl">
+        <h3 className={cn(DISPLAY, "mb-4 text-center text-2xl font-semibold text-white")}>
+          Confronta i piani
+        </h3>
+        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03]">
+          <table className="w-full min-w-[520px] text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-white/60">
+                <th scope="col" className="px-4 py-3 text-left font-medium">
+                  Cosa c&apos;è
+                </th>
+                <th scope="col" className="w-28 px-4 py-3 text-center font-medium">
+                  Gratis
+                </th>
+                <th scope="col" className="w-28 px-4 py-3 text-center font-medium text-fuchsia-200">
+                  Pro
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE.map((row) => (
+                <tr key={row.label} className="border-b border-white/5 last:border-0">
+                  <th scope="row" className="px-4 py-2.5 text-left font-normal text-white/75">
+                    {row.label}
+                  </th>
+                  <td className="px-4 py-2.5 text-center">
+                    <Cell value={row.free} />
+                  </td>
+                  <td className="bg-violet-500/[0.05] px-4 py-2.5 text-center">
+                    <Cell value={row.pro} pro />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Reveal>
     </section>
   );
 }
@@ -243,6 +346,16 @@ const TRUST = [
     icon: Lock,
     title: "AI solo se vuoi",
     text: "Il coach AI legge un riepilogo solo dopo il tuo consenso esplicito.",
+  },
+  {
+    icon: BadgeCheck,
+    title: "Niente da venderti",
+    text: "Non vendiamo polizze, fondi o conti e non prendiamo commissioni: i confronti usano solo dati pubblici.",
+  },
+  {
+    icon: Users,
+    title: "In coppia, ognuno il suo",
+    text: "Lo spazio comune lo vedete tutti; del tuo spazio personale l'altro vede solo ciò che scegli.",
   },
 ];
 
@@ -305,24 +418,40 @@ export function Trust() {
 
 const FAQ = [
   {
+    q: "Cosa cambia tra il piano gratuito e Pro?",
+    a: "Con il piano gratuito hai tutta l'app per tenere i conti e sai quanto puoi recuperare. Pro ti dà gli strumenti per recuperarlo: le voci di Soldi ritrovati una per una, il dossier 730 in PDF, le lettere di disdetta, le pratiche di Riprenditeli senza limiti, il coach AI e il fascicolo di famiglia da scaricare e condividere.",
+  },
+  {
+    q: "Posso disdire Pro quando voglio?",
+    a: "Sì, dalle impostazioni, in due clic. Resti Pro fino alla fine del periodo già pagato, poi torni al piano gratuito senza perdere niente di quello che hai registrato.",
+  },
+  {
     q: "Devo collegare il conto in banca?",
     a: "No. Registri le spese a parole, a voce o importando il CSV della banca. Nessun accesso ai tuoi conti, nessuna credenziale bancaria.",
+  },
+  {
+    q: "Come funziona Riprenditeli? Mandate voi le lettere?",
+    a: "No, le mandi tu: FinTrack prepara la lettera con le norme giuste (disdetta, rimborso di un addebito SEPA, reclamo alla banca, addebito doppio), tu la invii per email, PEC o raccomandata. Poi FinTrack tiene le scadenze di legge per la risposta e ti dice il passo successivo.",
+  },
+  {
+    q: "Come fa a stimare il rimborso del 730?",
+    a: "Riconosce le spese detraibili dalla categoria e dalla descrizione e applica le regole del 19%: franchigie, limiti per tipo e per figlio, pagamento tracciabile. Il Radar dei diritti le confronta con il tuo precompilato. È una stima da verificare col CAF: lo diciamo chiaramente anche nel dossier.",
+  },
+  {
+    q: "FinTrack mi dice dove investire o quale polizza fare?",
+    a: "No. Non è una consulenza e non vendiamo prodotti. Il Tariffometro e la Radiografia dei costi confrontano quello che paghi con medie pubbliche (IVASS, Banca d'Italia, ARERA, ESMA) e ti lasciano le domande giuste da fare: la scelta resta tua.",
   },
   {
     q: "Funziona sul telefono?",
     a: "Sì: si apre dal browser e si installa come un'app sulla schermata home. Registra le spese anche offline e le sincronizza appena torni online.",
   },
   {
-    q: "Come fa a stimare il rimborso del 730?",
-    a: "Riconosce le spese detraibili dalla categoria e dalla descrizione e applica le regole del 19%: franchigie, limiti per tipo e per figlio, pagamento tracciabile. È una stima da verificare col CAF: lo diciamo chiaramente anche nel dossier.",
+    q: "Posso usarlo in coppia o in famiglia?",
+    a: "Sì: inviti chi vuoi nel tuo spazio e vedete gli stessi conti, budget e obiettivi. Conti chiari vi dice chi deve quanto a chi, il caffè dei conti vi prepara la chiacchierata del mese, e ognuno può tenere uno spazio personale di cui l'altro vede solo ciò che sceglie.",
   },
   {
     q: "Il coach AI legge i miei movimenti?",
     a: "Solo se lo attivi tu: prima ti chiediamo il consenso e ti diciamo a quale fornitore va il riepilogo. Senza consenso il coach funziona lo stesso, con i calcoli fatti dall'app.",
-  },
-  {
-    q: "Posso usarlo in coppia o in famiglia?",
-    a: "Sì: inviti chi vuoi nel tuo spazio e vedete gli stessi conti, budget e obiettivi. Conti chiari vi dice chi deve quanto a chi, a metà o in base agli stipendi.",
   },
   {
     q: "E se voglio andarmene?",

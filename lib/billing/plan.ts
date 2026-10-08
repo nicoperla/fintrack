@@ -26,4 +26,5 @@ export const PRO_FEATURES = [
   "Riprenditeli: tutte le pratiche che vuoi per riavere i tuoi soldi, con le lettere in PDF per la raccomandata",
   "Coach AI: chiedi qualsiasi cosa sui tuoi soldi, risponde con i tuoi numeri",
   "Fino a 30 domande al giorno al coach AI",
+  "Fascicolo di famiglia: il PDF da conservare e i link a scadenza per una persona di fiducia",
 ];

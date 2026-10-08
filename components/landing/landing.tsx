@@ -10,6 +10,8 @@ import {
   VideoShowcase,
 } from "@/components/landing/showcase";
 import { FinalCta, Footer, Found730, Faq, Pricing, Trust } from "@/components/landing/closing";
+import { FeatureCatalog } from "@/components/landing/feature-catalog";
+import { PaysBack } from "@/components/landing/pays-back";
 import { StarfieldProvider } from "@/components/landing/starfield";
 import { cn } from "@/lib/utils";
 
@@ -46,10 +48,12 @@ export function Landing({
             <Hero />
             <FeatureMarquee />
             <Numbers />
+            <PaysBack />
             <StoryScroll />
             <VideoShowcase />
-            <Bento />
+            <FeatureCatalog />
             <Found730 />
+            <Bento />
             <Gallery />
             <Pricing priceLabel={priceLabel} />
             <Trust />

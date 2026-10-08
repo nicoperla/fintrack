@@ -11,13 +11,13 @@ import {
 } from "motion/react";
 import {
   ArrowRight,
-  CalendarClock,
+  BadgeEuro,
   Check,
+  Gauge,
   HandCoins,
-  Hourglass,
   Mic,
   Play,
-  Sparkles,
+  RotateCcw,
   type LucideIcon,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo-mark";
@@ -77,9 +77,9 @@ export function PrimaryCta({
 }
 
 const NAV = [
+  { href: "#recupera", label: "Si ripaga" },
   { href: "#funzioni", label: "Funzioni" },
   { href: "#video", label: "Video" },
-  { href: "#ritrovati", label: "730" },
   { href: "#prezzi", label: "Prezzi" },
   { href: "#faq", label: "FAQ" },
 ];
@@ -172,8 +172,8 @@ const CHIPS: {
   tint: string;
 }[] = [
   {
-    icon: Hourglass,
-    text: "Sigarette 6,20 € = 27 min di lavoro",
+    icon: BadgeEuro,
+    text: "Stipendio vero: 38 € al giorno fino al 27",
     className: "-top-5 -left-1 lg:top-[9%] lg:left-auto lg:right-[84%]",
     delay: 0.9,
     float: 6,
@@ -196,16 +196,16 @@ const CHIPS: {
     tint: "text-cyan-300",
   },
   {
-    icon: CalendarClock,
-    text: "Tra 45 giorni: mai sotto 912 €",
+    icon: RotateCcw,
+    text: "Rimborso addebito: +39,90 € ripresi",
     className: "hidden lg:flex bottom-[10%] left-[82%]",
     delay: 1.5,
     float: 6.5,
     tint: "text-indigo-300",
   },
   {
-    icon: Sparkles,
-    text: "Coach: metti da parte 380 € il 27",
+    icon: Gauge,
+    text: "RC auto: paghi più di 7 su 10",
     className: "hidden lg:flex -bottom-[8%] left-1/2 -translate-x-1/2",
     delay: 1.7,
     float: 7.5,
@@ -301,7 +301,7 @@ export function Hero() {
       <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-4 pt-32 pb-28 lg:grid-cols-[1.08fr_1fr] lg:pt-40 lg:pb-36">
         <div className="relative z-10 grid justify-items-center gap-7 text-center lg:justify-items-start lg:text-left">
           <a
-            href="#ritrovati"
+            href="#recupera"
             className="lp-rise lp-glow-border inline-flex items-center gap-2 rounded-full bg-white/[0.04] py-1 pr-3 pl-1 text-sm text-white/80 backdrop-blur transition-colors hover:text-white"
             style={{ animationDelay: "0.05s" }}
           >
@@ -310,8 +310,8 @@ export function Hero() {
             </span>
             {/* Shorter on phones, so the pill stays on one line. */}
             <span>
-              <span className="hidden sm:inline">Soldi ritrovati: il 730</span>
-              <span className="sm:hidden">Il 730</span> che si scrive da solo
+              <span className="hidden sm:inline">Riprenditeli: dai soldi ritrovati </span>
+              <span className="sm:hidden">Riprenditeli: </span>ai soldi riavuti
             </span>
             <ArrowRight className="size-3.5 shrink-0" aria-hidden />
           </a>
@@ -334,9 +334,9 @@ export function Hero() {
             className="lp-rise max-w-xl text-lg text-pretty text-white/65"
             style={{ animationDelay: "0.3s" }}
           >
-            Registri una spesa in tre secondi, anche a voce. FinTrack ti dice quanto ti costa in ore
-            di lavoro, dove andrà il saldo e quanto ti torna dal 730. E un coach ti guida con le tue
-            regole.
+            FinTrack tiene i conti al posto tuo, ti dice quanto puoi spendere davvero e va a cercare
+            i soldi che stai perdendo: il rimborso del 730, gli abbonamenti dimenticati, la luce e
+            l&apos;RC auto che paghi più degli altri. Poi ti aiuta a riprenderteli.
           </p>
 
           <div
@@ -365,12 +365,14 @@ export function Hero() {
             className="lp-rise flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-white/55 lg:justify-start"
             style={{ animationDelay: "0.6s" }}
           >
-            {["Gratis per sempre", "Nessun collegamento alla banca", "Dati in Europa"].map((t) => (
-              <li key={t} className="flex items-center gap-1.5">
-                <Check className="size-4 text-emerald-300" aria-hidden />
-                {t}
-              </li>
-            ))}
+            {["Piano gratuito per sempre", "Nessun accesso alla tua banca", "Dati in Europa"].map(
+              (t) => (
+                <li key={t} className="flex items-center gap-1.5">
+                  <Check className="size-4 text-emerald-300" aria-hidden />
+                  {t}
+                </li>
+              ),
+            )}
           </ul>
         </div>
 

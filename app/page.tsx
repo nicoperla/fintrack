@@ -6,7 +6,7 @@ import { formatCurrency } from "@/lib/format";
 import { Landing } from "@/components/landing/landing";
 
 const description =
-  "L'app italiana per le finanze personali: spese in tre secondi anche a voce, il prezzo in ore di lavoro, la previsione del saldo, il 730 che si scrive da solo e un coach che segue le tue regole. Gratis.";
+  "L'app italiana per i soldi di casa: tiene i conti in tre secondi anche a voce, ti dice quanto puoi spendere davvero e trova i soldi che stai perdendo, dal rimborso del 730 agli abbonamenti dimenticati, con le lettere per riprenderteli. Gratis per iniziare.";
 
 export const metadata: Metadata = {
   title: "FinTrack · I tuoi soldi, finalmente chiari",
