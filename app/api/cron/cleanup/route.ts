@@ -14,13 +14,14 @@ export async function GET(request: Request) {
   }
 
   const now = new Date();
-  const [rateLimits, resetTokens, emailTokens, invites] = await prisma.$transaction([
+  const [rateLimits, resetTokens, emailTokens, invites, loginTickets] = await prisma.$transaction([
     prisma.rateLimit.deleteMany({
       where: { windowStart: { lt: new Date(now.getTime() - DAY_MS) } },
     }),
     prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: now } } }),
     prisma.emailVerificationToken.deleteMany({ where: { expiresAt: { lt: now } } }),
     prisma.householdInvite.deleteMany({ where: { expiresAt: { lt: now } } }),
+    prisma.loginTicket.deleteMany({ where: { expiresAt: { lt: now } } }),
   ]);
 
   return Response.json({
@@ -28,5 +29,6 @@ export async function GET(request: Request) {
     resetTokens: resetTokens.count,
     emailTokens: emailTokens.count,
     invites: invites.count,
+    loginTickets: loginTickets.count,
   });
 }

@@ -12,7 +12,7 @@ type FieldShellProps = {
   children: (a11y: { id: string; "aria-invalid"?: true; "aria-describedby"?: string }) => ReactNode;
 };
 
-function FieldShell({ label, name, errors, hint, children }: FieldShellProps) {
+export function FieldShell({ label, name, errors, hint, children }: FieldShellProps) {
   const error = errors?.[0];
   const describedBy = error ? `${name}-error` : hint ? `${name}-hint` : undefined;
   return (

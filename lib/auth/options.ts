@@ -1,52 +1,51 @@
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/db/prisma";
-import { verifyPassword } from "@/lib/auth/password";
-import { loginSchema } from "@/lib/validations/auth";
-import { clientIp, rateLimit, RULES } from "@/lib/rate-limit";
+import { z } from "zod";
+import { deviceIdFromCookieHeader } from "@/lib/auth/devices";
+import { isTicket, redeemTicket } from "@/lib/auth/login-ticket";
 
-/** The login form shows a "too many attempts" message for this error. */
-export const RATE_LIMITED = "RATE_LIMITED";
-
-// Compared against when the email is unknown, so response time doesn't reveal which emails exist.
-const DUMMY_HASH = "$2b$12$GNMrHoKeK2LNEa.gtMgSDOro/8YpSF.ZdEXbGrUIb/RF3mSVayrhe";
+const ticketLogin = z.object({
+  ticket: z.string().refine(isTicket),
+  code: z.string().trim().max(20).optional(),
+});
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
-      name: "Email e password",
+      name: "FinTrack",
+      // No password here: the sign-in server action checked it and issued the ticket
+      // (lib/auth/login-ticket.ts). This step only adds the 2FA code, when it's on.
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        ticket: { label: "Ticket", type: "text" },
+        code: { label: "Codice", type: "text" },
       },
       async authorize(credentials, req) {
-        const parsed = loginSchema.safeParse(credentials);
+        const parsed = ticketLogin.safeParse(credentials);
         if (!parsed.success) return null;
-
-        // Before checking the password, so guessing is slowed down whatever the outcome.
-        const [byEmail, byIp] = await Promise.all([
-          rateLimit(`login:email:${parsed.data.email}`, RULES.loginEmail),
-          rateLimit(`login:ip:${clientIp(req?.headers)}`, RULES.loginIp),
-        ]);
-        if (!byEmail.ok || !byIp.ok) throw new Error(RATE_LIMITED);
-
-        const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-        const valid = await verifyPassword(parsed.data.password, user?.passwordHash ?? DUMMY_HASH);
-        if (!user || !valid) return null;
-
-        return { id: user.id, email: user.email, name: user.name };
+        const cookie = req?.headers?.cookie;
+        const result = await redeemTicket({
+          token: parsed.data.ticket,
+          code: parsed.data.code || undefined,
+          deviceId: deviceIdFromCookieHeader(typeof cookie === "string" ? cookie : undefined),
+        });
+        if (!result.ok) throw new Error(result.error);
+        return result.user;
       },
     }),
   ],
   callbacks: {
     jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+        token.sv = user.sessionVersion;
+      }
       return token;
     },
     session({ session, token }) {
       if (session.user) session.user.id = token.id;
+      session.sv = token.sv ?? 0;
       return session;
     },
   },

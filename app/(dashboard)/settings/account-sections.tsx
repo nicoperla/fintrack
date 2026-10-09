@@ -108,8 +108,11 @@ export function BillingSection({ billing }: { billing: BillingInfo }) {
 export function PrivacySection({
   aiConsent,
   aiProvider,
+  twoFactor,
 }: {
   aiConsent: boolean;
+  /** Deleting the account then needs the 2FA code too. */
+  twoFactor: boolean;
   /** Who receives the data when the AI coach is on; null when no AI is configured. */
   aiProvider: string | null;
 }) {
@@ -189,7 +192,7 @@ export function PrivacySection({
         </Button>
       </div>
 
-      <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} />
+      <DeleteAccountDialog open={deleteOpen} onOpenChange={setDeleteOpen} twoFactor={twoFactor} />
     </div>
   );
 }
@@ -197,9 +200,11 @@ export function PrivacySection({
 function DeleteAccountDialog({
   open,
   onOpenChange,
+  twoFactor,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  twoFactor: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<ActionResult | null>(null);
@@ -211,6 +216,7 @@ function DeleteAccountDialog({
     const res = await deleteAccount({
       password: String(form.get("password") ?? ""),
       confirm: String(form.get("confirm") ?? ""),
+      code: twoFactor ? String(form.get("code") ?? "") : undefined,
     }).catch((): ActionResult => ({ ok: false, error: "Eliminazione non riuscita. Riprova." }));
     if (!res.ok) {
       setPending(false);
@@ -246,6 +252,16 @@ function DeleteAccountDialog({
             autoComplete="current-password"
             errors={result?.fieldErrors?.password}
           />
+          {twoFactor && (
+            <FormField
+              label="Codice dell'app o codice di recupero"
+              name="code"
+              autoComplete="one-time-code"
+              autoCapitalize="none"
+              spellCheck={false}
+              errors={result?.fieldErrors?.code}
+            />
+          )}
           <FormField
             label="Scrivi ELIMINA per confermare"
             name="confirm"

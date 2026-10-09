@@ -174,6 +174,7 @@ const COMPARE: { label: string; free: boolean | string; pro: boolean | string }[
   { label: "Fascicolo di famiglia", free: "Da consultare", pro: "PDF e link" },
   { label: "Spazi in coppia, Conti chiari, caffè dei conti", free: true, pro: true },
   { label: "Il patto, il mese in storie, traguardi, report PDF", free: true, pro: true },
+  { label: "Verifica in due passaggi e avvisi di accesso", free: true, pro: true },
 ];
 
 function Cell({ value, pro }: { value: boolean | string; pro?: boolean }) {
@@ -335,7 +336,7 @@ const TRUST = [
   {
     icon: ShieldCheck,
     title: "Niente pubblicità",
-    text: "Non vendiamo dati e non ti profiliamo. Mai.",
+    text: "Non vendiamo dati e non ti profiliamo. Il coach AI legge un riepilogo solo se gli dai il consenso.",
   },
   {
     icon: Trash2,
@@ -344,8 +345,8 @@ const TRUST = [
   },
   {
     icon: Lock,
-    title: "AI solo se vuoi",
-    text: "Il coach AI legge un riepilogo solo dopo il tuo consenso esplicito.",
+    title: "Accesso blindato",
+    text: "Verifica in due passaggi con l'app di autenticazione e un'email se qualcuno entra da un dispositivo nuovo.",
   },
   {
     icon: BadgeCheck,
@@ -448,6 +449,10 @@ const FAQ = [
   {
     q: "Posso usarlo in coppia o in famiglia?",
     a: "Sì: inviti chi vuoi nel tuo spazio e vedete gli stessi conti, budget e obiettivi. Conti chiari vi dice chi deve quanto a chi, il caffè dei conti vi prepara la chiacchierata del mese, e ognuno può tenere uno spazio personale di cui l'altro vede solo ciò che sceglie.",
+  },
+  {
+    q: "Come proteggete il mio account?",
+    a: "Le password sono salvate con bcrypt e controllate contro quelle finite nei furti di dati. Puoi attivare la verifica in due passaggi con Google o Microsoft Authenticator, 1Password o Bitwarden: senza il tuo telefono la password da sola non basta. Ti scriviamo se qualcuno entra da un dispositivo nuovo, e quando cambi password chiudiamo le sessioni aperte ovunque. I dati stanno a Francoforte, su connessioni cifrate.",
   },
   {
     q: "Il coach AI legge i miei movimenti?",

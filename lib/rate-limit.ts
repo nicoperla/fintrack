@@ -14,6 +14,16 @@ export const RULES = {
   /** Per email and per IP: slows down password guessing without locking anyone out for long. */
   loginEmail: { limit: 8, windowSeconds: 15 * 60 },
   loginIp: { limit: 30, windowSeconds: 15 * 60 },
+  /**
+   * 2FA codes, per account: with the password already known, 6 digits are only safe if
+   * guessing is this slow (at most 20 tries a day, 3 codes valid at a time).
+   */
+  twoFactor: { limit: 5, windowSeconds: 15 * 60 },
+  twoFactorDaily: { limit: 20, windowSeconds: 24 * 60 * 60 },
+  /** The password asked again in settings (2FA, password change, account deletion), per user. */
+  reauth: { limit: 10, windowSeconds: 15 * 60 },
+  /** "Someone knows your password" emails, per user. */
+  securityAlert: { limit: 1, windowSeconds: 6 * 60 * 60 },
   register: { limit: 5, windowSeconds: 60 * 60 },
   resetEmail: { limit: 3, windowSeconds: 60 * 60 },
   resetIp: { limit: 10, windowSeconds: 60 * 60 },

@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { FormField, FormMessage } from "@/components/forms/form-field";
-import { registerUser } from "@/app/(auth)/actions";
-import type { ActionResult } from "@/lib/action-result";
+import { PasswordField } from "@/components/forms/password-field";
+import { registerUser, type LoginStep } from "@/app/(auth)/actions";
 
 export function RegisterForm({
   callbackUrl = "/dashboard",
@@ -18,7 +18,7 @@ export function RegisterForm({
   email?: string;
 }) {
   const router = useRouter();
-  const [result, setResult] = useState<ActionResult | null>(null);
+  const [result, setResult] = useState<LoginStep | null>(null);
   const [pending, setPending] = useState(false);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -32,17 +32,17 @@ export function RegisterForm({
       acceptTerms: form.get("acceptTerms") === "on",
     };
 
-    const res = await registerUser(values).catch(() => ({
+    const res = await registerUser(values).catch((): LoginStep => ({
       ok: false,
       error: "Registrazione non riuscita. Riprova tra poco.",
     }));
-    if (!res.ok) {
+    if (!res.ok || !res.ticket) {
       setResult(res);
       setPending(false);
       return;
     }
 
-    const login = await signIn("credentials", { ...values, redirect: false });
+    const login = await signIn("credentials", { ticket: res.ticket, redirect: false });
     if (!login?.ok) {
       router.replace("/login");
       return;
@@ -71,12 +71,12 @@ export function RegisterForm({
         required
         errors={errors?.email}
       />
-      <FormField
+      <PasswordField
         label="Password"
         name="password"
-        type="password"
         autoComplete="new-password"
-        placeholder="Almeno 8 caratteri"
+        placeholder="Almeno 10 caratteri"
+        hint="Più è lunga, meglio è: anche una frase di tre o quattro parole va benissimo."
         required
         errors={errors?.password}
       />

@@ -107,6 +107,14 @@ model User {
   taxProfile         Json?     @map("tax_profile")
   /// "Il crash test": the job, for the NASpI: kind of work, RAL and since when (lib/finance/crash-test.ts).
   crashProfile       Json?     @map("crash_profile")
+  /// Authenticator app secret, AES-GCM encrypted (lib/auth/secret-box.ts). Set during setup too.
+  totpSecret         String?   @map("totp_secret")
+  /// Two-step verification is on from this date; null: off (or setup not finished).
+  twoFactorEnabledAt DateTime? @map("two_factor_enabled_at")
+  /// The last 30-second step whose code was accepted: the same code never works twice.
+  totpLastStep       Int?      @map("totp_last_step")
+  /// Sessions carry this number: raising it signs the account out everywhere.
+  sessionVersion     Int       @default(0) @map("session_version")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -120,6 +128,9 @@ model User {
   transactions        Transaction[]
   passwordResetTokens PasswordResetToken[]
   emailTokens         EmailVerificationToken[]
+  loginTickets        LoginTicket[]
+  recoveryCodes       RecoveryCode[]
+  knownDevices        KnownDevice[]
   budgets             Budget[]
   goals               Goal[]
   debts               Debt[]
@@ -438,6 +449,58 @@ model EmailVerificationToken {
 
   @@index([userId])
   @@map("email_verification_tokens")
+}
+
+// Halfway through a sign-in: the password was right, the session is not issued yet. The client
+// trades the ticket (plus the 2FA code, when on) for a session; only its SHA-256 is stored.
+model LoginTicket {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  tokenHash        String   @unique @map("token_hash")
+  /// SHA-256 of the browser's device cookie: a ticket only works in the browser that got it.
+  deviceHash       String   @map("device_hash")
+  /// "Chrome su Windows", "Milano, IT": for the new-device email.
+  deviceLabel      String   @map("device_label")
+  place            String?
+  /// True when the second factor was already checked (e.g. just after enabling 2FA).
+  secondFactorDone Boolean  @default(false) @map("second_factor_done")
+  attempts         Int      @default(0)
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("login_tickets")
+}
+
+// Single-use codes to sign in without the authenticator app; only their SHA-256 is stored.
+model RecoveryCode {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+  codeHash String @map("code_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@map("recovery_codes")
+}
+
+// Browsers that signed in to an account: a sign-in from one not listed sends an email.
+model KnownDevice {
+  userId      String   @map("user_id")
+  /// SHA-256 of the random device cookie.
+  deviceHash  String   @map("device_hash")
+  label       String
+  place       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  lastLoginAt DateTime @default(now()) @map("last_login_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, deviceHash])
+  @@map("known_devices")
 }
 
 // Fixed-window counters for rate limiting (login, sign-up, password reset, coach…).

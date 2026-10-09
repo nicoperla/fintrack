@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db/prisma";
 import { requireUser } from "@/lib/auth/session";
 import { verifyPassword } from "@/lib/auth/password";
+import { checkSecondFactor } from "@/lib/auth/two-factor";
 import { sendVerificationEmail } from "@/lib/auth/email-verification";
 import { cancelCustomerSubscriptions } from "@/lib/billing/stripe";
 import { formatRetryAfter, rateLimit, RULES } from "@/lib/rate-limit";
@@ -38,6 +39,8 @@ const deleteSchema = z.object({
   confirm: z.string().refine((v) => v.trim().toUpperCase() === "ELIMINA", {
     message: "Scrivi ELIMINA per confermare",
   }),
+  /** Required when 2FA is on. */
+  code: z.string().trim().max(20).optional(),
 });
 
 /**
@@ -51,10 +54,37 @@ export async function deleteAccount(input: unknown): Promise<ActionResult> {
 
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: session.id },
-    select: { id: true, passwordHash: true, stripeCustomerId: true },
+    select: {
+      id: true,
+      passwordHash: true,
+      stripeCustomerId: true,
+      twoFactorEnabledAt: true,
+      totpSecret: true,
+      totpLastStep: true,
+    },
   });
+  // Its own limit: a session left open is not a way to guess the password.
+  const limit = await rateLimit(`reauth:${user.id}`, RULES.reauth);
+  if (!limit.ok) {
+    return {
+      ok: false,
+      error: `Troppi tentativi: riprova tra ${formatRetryAfter(limit.retryAfterSeconds)}.`,
+    };
+  }
   if (!(await verifyPassword(parsed.data.password, user.passwordHash))) {
     return { ok: false, fieldErrors: { password: ["Password non corretta"] } };
+  }
+  if (user.twoFactorEnabledAt) {
+    if (!parsed.data.code) return { ok: false, fieldErrors: { code: ["Inserisci il codice"] } };
+    const check = await checkSecondFactor(user, parsed.data.code);
+    if (!check.ok) {
+      return check.error === "RATE_LIMITED"
+        ? {
+            ok: false,
+            error: `Troppi codici sbagliati: riprova tra ${formatRetryAfter(check.retryAfterSeconds)}.`,
+          }
+        : { ok: false, fieldErrors: { code: ["Codice non valido"] } };
+    }
   }
 
   // Stop the subscription first: once the account is gone nobody could cancel it.

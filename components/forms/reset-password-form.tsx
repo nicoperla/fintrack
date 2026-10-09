@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { FormField, FormMessage } from "@/components/forms/form-field";
+import { FormMessage } from "@/components/forms/form-field";
+import { PasswordField } from "@/components/forms/password-field";
 import { resetPassword } from "@/app/(auth)/actions";
 import type { ActionResult } from "@/lib/action-result";
 
@@ -33,19 +34,18 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form onSubmit={onSubmit} className="grid gap-4" noValidate>
       {result?.error && <FormMessage tone="error">{result.error}</FormMessage>}
-      <FormField
+      <PasswordField
         label="Nuova password"
         name="password"
-        type="password"
         autoComplete="new-password"
-        placeholder="Almeno 8 caratteri"
+        placeholder="Almeno 10 caratteri"
+        hint="Dopo il cambio chiudiamo le sessioni aperte su tutti i dispositivi."
         required
         errors={errors?.password}
       />
-      <FormField
+      <PasswordField
         label="Conferma password"
         name="confirmPassword"
-        type="password"
         autoComplete="new-password"
         required
         errors={errors?.confirmPassword}

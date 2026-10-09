@@ -13,8 +13,30 @@ const nextConfig = {
       "/api/fascicolo/**": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
     },
   },
+  poweredByHeader: false,
   async headers() {
     return [
+      {
+        // Every page: HTTPS only, never inside someone else's frame (clickjacking), no MIME
+        // sniffing, no camera or location (the microphone is for voice entry), and the address
+        // of the page never sent to other sites. The token pages below tighten the Referer.
+        source: "/:path*",
+        headers: [
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+          { key: "X-Frame-Options", value: "DENY" },
+          {
+            key: "Content-Security-Policy",
+            value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+          },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), geolocation=(), microphone=(self), payment=(), usb=()",
+          },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+        ],
+      },
       {
         // The family file opened from a shared link: never indexed, cached or leaked through
         // the Referer header (the token is in the URL).

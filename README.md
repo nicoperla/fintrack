@@ -33,6 +33,7 @@ Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
 | `DIRECT_URL`              | locale + Vercel              | Connessione Neon **diretta** (host senza `-pooler`), per le migrazioni                                                                  |
 | `NEXTAUTH_SECRET`         | locale + Vercel              | Chiave per firmare le sessioni; usa valori diversi in locale e produzione                                                               |
 | `NEXTAUTH_URL`            | locale + Vercel (Production) | URL pubblico dell'app, usato per redirect e link nelle email                                                                            |
+| `TWO_FACTOR_KEY`          | opzionale                    | Chiave per cifrare i segreti del 2FA; senza, deriva da `NEXTAUTH_SECRET` (cambiarla rende illeggibili i segreti salvati)                |
 | `RESEND_API_KEY`          | opzionale                    | Invio email (reset password, riepilogo settimanale); senza, le email vengono stampate nei log                                           |
 | `EMAIL_FROM`              | opzionale                    | Mittente delle email, es. `FinTrack <onboarding@resend.dev>`                                                                            |
 | `CRON_SECRET`             | Vercel                       | Protegge `/api/cron/weekly-digest`; Vercel Cron lo invia come `Authorization: Bearer …`. Senza, il riepilogo non parte                  |
@@ -49,12 +50,19 @@ Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
 
 ## Autenticazione
 
-NextAuth v4 con provider email/password (bcrypt, 12 round) e sessioni JWT di 30 giorni.
+NextAuth v4 con sessioni JWT di 30 giorni; password con bcrypt (12 round).
 Il middleware richiede il login su tutte le pagine tranne landing, autenticazione, privacy, termini e link via email (le nuove pagine sono protette di default); il reset password usa token monouso validi 1 ora, salvati solo come hash SHA-256.
 
+- **Accesso in due passi** (`lib/auth/login-ticket.ts`): la server action `startLogin` controlla email e password (con un hash fittizio per le email inesistenti, così i tempi non rivelano chi è registrato) e restituisce un ticket monouso valido 10 minuti, salvato come hash e legato al cookie del dispositivo (`__Host-ft-device`): da un altro browser non vale. Il provider Credentials di NextAuth accetta solo il ticket, più il codice 2FA se attivo; al massimo 5 codici sbagliati per ticket.
+- **Verifica in due passaggi** (TOTP, RFC 6238, `lib/auth/totp.ts`): si attiva da Impostazioni › Sicurezza con la password, un codice QR per Google/Microsoft Authenticator, 1Password, Bitwarden… e il primo codice. La chiave è cifrata con AES-256-GCM (`lib/auth/secret-box.ts`); lo stesso codice non vale due volte. Dieci codici di recupero monouso, salvati come hash. Codici: 5 tentativi ogni 15 minuti e 20 al giorno per account; al terzo codice sbagliato dopo la password giusta parte un'email «qualcuno conosce la tua password». Disattivare il 2FA, rigenerare i codici, cambiare password ed eliminare l'account chiedono password e codice (con un loro limite di 10 tentativi ogni 15 minuti).
+- **Sessioni revocabili**: ogni sessione porta il `sessionVersion` dell'utente e `getSession` lo confronta a ogni richiesta. Cambio o reset della password, attivazione e disattivazione del 2FA e «Esci dagli altri dispositivi» lo aumentano: le altre sessioni finiscono subito, quella in uso viene rinnovata con un ticket.
+- **Dispositivi e avvisi** (`known_devices`): browser, sistema e città approssimativa (header di geolocalizzazione di Vercel) degli ultimi 20 dispositivi. Da un dispositivo nuovo parte un'email; altre email per password cambiata, 2FA attivato o disattivato e codice di recupero usato.
+- **Password nuove**: almeno 10 caratteri, non l'email o il nome, non troppo ripetitive e non presenti nei furti di dati noti (Have I Been Pwned, k-anonimato: escono solo 5 caratteri dell'hash SHA-1; se il servizio non risponde la password è accettata).
+- **Header di sicurezza** (`next.config.mjs`): HSTS, `X-Frame-Options: DENY` e `frame-ancestors 'none'`, `nosniff`, `Referrer-Policy`, `Permissions-Policy` (solo il microfono, per l'inserimento a voce) e `Cross-Origin-Opener-Policy`.
+
 - **Conferma dell'email**: alla registrazione parte un link valido 48 ore (`/verify-email`, token salvato come hash). L'account funziona subito; finché l'email non è confermata un banner lo ricorda (con «Rinvia il link») e restano bloccati inviti e coach AI. Gli account esistenti prima di questa funzione sono considerati confermati.
-- **Rate limiting** (`lib/rate-limit.ts`): contatori a finestra fissa nella tabella `rate_limits`, con un upsert atomico (funziona con più istanze serverless). Accesso: 8 tentativi per email e 30 per IP ogni 15 minuti; registrazione: 5 per IP all'ora; reset password: 3 per email (in silenzio, per non rivelare quali email esistono) e 10 per IP all'ora; inviti: 20 al giorno; coach AI: 5 al minuto e 30 al giorno per persona, più un limite globale per Groq gratuito. Una domanda a cui l'AI non risponde non consuma la quota.
-- **Pulizia notturna** (`/api/cron/cleanup`, 02:30 UTC): cancella contatori, link e inviti scaduti, così email e IP dei tentativi restano al massimo 2 giorni.
+- **Rate limiting** (`lib/rate-limit.ts`): contatori a finestra fissa nella tabella `rate_limits`, con un upsert atomico (funziona con più istanze serverless). Accesso: 8 tentativi per email e 30 per IP ogni 15 minuti, codici 2FA 5 ogni 15 minuti e 20 al giorno per account; registrazione: 5 per IP all'ora; reset password: 3 per email (in silenzio, per non rivelare quali email esistono) e 10 per IP all'ora; inviti: 20 al giorno; coach AI: 5 al minuto e 30 al giorno per persona, più un limite globale per Groq gratuito. Una domanda a cui l'AI non risponde non consuma la quota.
+- **Pulizia notturna** (`/api/cron/cleanup`, 02:30 UTC): cancella contatori, link, inviti e ticket di accesso scaduti, così email e IP dei tentativi restano al massimo 2 giorni.
 
 ## Funzionalità
 

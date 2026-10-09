@@ -91,6 +91,15 @@ export default function PrivacyPage() {
             log tecnici dei fornitori di hosting.
           </li>
           <li>
+            <strong>Sicurezza dell&apos;account</strong>: per i dispositivi da cui accedi, il tipo
+            di browser e di dispositivo (per esempio «Chrome su Windows»), la città approssimativa
+            ricavata dall&apos;indirizzo IP e la data dell&apos;ultimo accesso. Servono ad avvisarti
+            via email quando qualcuno entra da un dispositivo nuovo; teniamo gli ultimi 20 e li
+            cancelliamo con l&apos;account. Se attivi la verifica in due passaggi, la chiave
+            dell&apos;app di autenticazione è salvata cifrata e i codici di recupero solo come
+            impronta crittografica.
+          </li>
+          <li>
             <strong>Pagamenti</strong> (solo con FinTrack Pro): li gestisce Stripe. Noi non vediamo
             né salviamo i dati della carta: riceviamo solo lo stato dell&apos;abbonamento.
           </li>
@@ -180,6 +189,11 @@ export default function PrivacyPage() {
           <li>Stripe (Irlanda/USA): solo i pagamenti di FinTrack Pro.</li>
         </ul>
         <p>
+          Quando scegli una password controlliamo che non sia già finita in un furto di dati con il
+          servizio Have I Been Pwned: gli inviamo solo i primi 5 caratteri dell&apos;impronta SHA-1
+          della password, mai la password né la tua email, e il confronto lo facciamo noi.
+        </p>
+        <p>
           Il fascicolo di famiglia lo vede anche chi riceve il link che crei tu, fino alla scadenza
           o finché non lo revochi: senza importi, a meno che tu non scelga di mostrarli.
         </p>
@@ -235,8 +249,9 @@ export default function PrivacyPage() {
         <h2>Cookie e archiviazione nel browser</h2>
         <p>
           Usiamo solo strumenti tecnici necessari al funzionamento: il cookie di sessione per
-          tenerti connesso, un cookie per ricordare la modalità discreta, la memoria del browser per
-          il tema chiaro/scuro e per i movimenti registrati offline in attesa di invio. Niente
+          tenerti connesso, un cookie che riconosce il tuo browser per avvisarti degli accessi da
+          dispositivi nuovi, un cookie per ricordare la modalità discreta, la memoria del browser
+          per il tema chiaro/scuro e per i movimenti registrati offline in attesa di invio. Niente
           cookie di profilazione o di terze parti, quindi non serve un banner di consenso.
         </p>
       </section>
@@ -245,8 +260,9 @@ export default function PrivacyPage() {
         <h2>Sicurezza e minori</h2>
         <p>
           Le connessioni sono cifrate (HTTPS), le password salvate con bcrypt, i link di invito, di
-          reset e di conferma salvati solo come impronta crittografica. FinTrack è riservato ai
-          maggiorenni.
+          reset e di conferma salvati solo come impronta crittografica. Puoi proteggere
+          l&apos;account con la verifica in due passaggi; quando cambi la password chiudiamo le
+          sessioni aperte sugli altri dispositivi. FinTrack è riservato ai maggiorenni.
         </p>
       </section>
 

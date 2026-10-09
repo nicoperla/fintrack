@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { requireSpace } from "@/lib/auth/session";
 import { FormMessage } from "@/components/forms/form-field";
 import { prisma } from "@/lib/db/prisma";
@@ -7,6 +8,8 @@ import { SpaceSettings } from "./space-settings";
 import { WorkTimeForm } from "./work-time-form";
 import { getWorkSettings } from "@/lib/data/work-time";
 import { BillingSection, PrivacySection, type BillingInfo } from "./account-sections";
+import { SecuritySection, type SecurityInfo } from "./security-section";
+import { deviceCookieName, hashDeviceId, isDeviceId } from "@/lib/auth/devices";
 import { billingEnabled, PRO_FEATURES } from "@/lib/billing/plan";
 import { getProPrice, refreshSubscription } from "@/lib/billing/stripe";
 import { coachProvider } from "@/lib/coach/providers";
@@ -33,7 +36,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
       );
     }
   }
-  const [user, members, invites, work] = await Promise.all([
+  const [user, members, invites, work, recoveryLeft, devices] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: space.user.id },
       select: {
@@ -45,6 +48,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
         subscriptionStatus: true,
         planRenewsAt: true,
         planCancelsAtEnd: true,
+        twoFactorEnabledAt: true,
       },
     }),
     prisma.householdMember.findMany({
@@ -60,7 +64,27 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
         })
       : Promise.resolve([]),
     getWorkSettings(space.user.id, space.id),
+    prisma.recoveryCode.count({ where: { userId: space.user.id } }),
+    prisma.knownDevice.findMany({
+      where: { userId: space.user.id },
+      orderBy: { lastLoginAt: "desc" },
+      take: 8,
+      select: { deviceHash: true, label: true, place: true, lastLoginAt: true },
+    }),
   ]);
+  const deviceId = cookies().get(deviceCookieName())?.value;
+  const thisDevice = isDeviceId(deviceId) ? hashDeviceId(deviceId) : null;
+  const security: SecurityInfo = {
+    email: user.email,
+    twoFactorSince: user.twoFactorEnabledAt?.toISOString() ?? null,
+    recoveryLeft,
+    devices: devices.map((d) => ({
+      label: d.label,
+      place: d.place,
+      lastLoginAt: d.lastLoginAt.toISOString(),
+      current: d.deviceHash === thisDevice,
+    })),
+  };
   const price = billingEnabled() ? await getProPrice() : null;
   const provider = coachProvider();
   const billing: BillingInfo = {
@@ -81,7 +105,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Impostazioni</h1>
         <p className="text-muted-foreground text-sm">
-          Profilo, spazio condiviso, notifiche, abbonamento e privacy.
+          Profilo, sicurezza, spazio condiviso, notifiche, abbonamento e privacy.
         </p>
       </div>
       <section
@@ -92,6 +116,19 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
           Profilo
         </h2>
         <ProfileForm name={user.name ?? ""} email={user.email} />
+      </section>
+      <section
+        id="sicurezza"
+        className="bg-card grid scroll-mt-20 gap-4 rounded-2xl border p-5"
+        aria-labelledby="security-title"
+      >
+        <div>
+          <h2 id="security-title" className="font-medium">
+            Sicurezza
+          </h2>
+          <p className="text-muted-foreground text-sm">Come entri nel tuo account, e da dove.</p>
+        </div>
+        <SecuritySection info={security} />
       </section>
       <section className="bg-card grid gap-4 rounded-2xl border p-5" aria-labelledby="space-title">
         <div>
@@ -171,6 +208,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
         <PrivacySection
           aiConsent={user.aiConsentAt !== null}
           aiProvider={provider ? PROVIDER_NAMES[provider.id] : null}
+          twoFactor={user.twoFactorEnabledAt !== null}
         />
       </section>
     </div>
