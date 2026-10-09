@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* "Control room": slate surfaces with an amber accent, so it never looks like FinTrack. */
+@theme {
+  --color-ink: oklch(0.16 0.012 260);
+  --color-panel: oklch(0.2 0.014 260);
+  --color-raised: oklch(0.24 0.016 260);
+  --color-line: oklch(0.32 0.016 260);
+  --color-muted: oklch(0.7 0.02 260);
+  --color-accent: oklch(0.82 0.15 80);
+  --color-accent-ink: oklch(0.25 0.06 70);
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-ink);
+  color: oklch(0.95 0.005 260);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+dialog::backdrop {
+  background: oklch(0 0 0 / 0.6);
+  backdrop-filter: blur(2px);
+}

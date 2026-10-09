@@ -13,10 +13,19 @@ const NOT_AVAILABLE: ActionResult = {
   error: "I pagamenti non sono ancora attivi. Riprova più tardi.",
 };
 
+const USER_FIELDS = {
+  id: true,
+  email: true,
+  name: true,
+  plan: true,
+  subscriptionStatus: true,
+  stripeCustomerId: true,
+} as const;
+
 async function customerFor(userId: string) {
   const user = await prisma.user.findUniqueOrThrow({
     where: { id: userId },
-    select: { id: true, email: true, name: true, plan: true, stripeCustomerId: true },
+    select: USER_FIELDS,
   });
   if (user.stripeCustomerId) return user;
   const customer = await stripe().customers.create({
@@ -27,7 +36,7 @@ async function customerFor(userId: string) {
   return prisma.user.update({
     where: { id: user.id },
     data: { stripeCustomerId: customer.id },
-    select: { id: true, email: true, name: true, plan: true, stripeCustomerId: true },
+    select: USER_FIELDS,
   });
 }
 
@@ -36,7 +45,8 @@ export async function startCheckout(): Promise<ActionResult> {
   const session = await requireUser();
   if (!billingEnabled()) return NOT_AVAILABLE;
   const user = await customerFor(session.id);
-  if (user.plan === "PRO") return openBillingPortal();
+  // Pro given from the admin panel ("comp") can still subscribe, to keep it after the gift.
+  if (user.plan === "PRO" && user.subscriptionStatus !== "comp") return openBillingPortal();
 
   const base = getAppUrl();
   const checkout = await stripe().checkout.sessions.create({

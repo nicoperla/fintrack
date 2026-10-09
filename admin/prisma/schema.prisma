@@ -1,0 +1,861 @@
+// COPY of ../../prisma/schema.prisma, written by scripts/sync-admin-schema.mjs: don't edit.
+// The FinTrack app owns the schema and its migrations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AccountType {
+  CHECKING
+  CASH
+  CARD
+  SAVINGS
+  INVESTMENT
+}
+
+// Categories only use INCOME/EXPENSE; TRANSFER moves money between two of the user's accounts
+// and is excluded from income/expense totals.
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum HouseholdRole {
+  OWNER
+  MEMBER
+}
+
+/// FREE: everything but the AI coach chat; PRO: paid subscription (Stripe).
+enum Plan {
+  FREE
+  PRO
+}
+
+/// How shared expenses are divided among the members of a space ("Conti chiari").
+enum SplitMode {
+  EQUAL
+  INCOME
+}
+
+/// What a "Riprenditeli" claim asks for (lib/finance/claims.ts).
+enum ClaimKind {
+  /// Cancel a subscription; afterwards FinTrack watches for charges past the effective date.
+  CANCELLATION
+  /// Refund of a SEPA direct debit, within 8 weeks of the charge (artt. 13-14 d.lgs. 11/2010).
+  DIRECT_DEBIT_REFUND
+  /// Complaint to the bank (fees, a charge it shouldn't have taken); then the Arbitro Bancario Finanziario.
+  BANK_COMPLAINT
+  /// A merchant charged twice or the wrong amount: ask the merchant first.
+  DUPLICATE_CHARGE
+}
+
+/// DRAFT → SENT → WON / PARTIAL / LOST, or DROPPED when the user gives up.
+enum ClaimStatus {
+  DRAFT
+  SENT
+  WON
+  PARTIAL
+  LOST
+  DROPPED
+}
+
+/// What a "Tariffometro" check compares (lib/finance/tariffs.ts).
+enum TariffKind {
+  /// RC auto: the yearly premium against the province's average (IVASS).
+  CAR_INSURANCE
+  /// A current account: what a year of it costs against the Banca d'Italia survey.
+  BANK_ACCOUNT
+  /// Electricity: a bill's cost per kWh against ARERA's reference price.
+  ELECTRICITY
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String    @map("password_hash")
+  name               String?
+  /// Weekly summary email (Monday morning); can be turned off from settings or the email link.
+  weeklyDigest       Boolean   @default(true) @map("weekly_digest")
+  /// Net monthly income for "what this costs in working time"; null: estimated from recorded income.
+  monthlyNetIncome   Decimal?  @map("monthly_net_income") @db.Decimal(14, 2)
+  workHoursPerWeek   Int       @default(40) @map("work_hours_per_week")
+  showWorkTime       Boolean   @default(true) @map("show_work_time")
+  /// How the user wants to manage money: the coach's method, targets and priorities (lib/finance/coach-profile.ts).
+  coachProfile       Json?     @map("coach_profile")
+  /// The space currently shown; null (or a space the user left) falls back to their own.
+  activeHouseholdId  String?   @map("active_household_id")
+  /// Null until the user opens the link sent at sign-up.
+  emailVerifiedAt    DateTime? @map("email_verified_at")
+  /// When the user accepted the terms and the privacy policy (at sign-up).
+  termsAcceptedAt    DateTime? @map("terms_accepted_at")
+  /// Consent to send a summary of the data to the AI provider when asking the coach.
+  aiConsentAt        DateTime? @map("ai_consent_at")
+  plan               Plan      @default(FREE)
+  stripeCustomerId   String?   @unique @map("stripe_customer_id")
+  /// Stripe subscription status (active, past_due, canceled…), null if never subscribed.
+  subscriptionStatus String?   @map("subscription_status")
+  /// End of the paid period: renewal date, or the last day when the subscription was cancelled.
+  planRenewsAt       DateTime? @map("plan_renews_at")
+  planCancelsAtEnd   Boolean   @default(false) @map("plan_cancels_at_end")
+  /// Dependent children, for the per-child limits of the 730 deductions (school, sport, nursery).
+  dependentChildren  Int       @default(0) @map("dependent_children")
+  /// "Radar dei diritti": income band, birth year, rent contract and company welfare (lib/finance/rights.ts).
+  taxProfile         Json?     @map("tax_profile")
+  /// "Il crash test": the job, for the NASpI: kind of work, RAL and since when (lib/finance/crash-test.ts).
+  crashProfile       Json?     @map("crash_profile")
+  /// Authenticator app secret, AES-GCM encrypted (lib/auth/secret-box.ts). Set during setup too.
+  totpSecret         String?   @map("totp_secret")
+  /// Two-step verification is on from this date; null: off (or setup not finished).
+  twoFactorEnabledAt DateTime? @map("two_factor_enabled_at")
+  /// The last 30-second step whose code was accepted: the same code never works twice.
+  totpLastStep       Int?      @map("totp_last_step")
+  /// Sessions carry this number: raising it signs the account out everywhere.
+  sessionVersion     Int       @default(0) @map("session_version")
+  /// Blocked from the admin panel: no sign-in, open sessions end. Null: active.
+  suspendedAt        DateTime? @map("suspended_at")
+  /// Why, as written by the admin (shown only in the admin panel).
+  suspendedReason    String?   @map("suspended_reason")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  activeHousehold     Household?               @relation("ActiveHousehold", fields: [activeHouseholdId], references: [id], onDelete: SetNull)
+  ownedHouseholds     Household[]              @relation("HouseholdOwner")
+  memberships         HouseholdMember[]
+  sentInvites         HouseholdInvite[]
+  // Records this user created. Data belongs to the household: it survives if the author leaves.
+  accounts            FinancialAccount[]
+  categories          Category[]
+  transactions        Transaction[]
+  passwordResetTokens PasswordResetToken[]
+  emailTokens         EmailVerificationToken[]
+  loginTickets        LoginTicket[]
+  recoveryCodes       RecoveryCode[]
+  knownDevices        KnownDevice[]
+  adminNotes          AdminNote[]
+  budgets             Budget[]
+  goals               Goal[]
+  debts               Debt[]
+  settlementsPaid     Settlement[]             @relation("SettlementFrom")
+  settlementsReceived Settlement[]             @relation("SettlementTo")
+  claims              Claim[]
+  moneyTalksHeld      MoneyTalk[]              @relation("MoneyTalkHeldBy")
+  decisionsOwned      MoneyDecision[]          @relation("MoneyDecisionOwner")
+  pacts               Pact[]
+
+  @@map("users")
+}
+
+// A space whose finances are shared by its members (a couple, a family). Every user gets a
+// personal one at sign-up and can invite others into it; all financial data is scoped here.
+model Household {
+  id         String    @id @default(cuid())
+  name       String
+  /// Base currency: totals, budgets, goals and debts are expressed in it.
+  currency   String    @default("EUR") @db.Char(3)
+  /// Shared expenses: split equally or in proportion to each member's income.
+  splitMode  SplitMode @default(EQUAL) @map("split_mode")
+  /// Expenses are shared from this date (null: from the start of the current month).
+  splitSince DateTime? @map("split_since") @db.Date
+  ownerId    String    @map("owner_id")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  // "Lo stipendio vero" (lib/finance/true-salary.ts).
+  /// Shown on the dashboard since this moment; null: not turned on.
+  trueSalarySince  DateTime? @map("true_salary_since")
+  /// Day of the month the salary arrives; null: taken from the recorded salary.
+  payday           Int?
+  /// Net extra salaries counted month by month as they accrue ("spalma la tredicesima").
+  thirteenthSalary Decimal?  @map("thirteenth_salary") @db.Decimal(14, 2)
+  fourteenthSalary Decimal?  @map("fourteenth_salary") @db.Decimal(14, 2)
+  /// Where the money for the big expenses is set aside; null: on the everyday accounts.
+  reserveAccountId String?   @map("reserve_account_id")
+
+  // "Il Tariffometro" (lib/finance/tariffs.ts).
+  /// Province abbreviation (MI, NA…), to compare the RC auto with the province's prices.
+  province        String?
+  /// People living in the home, for the comparison with similar households.
+  householdSize   Int?      @map("household_size")
+  /// Consent to add the space's figures, anonymously, to the comparison between users; null: no.
+  tariffPoolSince DateTime? @map("tariff_pool_since")
+
+  owner             User                  @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  activeFor         User[]                @relation("ActiveHousehold")
+  members           HouseholdMember[]
+  invites           HouseholdInvite[]
+  accounts          FinancialAccount[]
+  categories        Category[]
+  transactions      Transaction[]
+  budgets           Budget[]
+  goals             Goal[]
+  debts             Debt[]
+  settlements       Settlement[]
+  dismissedFindings FoundMoneyDismissal[]
+  valuations        InvestmentValuation[]
+  claims            Claim[]
+  bigExpenses       BigExpense[]
+  familyFile        FamilyFile?
+  familyFileShares  FamilyFileShare[]
+  tariffChecks      TariffCheck[]
+  moneyTalks        MoneyTalk[]
+  moneyDecisions    MoneyDecision[]
+  pacts             Pact[]
+  investmentCosts   InvestmentCost[]
+  reserveAccount    FinancialAccount?     @relation("ReserveAccount", fields: [reserveAccountId], references: [id], onDelete: SetNull)
+
+  @@index([ownerId])
+  @@map("households")
+}
+
+model HouseholdMember {
+  householdId String        @map("household_id")
+  userId      String        @map("user_id")
+  role        HouseholdRole @default(MEMBER)
+  joinedAt    DateTime      @default(now()) @map("joined_at")
+  /// "Mio, tuo, nostro": the totals of their own personal space this member shows to the others
+  /// here (lib/finance/together.ts). Empty: nothing, the default.
+  shares      String[]      @default([])
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, userId])
+  @@index([userId])
+  @@map("household_members")
+}
+
+// Invitations are links bound to an email address; only the SHA-256 of the token is stored.
+model HouseholdInvite {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  email       String
+  tokenHash   String   @unique @map("token_hash")
+  invitedById String?  @map("invited_by_id")
+  expiresAt   DateTime @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  invitedBy User?     @relation(fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([householdId])
+  @@map("household_invites")
+}
+
+// Daily ECB reference rates (via Frankfurter): units of `currency` for 1 EUR.
+model ExchangeRate {
+  date     DateTime @db.Date
+  currency String   @db.Char(3)
+  rate     Decimal  @db.Decimal(18, 8)
+
+  @@id([date, currency])
+  @@map("exchange_rates")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+// Named FinancialAccount because NextAuth's Prisma adapter reserves the `Account` model (needed for OAuth).
+// The current balance is derived (see lib/finance/balances.ts), never stored.
+model FinancialAccount {
+  id             String      @id @default(cuid())
+  householdId    String      @map("household_id")
+  /// Who created it (null if they deleted their account).
+  userId         String?     @map("user_id")
+  name           String
+  type           AccountType
+  initialBalance Decimal     @default(0) @map("initial_balance") @db.Decimal(14, 2)
+  currency       String      @default("EUR") @db.Char(3)
+  archived       Boolean     @default(false)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+
+  household         Household             @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user              User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transactions      Transaction[]         @relation("TransactionAccount")
+  incomingTransfers Transaction[]         @relation("TransferDestination")
+  valuations        InvestmentValuation[]
+  reserveFor        Household[]           @relation("ReserveAccount")
+  tariffChecks      TariffCheck[]
+  costs             InvestmentCost?
+
+  @@index([householdId])
+  @@map("accounts")
+}
+
+model Category {
+  id          String          @id @default(cuid())
+  householdId String          @map("household_id")
+  /// Who created it (null if they deleted their account).
+  userId      String?         @map("user_id")
+  name        String
+  type        TransactionType
+  parentId    String?         @map("parent_id")
+  icon        String?
+  color       String?
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user         User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  parent       Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children     Category[]    @relation("CategoryHierarchy")
+  transactions Transaction[]
+  budget       Budget?
+  pacts        Pact[]
+
+  @@index([householdId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+// A recurring monthly spending limit. A budget on a parent category also counts its subcategories.
+model Budget {
+  id             String   @id @default(cuid())
+  householdId    String   @map("household_id")
+  /// Who created it (null if they deleted their account).
+  userId         String?  @map("user_id")
+  categoryId     String   @unique @map("category_id")
+  amount         Decimal  @db.Decimal(14, 2)
+  alertThreshold Int      @default(80) @map("alert_threshold")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("budgets")
+}
+
+model Goal {
+  id            String    @id @default(cuid())
+  householdId   String    @map("household_id")
+  /// Who created it (null if they deleted their account).
+  userId        String?   @map("user_id")
+  name          String
+  targetAmount  Decimal   @map("target_amount") @db.Decimal(14, 2)
+  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(14, 2)
+  targetDate    DateTime? @map("target_date") @db.Date
+  icon          String?
+  color         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  pacts     Pact[]
+
+  @@index([householdId])
+  @@map("goals")
+}
+
+// userId is denormalized from the account so per-user queries and ownership checks need no join.
+// For TRANSFER, accountId is the source, transferAccountId the destination, and categoryId is null.
+model Transaction {
+  id                String          @id @default(cuid())
+  householdId       String          @map("household_id")
+  /// Who created it (null if they deleted their account).
+  userId            String?         @map("user_id")
+  accountId         String          @map("account_id")
+  transferAccountId String?         @map("transfer_account_id")
+  categoryId        String?         @map("category_id")
+  type              TransactionType
+  /// In the account's currency.
+  amount            Decimal         @db.Decimal(14, 2)
+  /// `amount` converted to the household currency at the rate of `date`: all totals sum this.
+  baseAmount        Decimal         @map("base_amount") @db.Decimal(14, 2)
+  /// TRANSFER between currencies: what the destination account receives, in its currency.
+  transferAmount    Decimal?        @map("transfer_amount") @db.Decimal(14, 2)
+  date              DateTime        @db.Date
+  description       String
+  notes             String?
+  tags              String[]        @default([])
+  /// 730 deduction chosen by hand: a type (lib/finance/deductions.ts) or "none"; null = automatic.
+  deduction         String?
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  household       Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user            User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  account         FinancialAccount  @relation("TransactionAccount", fields: [accountId], references: [id], onDelete: Cascade)
+  transferAccount FinancialAccount? @relation("TransferDestination", fields: [transferAccountId], references: [id], onDelete: Cascade)
+  category        Category?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  claims          Claim[]
+
+  @@index([householdId, date])
+  @@index([userId])
+  @@index([accountId, date])
+  @@index([transferAccountId])
+  @@index([categoryId])
+  @@map("transactions")
+}
+
+// A loan or revolving balance for the payoff planner (snowball / avalanche).
+model Debt {
+  id             String   @id @default(cuid())
+  householdId    String   @map("household_id")
+  /// Who created it (null if they deleted their account).
+  userId         String?  @map("user_id")
+  name           String
+  balance        Decimal  @db.Decimal(14, 2)
+  interestRate   Decimal  @map("interest_rate") @db.Decimal(5, 2)
+  minimumPayment Decimal  @map("minimum_payment") @db.Decimal(14, 2)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([householdId])
+  @@map("debts")
+}
+
+// "Conti chiari": money one member gives another to even out the shared expenses.
+model Settlement {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  fromUserId  String   @map("from_user_id")
+  toUserId    String   @map("to_user_id")
+  amount      Decimal  @db.Decimal(14, 2)
+  date        DateTime @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  from      User      @relation("SettlementFrom", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to        User      @relation("SettlementTo", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([householdId, date])
+  @@map("settlements")
+}
+
+// Sign-up confirmation links; only the SHA-256 of the token is stored.
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("email_verification_tokens")
+}
+
+// Halfway through a sign-in: the password was right, the session is not issued yet. The client
+// trades the ticket (plus the 2FA code, when on) for a session; only its SHA-256 is stored.
+model LoginTicket {
+  id               String   @id @default(cuid())
+  userId           String   @map("user_id")
+  tokenHash        String   @unique @map("token_hash")
+  /// SHA-256 of the browser's device cookie: a ticket only works in the browser that got it.
+  deviceHash       String   @map("device_hash")
+  /// "Chrome su Windows", "Milano, IT": for the new-device email.
+  deviceLabel      String   @map("device_label")
+  place            String?
+  /// True when the second factor was already checked (e.g. just after enabling 2FA).
+  secondFactorDone Boolean  @default(false) @map("second_factor_done")
+  attempts         Int      @default(0)
+  expiresAt        DateTime @map("expires_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("login_tickets")
+}
+
+// Single-use codes to sign in without the authenticator app; only their SHA-256 is stored.
+model RecoveryCode {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+  codeHash String @map("code_hash")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, codeHash])
+  @@map("recovery_codes")
+}
+
+// Browsers that signed in to an account: a sign-in from one not listed sends an email.
+model KnownDevice {
+  userId      String   @map("user_id")
+  /// SHA-256 of the random device cookie.
+  deviceHash  String   @map("device_hash")
+  label       String
+  place       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  lastLoginAt DateTime @default(now()) @map("last_login_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, deviceHash])
+  @@map("known_devices")
+}
+
+// Fixed-window counters for rate limiting (login, sign-up, password reset, coach…).
+model RateLimit {
+  key         String   @id
+  windowStart DateTime @map("window_start")
+  count       Int
+
+  @@index([windowStart])
+  @@map("rate_limits")
+}
+
+// "Soldi ritrovati": findings the user marked as fine (a duplicate that wasn't, a renewal they want).
+model FoundMoneyDismissal {
+  householdId String   @map("household_id")
+  key         String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@id([householdId, key])
+  @@map("found_money_dismissals")
+}
+
+/// The market value of an investment account on a day, as the bank or broker shows it. The
+/// account's transactions are the money put in and taken out; the gap is the gain or loss.
+model InvestmentValuation {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  accountId   String   @map("account_id")
+  date        DateTime @db.Date
+  /// In the account's currency.
+  value       Decimal  @db.Decimal(14, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  household Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account   FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@unique([accountId, date])
+  @@index([householdId])
+  @@map("investment_valuations")
+}
+
+/// "Riprenditeli": a request to get money back or stop paying, from draft to outcome. The user
+/// sends the letter themselves; FinTrack keeps the deadlines (lib/finance/claims.ts).
+model Claim {
+  id              String      @id @default(cuid())
+  householdId     String      @map("household_id")
+  /// Who opened it and sends it in their own name (null if they deleted their account).
+  userId          String?     @map("user_id")
+  kind            ClaimKind
+  status          ClaimStatus @default(DRAFT)
+  /// The "Soldi ritrovati" finding it started from ("dup:<transaction>", "sub:<recurring key>",
+  /// "fees", "after:<transaction>"): one claim per finding.
+  findingKey      String?     @map("finding_key")
+  /// The charge being contested, if any.
+  transactionId   String?     @map("transaction_id")
+  /// Who took the money: the merchant, the provider or the bank.
+  counterparty    String
+  /// Expected money back, or saved per year for a CANCELLATION; in the space's currency.
+  expectedAmount  Decimal     @map("expected_amount") @db.Decimal(14, 2)
+  /// What actually came back (or is saved per year), set when the claim is closed.
+  recoveredAmount Decimal?    @map("recovered_amount") @db.Decimal(14, 2)
+  /// The letter as the user sends it. Bank details stay placeholders and are never stored here.
+  subject         String
+  body            String
+  /// email | pec | raccomandata | app | sportello (lib/finance/claims.ts CLAIM_CHANNELS).
+  channel         String?
+  sentAt          DateTime?   @map("sent_at") @db.Date
+  /// CANCELLATION: the day from which the service must no longer be charged.
+  effectiveFrom   DateTime?   @map("effective_from") @db.Date
+  /// DRAFT: last day to act; SENT: last day for the other side to answer.
+  deadline        DateTime?   @db.Date
+  closedAt        DateTime?   @map("closed_at")
+  notes           String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  household   Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transaction Transaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+
+  // NULLs don't collide in Postgres: claims opened by hand have no finding and never conflict.
+  @@unique([householdId, findingKey])
+  @@index([householdId, status])
+  @@index([transactionId])
+  @@map("claims")
+}
+
+/// "Lo stipendio vero": a big expense of the year ("stangata": IMU, bollo, RC auto, gifts…) that
+/// money is set aside for, a little every day until it's due (lib/finance/true-salary.ts).
+model BigExpense {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  /// Catalog key (BIG_EXPENSE_PRESETS), null for one the user wrote.
+  preset      String?
+  name        String
+  /// For the whole year, in the space currency; split evenly across the installments.
+  amount      Decimal   @db.Decimal(14, 2)
+  /// Months of the year it's paid in (1–12), the same share of the amount each time.
+  months      Int[]
+  /// Day of the month it's due (the last day, in shorter months).
+  day         Int       @default(1)
+  /// Installments due up to this day are already paid (marked before the due date).
+  paidThrough DateTime? @map("paid_through") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("big_expenses")
+}
+
+/// "Il fascicolo di famiglia": what the family should know if the user can't tell them. The
+/// accounts, debts and subscriptions come from the space's data; these are the user's notes.
+model FamilyFile {
+  householdId String   @id @map("household_id")
+  /// Free text by section (lib/family-file.ts): documents, contacts, policies, instructions.
+  notes       Json
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@map("family_files")
+}
+
+/// A read-only link to the family file for a trusted person. It expires, it can be revoked and
+/// only the SHA-256 of its token is stored.
+model FamilyFileShare {
+  id           String    @id @default(cuid())
+  householdId  String    @map("household_id")
+  tokenHash    String    @unique @map("token_hash")
+  /// Who it's for, to recognize it in the list ("Marco, mio fratello").
+  label        String
+  /// Amounts are left out unless the user chooses to show them.
+  showAmounts  Boolean   @default(false) @map("show_amounts")
+  expiresAt    DateTime  @map("expires_at")
+  revokedAt    DateTime? @map("revoked_at")
+  views        Int       @default(0)
+  lastViewedAt DateTime? @map("last_viewed_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("family_file_shares")
+}
+
+/// "Il Tariffometro": a contract the space compares with what others pay. Amounts are in the
+/// space currency; the public prices they're compared with are in euro.
+model TariffCheck {
+  id             String     @id @default(cuid())
+  householdId    String     @map("household_id")
+  kind           TariffKind
+  /// The user's name for it ("Panda", "Luce di casa"); for an account, the account's name.
+  label          String
+  /// CAR_INSURANCE: the yearly premium. BANK_ACCOUNT: the yearly cost read in the bank's
+  /// "Riepilogo delle spese" (null: worked out from the movements). ELECTRICITY: the bill total.
+  amount         Decimal?   @db.Decimal(14, 2)
+  /// CAR_INSURANCE: the premium of the previous policy year, to show what changing saved.
+  previousAmount Decimal?   @map("previous_amount") @db.Decimal(14, 2)
+  /// CAR_INSURANCE: when the policy ends (it doesn't renew by itself). ELECTRICITY: when the
+  /// fixed price runs out. A reminder comes a month before.
+  renewsOn       DateTime?  @map("renews_on") @db.Date
+  /// CAR_INSURANCE: bonus-malus class (1–18) and age band of the policyholder (AGE_BANDS).
+  bonusMalus     Int?       @map("bonus_malus")
+  ageBand        String?    @map("age_band")
+  /// BANK_ACCOUNT: the account, and where it's held (BANK_ACCOUNT_KINDS).
+  accountId      String?    @map("account_id")
+  accountKind    String?    @map("account_kind")
+  /// ELECTRICITY: the bill's period and the kWh billed.
+  periodFrom     DateTime?  @map("period_from") @db.Date
+  periodTo       DateTime?  @map("period_to") @db.Date
+  kwh            Int?
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  household Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  account   FinancialAccount? @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  /// One check per account (NULLs don't collide in Postgres, so cars and bills are free).
+  @@unique([householdId, accountId])
+  @@index([householdId, kind])
+  @@map("tariff_checks")
+}
+
+/// "Il caffè dei conti": a month a shared space has talked about together (lib/finance/money-talk.ts).
+model MoneyTalk {
+  id          String   @id @default(cuid())
+  householdId String   @map("household_id")
+  /// First day of the month talked about.
+  month       DateTime @db.Date
+  /// Who marked it as done (null if they deleted their account).
+  heldById    String?  @map("held_by_id")
+  heldAt      DateTime @default(now()) @map("held_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  heldBy    User?     @relation("MoneyTalkHeldBy", fields: [heldById], references: [id], onDelete: SetNull)
+
+  @@unique([householdId, month])
+  @@map("money_talks")
+}
+
+/// A decision taken at "Il caffè dei conti", kept in the space's log until it's done.
+model MoneyDecision {
+  id          String    @id @default(cuid())
+  householdId String    @map("household_id")
+  /// First day of the month of the talk it was taken at.
+  month       DateTime  @db.Date
+  /// What it's about when it came from a suggestion ("Budget «Ristoranti»"): never an amount.
+  topic       String?
+  text        String
+  /// Who takes care of it; null: together (or someone who deleted their account). The only link
+  /// to a user: a second SET NULL on the same row would make deleting an account together with
+  /// the space fail its household check.
+  ownerId     String?   @map("owner_id")
+  dueOn       DateTime? @map("due_on") @db.Date
+  doneAt      DateTime? @map("done_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  owner     User?     @relation("MoneyDecisionOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  @@index([householdId, month])
+  @@map("money_decisions")
+}
+
+/// "Il patto": a spending limit on a category for a period, with a stake, checked at the end on
+/// the movements (lib/finance/pacts.ts). The stake is only social: FinTrack never moves money.
+model Pact {
+  id                  String    @id @default(cuid())
+  householdId         String    @map("household_id")
+  /// Who made it: a pact is personal and goes with the account.
+  userId              String    @map("user_id")
+  /// A top-level category covers its subcategories.
+  categoryId          String    @map("category_id")
+  limit               Decimal   @db.Decimal(14, 2)
+  periodFrom          DateTime  @map("period_from") @db.Date
+  periodTo            DateTime  @map("period_to") @db.Date
+  /// Count only the movements its author recorded (false: the whole space's).
+  onlyMine            Boolean   @default(true) @map("only_mine")
+  /// The stake. A friend who referees, by first name, through a link without an account.
+  refereeName         String?   @map("referee_name")
+  /// SHA-256 of the referee's link token; null once revoked.
+  refereeTokenHash    String?   @unique @map("referee_token_hash")
+  refereeViews        Int       @default(0) @map("referee_views")
+  refereeLastViewedAt DateTime? @map("referee_last_viewed_at")
+  /// What the author promised to do if it goes wrong ("offro la pizza a Marco").
+  promise             String?
+  /// A fine to put in a savings goal if it goes wrong, marked by the author once done.
+  fineAmount          Decimal?  @map("fine_amount") @db.Decimal(14, 2)
+  goalId              String?   @map("goal_id")
+  finePaidAt          DateTime? @map("fine_paid_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  goal      Goal?     @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
+  @@index([householdId, periodTo])
+  @@map("pacts")
+}
+
+/// "Radiografia dei costi": the costs an investment account's product declares in its KID, in
+/// percent as written there (lib/finance/fund-costs.ts).
+model InvestmentCost {
+  accountId      String   @id @map("account_id")
+  householdId    String   @map("household_id")
+  /// For the ESMA average of the category (FUND_CATEGORIES); "other": none.
+  category       String
+  /// One-off, on every amount paid in and on what is taken out.
+  entryPct       Decimal  @default(0) @map("entry_pct") @db.Decimal(6, 3)
+  exitPct        Decimal  @default(0) @map("exit_pct") @db.Decimal(6, 3)
+  /// Per year: management and other ongoing costs, transaction costs, performance fees.
+  ongoingPct     Decimal  @map("ongoing_pct") @db.Decimal(6, 3)
+  transactionPct Decimal  @default(0) @map("transaction_pct") @db.Decimal(6, 3)
+  performancePct Decimal  @default(0) @map("performance_pct") @db.Decimal(6, 3)
+  /// Paid in every month, for the projection; null: nothing.
+  monthly        Decimal? @db.Decimal(14, 2)
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  account   FinancialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  household Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+  @@map("investment_costs")
+}
+
+// The admin panel (admin/, a separate app on the same database): who runs it. Not FinTrack
+// users: their own password, and 2FA is mandatory.
+model AdminUser {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String    @map("password_hash")
+  /// Authenticator secret, AES-GCM encrypted with a key from the panel's ADMIN_SECRET.
+  totpSecret     String    @map("totp_secret")
+  totpLastStep   Int?      @map("totp_last_step")
+  /// SHA-256 of the recovery codes not used yet.
+  recoveryCodes  String[]  @default([]) @map("recovery_codes")
+  /// Panel sessions carry this number: raising it signs the admin out everywhere.
+  sessionVersion Int       @default(0) @map("session_version")
+  /// Null until the first code from the app confirmed the setup.
+  activatedAt    DateTime? @map("activated_at")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  auditLogs AdminAuditLog[]
+  notes     AdminNote[]
+
+  @@map("admin_users")
+}
+
+// Everything done from the admin panel, sign-ins included. Kept one year (nightly cleanup).
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  adminId      String?  @map("admin_id")
+  action       String
+  /// The FinTrack user acted on. No foreign key: the trail outlives the account.
+  targetUserId String?  @map("target_user_id")
+  targetEmail  String?  @map("target_email")
+  details      Json?
+  ip           String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  admin AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetUserId])
+  @@map("admin_audit_logs")
+}
+
+// Support notes on a user, written in the admin panel; they go with the account.
+model AdminNote {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  adminId   String?  @map("admin_id")
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("admin_notes")
+}

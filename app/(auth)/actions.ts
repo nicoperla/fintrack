@@ -7,6 +7,7 @@ import { DUMMY_HASH, hashPassword, verifyPassword } from "@/lib/auth/password";
 import { passwordProblem } from "@/lib/auth/password-policy";
 import { currentDevice, issueTicket } from "@/lib/auth/login-ticket";
 import { notifyPasswordChanged } from "@/lib/auth/security-emails";
+import { LEGAL } from "@/lib/legal";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
 import { ensurePersonalHousehold } from "@/lib/households";
@@ -35,6 +36,9 @@ function hashToken(token: string) {
 export type LoginStep = ActionResult & { ticket?: string; needsCode?: boolean };
 
 const WRONG_CREDENTIALS = "Email o password non corretti.";
+const SUSPENDED = `Questo account è sospeso.${
+  LEGAL.email ? ` Per informazioni scrivi a ${LEGAL.email}.` : ""
+}`;
 
 /**
  * Checks email and password. The answer is a short-lived ticket; when the account has 2FA, the
@@ -63,10 +67,12 @@ export async function startLogin(input: unknown): Promise<LoginStep> {
 
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { id: true, passwordHash: true, twoFactorEnabledAt: true },
+    select: { id: true, passwordHash: true, twoFactorEnabledAt: true, suspendedAt: true },
   });
   const valid = await verifyPassword(password, user?.passwordHash ?? DUMMY_HASH);
   if (!user || !valid) return { ok: false, error: WRONG_CREDENTIALS };
+  // Only after the right password: nobody else learns that the account is suspended.
+  if (user.suspendedAt) return { ok: false, error: SUSPENDED };
 
   const ticket = await issueTicket(user.id, currentDevice({ refresh: true }));
   return { ok: true, ticket, needsCode: user.twoFactorEnabledAt !== null };

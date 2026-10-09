@@ -24,6 +24,14 @@ const dateFormat = new Intl.DateTimeFormat("it-IT", {
   year: "numeric",
 });
 
+// "l'1", "l'8", "l'11": these days are read with a leading vowel sound.
+const elided = (iso: string) => [1, 8, 11].includes(new Date(iso).getDate());
+/** "il 16 ottobre 2026", "l'8 novembre 2026". */
+const onDate = (iso: string) => `${elided(iso) ? "l'" : "il "}${dateFormat.format(new Date(iso))}`;
+/** "al 16 ottobre 2026", "all'8 novembre 2026". */
+const untilDate = (iso: string) =>
+  `${elided(iso) ? "all'" : "al "}${dateFormat.format(new Date(iso))}`;
+
 export type BillingInfo = {
   enabled: boolean;
   plan: "FREE" | "PRO";
@@ -48,6 +56,8 @@ export function BillingSection({ billing }: { billing: BillingInfo }) {
   }
 
   const pro = billing.plan === "PRO";
+  /** Pro given from the admin panel: no Stripe subscription behind it. */
+  const gift = pro && billing.status === "comp";
   return (
     <div className="grid gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -56,13 +66,15 @@ export function BillingSection({ billing }: { billing: BillingInfo }) {
             <Sparkles className="size-4" aria-hidden /> Piano {pro ? "Pro" : "Gratuito"}
           </p>
           <p className="text-muted-foreground text-sm">
-            {pro
-              ? billing.renewsAt
-                ? billing.cancelsAtEnd
-                  ? `Disdetto: Pro resta attivo fino al ${dateFormat.format(new Date(billing.renewsAt))}.`
-                  : `Si rinnova il ${dateFormat.format(new Date(billing.renewsAt))}.`
-                : "Abbonamento attivo."
-              : "Tutta l'app è gratis. Pro aggiunge il coach AI."}
+            {gift
+              ? `Pro in omaggio${billing.renewsAt ? ` fino ${untilDate(billing.renewsAt)}` : ""}${billing.enabled ? ": per tenerlo dopo, abbonati." : "."}`
+              : pro
+                ? billing.renewsAt
+                  ? billing.cancelsAtEnd
+                    ? `Disdetto: Pro resta attivo fino ${untilDate(billing.renewsAt)}.`
+                    : `Si rinnova ${onDate(billing.renewsAt)}.`
+                  : "Abbonamento attivo."
+                : "Tutta l'app è gratis. Pro aggiunge il coach AI."}
             {billing.status === "past_due" &&
               " L'ultimo pagamento non è andato a buon fine: aggiorna la carta per non perdere Pro."}
           </p>
@@ -88,12 +100,18 @@ export function BillingSection({ billing }: { billing: BillingInfo }) {
       {billing.enabled ? (
         <Button
           className="justify-self-start"
-          variant={pro ? "outline" : "default"}
+          variant={pro && !gift ? "outline" : "default"}
           disabled={pending}
-          onClick={() => go(pro ? openBillingPortal : startCheckout)}
+          onClick={() => go(pro && !gift ? openBillingPortal : startCheckout)}
         >
           <CreditCard />
-          {pending ? "Apertura…" : pro ? "Gestisci abbonamento" : "Passa a Pro"}
+          {pending
+            ? "Apertura…"
+            : gift
+              ? "Abbonati a Pro"
+              : pro
+                ? "Gestisci abbonamento"
+                : "Passa a Pro"}
         </Button>
       ) : (
         <p className="text-muted-foreground text-sm">

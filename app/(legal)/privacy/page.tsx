@@ -100,6 +100,14 @@ export default function PrivacyPage() {
             impronta crittografica.
           </li>
           <li>
+            <strong>Assistenza e sicurezza del servizio</strong>: chi gestisce FinTrack, da un
+            pannello riservato, vede i dati del tuo account (nome, email, piano, date di iscrizione
+            e di accesso, dispositivi) e quanti movimenti, conti e budget hai, mai il loro
+            contenuto. Da lì può sospendere un account in caso di abuso, chiudere le sessioni aperte
+            o, se lo chiedi, azzerare la verifica in due passaggi. Ogni operazione resta in un
+            registro per un anno.
+          </li>
+          <li>
             <strong>Pagamenti</strong> (solo con FinTrack Pro): li gestisce Stripe. Noi non vediamo
             né salviamo i dati della carta: riceviamo solo lo stato dell&apos;abbonamento.
           </li>

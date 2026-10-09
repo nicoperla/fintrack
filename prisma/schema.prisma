@@ -115,6 +115,10 @@ model User {
   totpLastStep       Int?      @map("totp_last_step")
   /// Sessions carry this number: raising it signs the account out everywhere.
   sessionVersion     Int       @default(0) @map("session_version")
+  /// Blocked from the admin panel: no sign-in, open sessions end. Null: active.
+  suspendedAt        DateTime? @map("suspended_at")
+  /// Why, as written by the admin (shown only in the admin panel).
+  suspendedReason    String?   @map("suspended_reason")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -131,6 +135,7 @@ model User {
   loginTickets        LoginTicket[]
   recoveryCodes       RecoveryCode[]
   knownDevices        KnownDevice[]
+  adminNotes          AdminNote[]
   budgets             Budget[]
   goals               Goal[]
   debts               Debt[]
@@ -791,4 +796,63 @@ model InvestmentCost {
 
   @@index([householdId])
   @@map("investment_costs")
+}
+
+// The admin panel (admin/, a separate app on the same database): who runs it. Not FinTrack
+// users: their own password, and 2FA is mandatory.
+model AdminUser {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  passwordHash   String    @map("password_hash")
+  /// Authenticator secret, AES-GCM encrypted with a key from the panel's ADMIN_SECRET.
+  totpSecret     String    @map("totp_secret")
+  totpLastStep   Int?      @map("totp_last_step")
+  /// SHA-256 of the recovery codes not used yet.
+  recoveryCodes  String[]  @default([]) @map("recovery_codes")
+  /// Panel sessions carry this number: raising it signs the admin out everywhere.
+  sessionVersion Int       @default(0) @map("session_version")
+  /// Null until the first code from the app confirmed the setup.
+  activatedAt    DateTime? @map("activated_at")
+  lastLoginAt    DateTime? @map("last_login_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  auditLogs AdminAuditLog[]
+  notes     AdminNote[]
+
+  @@map("admin_users")
+}
+
+// Everything done from the admin panel, sign-ins included. Kept one year (nightly cleanup).
+model AdminAuditLog {
+  id           String   @id @default(cuid())
+  adminId      String?  @map("admin_id")
+  action       String
+  /// The FinTrack user acted on. No foreign key: the trail outlives the account.
+  targetUserId String?  @map("target_user_id")
+  targetEmail  String?  @map("target_email")
+  details      Json?
+  ip           String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  admin AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetUserId])
+  @@map("admin_audit_logs")
+}
+
+// Support notes on a user, written in the admin panel; they go with the account.
+model AdminNote {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  adminId   String?  @map("admin_id")
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  admin AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("admin_notes")
 }

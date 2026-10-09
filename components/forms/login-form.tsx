@@ -70,7 +70,11 @@ export function LoginForm({ callbackUrl, notice }: { callbackUrl: string; notice
       return;
     }
     const failed = await finishSignIn(res.ticket);
-    if (failed) return backToPassword("Accesso non riuscito. Riprova.");
+    if (failed) {
+      return backToPassword(
+        failed === "SUSPENDED" ? "Questo account è sospeso." : "Accesso non riuscito. Riprova.",
+      );
+    }
     enter();
   }
 
@@ -92,6 +96,7 @@ export function LoginForm({ callbackUrl, notice }: { callbackUrl: string; notice
       setPending(false);
       return;
     }
+    if (failed === "SUSPENDED") return backToPassword("Questo account è sospeso.");
     // Expired, used up by too many wrong codes, or opened in another browser.
     backToPassword("L'accesso è scaduto: inserisci di nuovo email e password.");
   }

@@ -62,7 +62,13 @@ Il middleware richiede il login su tutte le pagine tranne landing, autenticazion
 
 - **Conferma dell'email**: alla registrazione parte un link valido 48 ore (`/verify-email`, token salvato come hash). L'account funziona subito; finché l'email non è confermata un banner lo ricorda (con «Rinvia il link») e restano bloccati inviti e coach AI. Gli account esistenti prima di questa funzione sono considerati confermati.
 - **Rate limiting** (`lib/rate-limit.ts`): contatori a finestra fissa nella tabella `rate_limits`, con un upsert atomico (funziona con più istanze serverless). Accesso: 8 tentativi per email e 30 per IP ogni 15 minuti, codici 2FA 5 ogni 15 minuti e 20 al giorno per account; registrazione: 5 per IP all'ora; reset password: 3 per email (in silenzio, per non rivelare quali email esistono) e 10 per IP all'ora; inviti: 20 al giorno; coach AI: 5 al minuto e 30 al giorno per persona, più un limite globale per Groq gratuito. Una domanda a cui l'AI non risponde non consuma la quota.
-- **Pulizia notturna** (`/api/cron/cleanup`, 02:30 UTC): cancella contatori, link, inviti e ticket di accesso scaduti, così email e IP dei tentativi restano al massimo 2 giorni.
+- **Pulizia notturna** (`/api/cron/cleanup`, 02:30 UTC): cancella contatori, link, inviti e ticket di accesso scaduti, chiude il Pro in omaggio arrivato a scadenza e il registro admin più vecchio di un anno, così email e IP dei tentativi restano al massimo 2 giorni.
+
+## Pannello admin
+
+Nella cartella [`admin/`](admin/README.md) c'è il pannello di amministrazione: un'app Next.js 15 separata, con un suo progetto Vercel (Root Directory `admin`), il suo accesso (password + 2FA obbligatorio) e lo stesso database. Gestisce utenti (ricerca, filtri, CSV, sospensione, sessioni, reset password, 2FA, Pro in omaggio, eliminazione), abbonamenti e pagamenti Stripe, tentativi di accesso sospetti, registro delle operazioni e stato del sistema. La guida per metterlo online è in [admin/README.md](admin/README.md).
+
+FinTrack rispetta ciò che fa il pannello: un utente con `suspended_at` non entra e le sue sessioni finiscono; il Pro «in omaggio» (`subscription_status = 'comp'`) scade da solo con la pulizia notturna. Lo schema resta qui: dopo ogni modifica esegui `node scripts/sync-admin-schema.mjs` (un test controlla che la copia in `admin/prisma/` sia aggiornata).
 
 ## Funzionalità
 

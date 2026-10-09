@@ -8,6 +8,7 @@ export default defineConfig({
   oxc: { jsx: { runtime: "automatic" } },
   test: {
     include: ["**/*.test.ts"],
-    exclude: ["node_modules", ".next"],
+    // admin/ is a separate app with its own tests.
+    exclude: ["node_modules", ".next", "admin"],
   },
 });

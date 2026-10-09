@@ -6,17 +6,17 @@ import { prisma } from "@/lib/db/prisma";
 import { getActiveSpace, type ActiveSpace } from "@/lib/households";
 
 // JWT sessions can't be deleted, so they're checked against the account on every request: a
-// deleted user, or a session older than the last password change, 2FA change or "sign out
-// everywhere" (they raise sessionVersion), counts as logged out.
+// deleted or suspended user, or a session older than the last password change, 2FA change or
+// "sign out everywhere" (they raise sessionVersion), counts as logged out.
 // cache() dedupes the lookup across the layout, page and actions of a single request.
 export const getSession = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return null;
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { sessionVersion: true },
+    select: { sessionVersion: true, suspendedAt: true },
   });
-  return user && user.sessionVersion === (session.sv ?? 0) ? session : null;
+  return user && !user.suspendedAt && user.sessionVersion === (session.sv ?? 0) ? session : null;
 });
 
 export async function requireUser() {

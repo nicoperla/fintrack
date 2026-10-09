@@ -86,7 +86,7 @@ export async function issueTicket(
   return token;
 }
 
-export type TicketError = "EXPIRED" | "CODE_REQUIRED" | "BAD_CODE" | "RATE_LIMITED";
+export type TicketError = "EXPIRED" | "CODE_REQUIRED" | "BAD_CODE" | "RATE_LIMITED" | "SUSPENDED";
 
 export type RedeemResult =
   | {
@@ -117,6 +117,7 @@ export async function redeemTicket({
           twoFactorEnabledAt: true,
           totpSecret: true,
           totpLastStep: true,
+          suspendedAt: true,
         },
       },
     },
@@ -130,6 +131,8 @@ export async function redeemTicket({
     return { ok: false, error: "EXPIRED" };
   }
   const { user } = ticket;
+  // Suspended from the admin panel after the password step.
+  if (user.suspendedAt) return { ok: false, error: "SUSPENDED" };
   const where = { device: ticket.deviceLabel, place: ticket.place };
 
   let recoveryLeft: number | null = null;

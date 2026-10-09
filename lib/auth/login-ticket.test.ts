@@ -105,6 +105,14 @@ describe("redeemTicket", () => {
     expect(checkSecondFactor).not.toHaveBeenCalled();
   });
 
+  it("refuses an account suspended after the password step", async () => {
+    prisma.loginTicket.findUnique.mockResolvedValue(
+      ticket({ user: { ...user, suspendedAt: new Date() } }),
+    );
+    expect(await redeem()).toEqual({ ok: false, error: "SUSPENDED" });
+    expect(prisma.loginTicket.deleteMany).not.toHaveBeenCalled();
+  });
+
   it("refuses a ticket used by a parallel request", async () => {
     prisma.loginTicket.deleteMany.mockResolvedValue({ count: 0 });
     expect(await redeem()).toEqual({ ok: false, error: "EXPIRED" });

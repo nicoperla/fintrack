@@ -41,6 +41,12 @@ describe("getSession", () => {
     expect(await getSession()).toBeNull();
   });
 
+  it("refuses the session of a suspended account", async () => {
+    getServerSession.mockResolvedValue(session(0));
+    findUnique.mockResolvedValue({ sessionVersion: 0, suspendedAt: new Date() });
+    expect(await getSession()).toBeNull();
+  });
+
   it("refuses the session of a deleted account", async () => {
     getServerSession.mockResolvedValue(session(0));
     findUnique.mockResolvedValue(null);

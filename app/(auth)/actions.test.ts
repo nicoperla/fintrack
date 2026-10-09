@@ -94,6 +94,19 @@ describe("startLogin", () => {
     expect(issueTicket).not.toHaveBeenCalled();
   });
 
+  it("tells a suspended account only after the right password", async () => {
+    prisma.user.findUnique.mockResolvedValue({
+      id: "user-1",
+      passwordHash: "hash",
+      twoFactorEnabledAt: null,
+      suspendedAt: new Date(),
+    });
+    expect((await startLogin(input)).error).toMatch(/sospeso/);
+    expect(issueTicket).not.toHaveBeenCalled();
+    verifyPassword.mockResolvedValue(false);
+    expect((await startLogin(input)).error).toBe("Email o password non corretti.");
+  });
+
   it("stops before checking the password when there were too many tries", async () => {
     rateLimit.mockResolvedValueOnce({ ok: false, remaining: 0, retryAfterSeconds: 600 });
     const result = await startLogin(input);
