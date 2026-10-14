@@ -38,6 +38,12 @@ const MOBILE = { width: 390, height: 844 };
 
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** The dashboard's top card: "Soldi disponibili", or "Lo stipendio vero" when that's on (the demo). */
+const dashboardHero = (page) =>
+  page
+    .locator('section[aria-label="Soldi disponibili"], section[aria-label="Lo stipendio vero"]')
+    .first();
+
 /** One login for the whole run: the app allows only a few attempts per email. */
 let session = null;
 
@@ -63,7 +69,7 @@ async function newContext(browser, { viewport, scale, dark = true, reduceMotion 
     await Promise.all([page.waitForURL("**/dashboard"), page.click('button[type="submit"]')]);
     session = await context.storageState();
   }
-  await page.getByText("Soldi disponibili", { exact: true }).waitFor();
+  await dashboardHero(page).waitFor();
   return { context, page };
 }
 
@@ -316,21 +322,22 @@ async function videos(browser) {
     const size = { width: 1280, height: 800 };
     const { context, page } = await newContext(browser, { viewport: size, scale: 1 });
     await page.goto(`${BASE}/dashboard`);
-    await page.getByText("Soldi disponibili", { exact: true }).waitFor();
+    await dashboardHero(page).waitFor();
     await settle(page, 300);
     await page.goto(`${BASE}/dashboard`); // replay the count-up while recording
     // When each chapter starts, to update VIDEOS.desktop.chapters in components/landing/media.ts.
     const marks = [];
     const mark = (label) => marks.push({ label, t: Date.now() / 1000 });
     const frames = await screencast(page, size, async () => {
-      await page.getByText("Soldi disponibili", { exact: true }).waitFor();
+      await dashboardHero(page).waitFor();
       await pause(1800);
       const quick = page.getByRole("textbox", { name: /Inserimento rapido/ });
       await type(page, quick, "sigarette 6,20");
       await pause(2200);
       await quick.fill("");
       await smoothScroll(page, 520, 2600);
-      await page.locator('a[href="/ritrovati"]').first().click();
+      // The dashboard card may point to the claims instead: open the page directly.
+      await page.goto(`${BASE}/ritrovati`);
       await page.getByText("Il tuo 730").first().waitFor();
       mark("Soldi ritrovati");
       await pause(2600);
@@ -368,7 +375,7 @@ async function videos(browser) {
     const { context, page } = await newContext(browser, { viewport, scale: 2 });
     await page.goto(`${BASE}/dashboard`);
     const frames = await screencast(page, size, async () => {
-      await page.getByText("Soldi disponibili", { exact: true }).waitFor();
+      await dashboardHero(page).waitFor();
       await pause(1600);
       const quick = page.getByRole("textbox", { name: /Inserimento rapido/ });
       await type(page, quick, "caffè 1,50", 110);
@@ -376,7 +383,8 @@ async function videos(browser) {
       await quick.fill("");
       await page.locator("body").click({ position: { x: 5, y: 300 } });
       await smoothScroll(page, 760, 2200);
-      await page.locator('a[href="/ritrovati"]').first().click();
+      // The dashboard card may point to the claims instead: open the page directly.
+      await page.goto(`${BASE}/ritrovati`);
       await page.getByText("Il tuo 730").first().waitFor();
       await pause(2400);
       await smoothScroll(page, 560, 2000);

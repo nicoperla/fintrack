@@ -43,8 +43,8 @@ export const VIDEOS = {
     chapters: [
       { at: 0, label: "Dashboard e inserimento rapido" },
       { at: 9.3, label: "Soldi ritrovati" },
-      { at: 14.9, label: "Coach e «Posso permettermelo?»" },
-      { at: 22, label: "Il mese in storie" },
+      { at: 14.8, label: "Coach e «Posso permettermelo?»" },
+      { at: 21.8, label: "Il mese in storie" },
     ],
   },
   mobile: {
