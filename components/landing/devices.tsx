@@ -51,7 +51,7 @@ export function PhoneFrame({ children, className }: { children: ReactNode; class
 /** A browser window around a desktop screenshot or video. */
 export function BrowserFrame({
   children,
-  title = "FinTrack",
+  title = "Orbitly",
   className,
 }: {
   children: ReactNode;

@@ -151,7 +151,7 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
   try {
     await sendEmail({
       to: user.email,
-      subject: "Reimposta la tua password FinTrack",
+      subject: "Reimposta la tua password Orbitly",
       text: `Per reimpostare la password apri questo link (valido 1 ora):\n${link}\n\nSe non hai richiesto il reset, ignora questa email.`,
       html: `<p>Per reimpostare la password clicca qui (valido 1 ora):</p><p><a href="${link}">Reimposta password</a></p><p>Se non hai richiesto il reset, ignora questa email.</p>`,
     });

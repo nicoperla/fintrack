@@ -2,7 +2,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { getPacts } from "@/lib/data/pacts";
 import { PactView } from "@/components/pacts/pact-view";
 
-export const metadata = { title: "Il patto · FinTrack" };
+export const metadata = { title: "Il patto · Orbitly" };
 
 export default async function PactPage() {
   const space = await requireSpace();

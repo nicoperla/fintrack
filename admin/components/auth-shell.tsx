@@ -16,7 +16,7 @@ export function AuthShell({
       <div className="w-full max-w-md">
         <p className="mb-6 flex items-center justify-center gap-2 text-sm font-semibold tracking-wide text-white uppercase">
           <ShieldCheck className="text-accent size-5" aria-hidden />
-          FinTrack Admin
+          Orbitly Admin
         </p>
         <div className="border-line bg-panel rounded-2xl border p-6 shadow-2xl">
           <h1 className="text-xl font-semibold text-white">{title}</h1>

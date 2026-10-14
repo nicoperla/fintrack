@@ -11,7 +11,7 @@ import { startLogin, type LoginStep } from "@/app/(auth)/actions";
 
 const CODE_ERRORS: Record<string, string> = {
   BAD_CODE:
-    "Codice non valido. Usa quello di FinTrack nell'app e controlla che l'ora del telefono sia giusta.",
+    "Codice non valido. Usa quello di Orbitly (o FinTrack, se l'hai aggiunto prima del cambio di nome) e controlla che l'ora del telefono sia giusta.",
   RATE_LIMITED: "Troppi codici sbagliati. Aspetta un quarto d'ora e riprova.",
 };
 
@@ -109,7 +109,7 @@ export function LoginForm({ callbackUrl, notice }: { callbackUrl: string; notice
           <p className="text-muted-foreground">
             {recovery
               ? "Inserisci uno dei codici di recupero che hai salvato quando hai attivato la verifica in due passaggi. Ogni codice vale una volta sola."
-              : "Apri l'app di autenticazione sul telefono e inserisci il codice di 6 cifre di FinTrack."}
+              : "Apri l'app di autenticazione sul telefono e inserisci il codice di 6 cifre di Orbitly (si chiamava FinTrack: se l'avevi aggiunto prima, lo trovi con quel nome)."}
           </p>
         </div>
         {error && <FormMessage tone="error">{error}</FormMessage>}

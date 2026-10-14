@@ -2,7 +2,7 @@ import Stripe from "stripe";
 import { prisma } from "@/lib/db";
 
 /*
- * Stripe from the panel: read subscriptions and invoices, cancel or resume. FinTrack's webhook
+ * Stripe from the panel: read subscriptions and invoices, cancel or resume. Orbitly's webhook
  * keeps users.plan in sync anyway; the panel also writes the result right away so the page
  * shows it without waiting.
  */
@@ -22,7 +22,7 @@ export function dashboardUrl(path: string) {
   return `https://dashboard.stripe.com${stripeTestMode() ? "/test" : ""}/${path.replace(/^\//, "")}`;
 }
 
-/** As in FinTrack: these statuses keep Pro (past_due gets Stripe's retry period first). */
+/** As in Orbitly: these statuses keep Pro (past_due gets Stripe's retry period first). */
 const PRO_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 export function planFromSubscription(subscription: Stripe.Subscription) {

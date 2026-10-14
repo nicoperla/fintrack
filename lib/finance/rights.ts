@@ -1,11 +1,11 @@
 import { DEDUCTION_TYPES, RULES, type DeductionType } from "@/lib/finance/deductions";
 
 /*
- * "Radar dei diritti": what the 730 precompilato misses compared with the expenses FinTrack saw,
+ * "Radar dei diritti": what the 730 precompilato misses compared with the expenses Orbitly saw,
  * the rent deduction (rarely precompiled) and the company welfare about to be lost.
  *
  * Rent: art. 16 TUIR, for the 730/2026 and 730/2027. Fringe benefits: art. 51 c. 3 TUIR as set by
- * L. 207/2024 for 2025–2027. Checked October 2026. FinTrack informs: the 730 is corrected by the
+ * L. 207/2024 for 2025–2027. Checked October 2026. Orbitly informs: the 730 is corrected by the
  * user or by a CAF, and every figure here is an estimate.
  */
 
@@ -184,13 +184,13 @@ export type ComparisonRow = {
   label: string;
   fintrack: number;
   precompiled: number;
-  /** Seen by FinTrack and not in the precompilato (at least this much). */
+  /** Seen by Orbitly and not in the precompilato (at least this much). */
   missing: number;
   extraRefund: number;
 };
 
 /**
- * FinTrack's expenses against the totals the user reads in the precompilato. Where FinTrack saw
+ * Orbitly's expenses against the totals the user reads in the precompilato. Where Orbitly saw
  * more, at least the difference is missing; where it saw less, the precompilato wins.
  */
 export function compareWithPrecompiled(input: {

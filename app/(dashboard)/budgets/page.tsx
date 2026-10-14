@@ -14,7 +14,7 @@ import { dailyAllowance } from "@/lib/finance/planning";
 import { toDateInputValue } from "@/lib/format";
 import { Amount } from "@/components/amount";
 
-export const metadata = { title: "Budget · FinTrack" };
+export const metadata = { title: "Budget · Orbitly" };
 
 export default async function BudgetsPage() {
   const space = await requireSpace();

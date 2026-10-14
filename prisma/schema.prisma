@@ -43,7 +43,7 @@ enum SplitMode {
 
 /// What a "Riprenditeli" claim asks for (lib/finance/claims.ts).
 enum ClaimKind {
-  /// Cancel a subscription; afterwards FinTrack watches for charges past the effective date.
+  /// Cancel a subscription; afterwards Orbitly watches for charges past the effective date.
   CANCELLATION
   /// Refund of a SEPA direct debit, within 8 weeks of the charge (artt. 13-14 d.lgs. 11/2010).
   DIRECT_DEBIT_REFUND
@@ -551,7 +551,7 @@ model InvestmentValuation {
 }
 
 /// "Riprenditeli": a request to get money back or stop paying, from draft to outcome. The user
-/// sends the letter themselves; FinTrack keeps the deadlines (lib/finance/claims.ts).
+/// sends the letter themselves; Orbitly keeps the deadlines (lib/finance/claims.ts).
 model Claim {
   id              String      @id @default(cuid())
   householdId     String      @map("household_id")
@@ -737,7 +737,7 @@ model MoneyDecision {
 }
 
 /// "Il patto": a spending limit on a category for a period, with a stake, checked at the end on
-/// the movements (lib/finance/pacts.ts). The stake is only social: FinTrack never moves money.
+/// the movements (lib/finance/pacts.ts). The stake is only social: Orbitly never moves money.
 model Pact {
   id                  String    @id @default(cuid())
   householdId         String    @map("household_id")
@@ -798,7 +798,7 @@ model InvestmentCost {
   @@map("investment_costs")
 }
 
-// The admin panel (admin/, a separate app on the same database): who runs it. Not FinTrack
+// The admin panel (admin/, a separate app on the same database): who runs it. Not Orbitly
 // users: their own password, and 2FA is mandatory.
 model AdminUser {
   id             String    @id @default(cuid())
@@ -828,7 +828,7 @@ model AdminAuditLog {
   id           String   @id @default(cuid())
   adminId      String?  @map("admin_id")
   action       String
-  /// The FinTrack user acted on. No foreign key: the trail outlives the account.
+  /// The Orbitly user acted on. No foreign key: the trail outlives the account.
   targetUserId String?  @map("target_user_id")
   targetEmail  String?  @map("target_email")
   details      Json?

@@ -4,7 +4,7 @@ import { getCategoryTree } from "@/lib/data/categories";
 import { SuggestedCategories } from "@/components/categories/suggested-categories";
 import { suggestMissingCategories } from "@/lib/defaults/suggestions";
 
-export const metadata = { title: "Categorie · FinTrack" };
+export const metadata = { title: "Categorie · Orbitly" };
 
 export default async function CategoriesPage() {
   const space = await requireSpace();

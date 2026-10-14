@@ -17,7 +17,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <main className="relative z-10 flex min-h-svh flex-col items-center justify-center gap-8 p-4">
           <Link href="/" className="flex items-center gap-2 text-xl font-semibold text-white">
             <LogoMark />
-            <span className="font-display tracking-tight">FinTrack</span>
+            <span className="font-display tracking-tight">Orbitly</span>
           </Link>
           {/* The same spinning light border as the landing page's badge. */}
           <div className="lp-rise lp-glow-border w-full max-w-sm rounded-xl [&_[data-slot=card]]:backdrop-blur-xl">

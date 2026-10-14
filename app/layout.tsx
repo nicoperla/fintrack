@@ -27,10 +27,10 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   // Absolute URLs for the social previews (Open Graph images).
   metadataBase: new URL(getAppUrl()),
-  title: "FinTrack",
+  title: "Orbitly",
   description: "Gestione delle finanze personali",
-  applicationName: "FinTrack",
-  appleWebApp: { capable: true, title: "FinTrack", statusBarStyle: "default" },
+  applicationName: "Orbitly",
+  appleWebApp: { capable: true, title: "Orbitly", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

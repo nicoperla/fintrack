@@ -104,7 +104,7 @@ export function CostView({ data }: { data: FundCostsPage }) {
       <p className="text-muted-foreground flex items-start gap-2 text-xs">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <span>
-          Non è una consulenza: FinTrack non ti dice se tenere un prodotto, venderlo o comprarne un
+          Non è una consulenza: Orbitly non ti dice se tenere un prodotto, venderlo o comprarne un
           altro. Mostra quanto pesano negli anni i costi scritti nel KID, accanto alla media della
           categoria. Medie dei costi correnti dei fondi UCITS venduti nell&apos;UE,{" "}
           {ESMA_REFERENCE.period}:{" "}

@@ -17,6 +17,7 @@ describe("passwordChecks", () => {
   it("refuses the name, the email and the app's name", () => {
     expect(failing("anna.rossi2026", { email: "anna.rossi@example.com" })).toEqual(["personal"]);
     expect(failing("Giuseppe-1990", { name: "Giuseppe Verdi" })).toEqual(["personal"]);
+    expect(personalPart("Orbitly2026!")).toBe("email");
     expect(personalPart("FinTrack2026!")).toBe("email");
     // Short names would forbid too much: "Ugo" may appear in a password.
     expect(failing("sugo di pomodoro", { name: "Ugo" })).toEqual([]);

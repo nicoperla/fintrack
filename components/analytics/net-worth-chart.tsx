@@ -29,7 +29,7 @@ const RANGES = [
   ["3m", "3M", "negli ultimi 3 mesi"],
   ["6m", "6M", "negli ultimi 6 mesi"],
   ["1a", "1A", "nell'ultimo anno"],
-  ["tutto", "Tutto", "da quando usi FinTrack"],
+  ["tutto", "Tutto", "da quando usi Orbitly"],
 ] as const;
 
 const parse = (iso: string) => new Date(`${iso}T00:00:00Z`);

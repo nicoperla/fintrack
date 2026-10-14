@@ -6,7 +6,7 @@ import { CsvImportWizard } from "@/components/import/csv-import-wizard";
 import { requireSpace } from "@/lib/auth/session";
 import { getAccountOptions } from "@/lib/data/accounts";
 
-export const metadata = { title: "Importa CSV · FinTrack" };
+export const metadata = { title: "Importa CSV · Orbitly" };
 
 export default async function ImportPage() {
   const space = await requireSpace();

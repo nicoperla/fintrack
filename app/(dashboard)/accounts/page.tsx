@@ -12,7 +12,7 @@ import { isInvestment } from "@/lib/account-types";
 import { toAccountDTO } from "@/lib/dto";
 import { Amount } from "@/components/amount";
 
-export const metadata = { title: "Conti · FinTrack" };
+export const metadata = { title: "Conti · Orbitly" };
 
 export default async function AccountsPage() {
   const space = await requireSpace();

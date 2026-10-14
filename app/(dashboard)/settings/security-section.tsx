@@ -67,7 +67,7 @@ async function renewSession(ticket: string | undefined) {
 
 function recoveryFile(codes: string[], email: string) {
   return [
-    "FinTrack · codici di recupero",
+    "Orbitly · codici di recupero",
     `Account: ${email}`,
     `Creati il ${dateFormat.format(new Date())}`,
     "",
@@ -104,7 +104,7 @@ function RecoveryCodes({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "fintrack-codici-di-recupero.txt";
+    link.download = "orbitly-codici-di-recupero.txt";
     link.click();
     URL.revokeObjectURL(url);
   }

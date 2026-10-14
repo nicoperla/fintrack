@@ -5,7 +5,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { getGamification } from "@/lib/data/gamification";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Traguardi · FinTrack" };
+export const metadata = { title: "Traguardi · Orbitly" };
 
 const weekday = new Intl.DateTimeFormat("it-IT", { weekday: "narrow", timeZone: "UTC" });
 const fullDay = new Intl.DateTimeFormat("it-IT", {

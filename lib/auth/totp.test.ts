@@ -87,7 +87,7 @@ describe("otpauthUri", () => {
   it("names the issuer and the account, as the apps show them", () => {
     const uri = otpauthUri("JBSWY3DPEHPK3PXP", "anna+casa@example.com");
     expect(uri).toBe(
-      "otpauth://totp/FinTrack:anna%2Bcasa%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=FinTrack&algorithm=SHA1&digits=6&period=30",
+      "otpauth://totp/Orbitly:anna%2Bcasa%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=Orbitly&algorithm=SHA1&digits=6&period=30",
     );
   });
 

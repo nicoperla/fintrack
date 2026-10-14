@@ -4,7 +4,7 @@ import { clientIp } from "@/lib/request";
 
 /*
  * The audit log: every action in the panel, with who, on whom, when and from which IP. Shown
- * in "Registro" and on each user's page; FinTrack's nightly cleanup keeps one year.
+ * in "Registro" and on each user's page; Orbitly's nightly cleanup keeps one year.
  */
 
 export const ACTIONS = {

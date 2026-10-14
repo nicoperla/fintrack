@@ -59,7 +59,7 @@ export async function overview(now = new Date()) {
   };
 }
 
-/** Accounts that signed in since a date (FinTrack notes each browser's last sign-in). */
+/** Accounts that signed in since a date (Orbitly notes each browser's last sign-in). */
 async function activeUsers(since: Date) {
   const rows = await prisma.$queryRaw<{ count: bigint }[]>`
     SELECT COUNT(DISTINCT "user_id") AS count FROM "known_devices" WHERE "last_login_at" >= ${since}`;

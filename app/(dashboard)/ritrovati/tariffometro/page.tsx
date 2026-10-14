@@ -4,7 +4,7 @@ import { TariffView } from "@/components/tariffs/tariff-view";
 import { requireSpace } from "@/lib/auth/session";
 import { getTariffometro } from "@/lib/data/tariffs";
 
-export const metadata = { title: "Il Tariffometro · FinTrack" };
+export const metadata = { title: "Il Tariffometro · Orbitly" };
 
 export default async function TariffometroPage() {
   const space = await requireSpace();

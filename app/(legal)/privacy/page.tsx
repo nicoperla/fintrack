@@ -2,13 +2,13 @@ import Link from "next/link";
 import { ContactLine, LegalDocument } from "@/components/marketing/legal-document";
 import { LEGAL } from "@/lib/legal";
 
-export const metadata = { title: "Privacy · FinTrack" };
+export const metadata = { title: "Privacy · Orbitly" };
 
 export default function PrivacyPage() {
   return (
     <LegalDocument title="Informativa sulla privacy">
       <p>
-        FinTrack è un&apos;app per gestire le finanze personali. Questa pagina spiega quali dati
+        Orbitly è un&apos;app per gestire le finanze personali. Questa pagina spiega quali dati
         trattiamo, perché, con chi li condividiamo e come puoi esercitare i tuoi diritti ai sensi
         del Regolamento UE 2016/679 (GDPR).
       </p>
@@ -81,7 +81,7 @@ export default function PrivacyPage() {
           <li>
             <strong>Pratiche di «Riprenditeli»</strong>: per le disdette, i rimborsi e i reclami che
             apri, a chi sono rivolti, gli importi, il testo della lettera, le date di invio e di
-            scadenza e com&apos;è finita. FinTrack non invia niente al posto tuo. I dati tra
+            scadenza e com&apos;è finita. Orbitly non invia niente al posto tuo. I dati tra
             parentesi quadre, come IBAN e numero cliente, li completi tu nella tua email: non ti
             chiediamo di salvarli.
           </li>
@@ -100,7 +100,7 @@ export default function PrivacyPage() {
             impronta crittografica.
           </li>
           <li>
-            <strong>Assistenza e sicurezza del servizio</strong>: chi gestisce FinTrack, da un
+            <strong>Assistenza e sicurezza del servizio</strong>: chi gestisce Orbitly, da un
             pannello riservato, vede i dati del tuo account (nome, email, piano, date di iscrizione
             e di accesso, dispositivi) e quanti movimenti, conti e budget hai, mai il loro
             contenuto. Da lì può sospendere un account in caso di abuso, chiudere le sessioni aperte
@@ -108,7 +108,7 @@ export default function PrivacyPage() {
             registro per un anno.
           </li>
           <li>
-            <strong>Pagamenti</strong> (solo con FinTrack Pro): li gestisce Stripe. Noi non vediamo
+            <strong>Pagamenti</strong> (solo con Orbitly Pro): li gestisce Stripe. Noi non vediamo
             né salviamo i dati della carta: riceviamo solo lo stato dell&apos;abbonamento.
           </li>
         </ul>
@@ -149,7 +149,7 @@ export default function PrivacyPage() {
       <section id="ai">
         <h2>Il coach AI</h2>
         <p>
-          La pagina del coach, i consigli e le risposte rapide sono calcolati da FinTrack sui nostri
+          La pagina del coach, i consigli e le risposte rapide sono calcolati da Orbitly sui nostri
           server, senza inviare dati a terzi. Solo la chat con il coach AI usa un fornitore esterno
           di intelligenza artificiale: Groq Inc. oppure Anthropic PBC, negli Stati Uniti. La pagina
           del coach indica quale è in uso.
@@ -173,9 +173,9 @@ export default function PrivacyPage() {
         <h2>Il confronto anonimo tra utenti</h2>
         <p>
           Il Tariffometro confronta quello che paghi con medie pubbliche. Più avanti mostrerà anche
-          quanto pagano le famiglie FinTrack della tua provincia. Per costruire quel confronto
-          usiamo solo i dati degli spazi in cui qualcuno ha scelto «Partecipo»: importi del
-          Tariffometro, provincia e numero di persone in casa.
+          quanto pagano le famiglie Orbitly della tua provincia. Per costruire quel confronto usiamo
+          solo i dati degli spazi in cui qualcuno ha scelto «Partecipo»: importi del Tariffometro,
+          provincia e numero di persone in casa.
         </p>
         <p>
           Agli altri utenti mostreremo solo medie di almeno 20 famiglie, con un piccolo scarto
@@ -194,7 +194,7 @@ export default function PrivacyPage() {
           <li>Neon Inc.: database PostgreSQL, ospitato a Francoforte (UE).</li>
           <li>Resend Inc. (USA): invio delle email.</li>
           <li>Groq Inc. o Anthropic PBC (USA): solo il coach AI, solo con il tuo consenso.</li>
-          <li>Stripe (Irlanda/USA): solo i pagamenti di FinTrack Pro.</li>
+          <li>Stripe (Irlanda/USA): solo i pagamenti di Orbitly Pro.</li>
         </ul>
         <p>
           Quando scegli una password controlliamo che non sia già finita in un furto di dati con il
@@ -270,7 +270,7 @@ export default function PrivacyPage() {
           Le connessioni sono cifrate (HTTPS), le password salvate con bcrypt, i link di invito, di
           reset e di conferma salvati solo come impronta crittografica. Puoi proteggere
           l&apos;account con la verifica in due passaggi; quando cambi la password chiudiamo le
-          sessioni aperte sugli altri dispositivi. FinTrack è riservato ai maggiorenni.
+          sessioni aperte sugli altri dispositivi. Orbitly è riservato ai maggiorenni.
         </p>
       </section>
 

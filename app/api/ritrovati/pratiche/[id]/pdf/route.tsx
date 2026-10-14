@@ -9,7 +9,7 @@ import { NAME_PLACEHOLDER } from "@/lib/claims/letters";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET /api/ritrovati/pratiche/<id>/pdf: a claim's letter, ready to print (FinTrack Pro).
+// GET /api/ritrovati/pratiche/<id>/pdf: a claim's letter, ready to print (Orbitly Pro).
 export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getSession();
   if (!session) return new Response("Non autorizzato", { status: 401 });
@@ -24,7 +24,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   ]);
   if (!claim) return new Response("Pratica non trovata", { status: 404 });
   if (!hasPro(user)) {
-    return new Response("Le lettere in PDF fanno parte di FinTrack Pro.", { status: 402 });
+    return new Response("Le lettere in PDF fanno parte di Orbitly Pro.", { status: 402 });
   }
 
   const pdf = await renderToBuffer(
@@ -40,7 +40,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="fintrack-lettera-${params.id}.pdf"`,
+      "Content-Disposition": `attachment; filename="orbitly-lettera-${params.id}.pdf"`,
       "Cache-Control": "private, no-store",
     },
   });

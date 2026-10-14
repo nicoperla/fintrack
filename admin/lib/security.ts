@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 
 /*
- * Who is hammering the sign-in: the rate-limit counters (table rate_limits) of FinTrack and of
+ * Who is hammering the sign-in: the rate-limit counters (table rate_limits) of Orbitly and of
  * the panel, read with the same limits the apps apply (lib/rate-limit.ts in both).
  */
 

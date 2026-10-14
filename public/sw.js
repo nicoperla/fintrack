@@ -1,5 +1,5 @@
 /*
- * FinTrack service worker: makes the app installable and usable offline for consultation.
+ * Orbitly service worker: makes the app installable and usable offline for consultation.
  *
  * - Pages (navigations): network first, so data is always fresh online; the last good copy of
  *   each visited page is kept and shown offline, with /offline.html for pages never visited.

@@ -172,7 +172,7 @@ export function Onboarding({
     <div className="mx-auto grid w-full max-w-xl gap-6 py-4">
       <div className="text-center">
         <p className="text-muted-foreground text-sm">
-          Benvenuto su FinTrack{name ? `, ${name.split(" ")[0]}` : ""}!
+          Benvenuto su Orbitly{name ? `, ${name.split(" ")[0]}` : ""}!
         </p>
         <h1 className="text-2xl font-semibold tracking-tight text-balance">
           Iniziamo in tre passi

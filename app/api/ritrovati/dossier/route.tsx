@@ -15,7 +15,7 @@ const dateFormat = new Intl.DateTimeFormat("it-IT", {
   timeZone: "Europe/Rome",
 });
 
-// GET /api/ritrovati/dossier?anno=2026&chi=io|tutti: the 730 dossier (FinTrack Pro).
+// GET /api/ritrovati/dossier?anno=2026&chi=io|tutti: the 730 dossier (Orbitly Pro).
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session) return new Response("Non autorizzato", { status: 401 });
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
   const space = await getActiveSpace(session.user);
   const data = await getFoundMoney(session.user.id, space.id, params.get("anno") ?? undefined);
   if (!data.details) {
-    return new Response("Il dossier 730 fa parte di FinTrack Pro.", { status: 402 });
+    return new Response("Il dossier 730 fa parte di Orbitly Pro.", { status: 402 });
   }
 
   const everyone = params.get("chi") === "tutti" && data.shared;
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
   return new Response(new Uint8Array(pdf), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="fintrack-dossier-730-${data.year + 1}.pdf"`,
+      "Content-Disposition": `attachment; filename="orbitly-dossier-730-${data.year + 1}.pdf"`,
       "Cache-Control": "private, no-store",
     },
   });

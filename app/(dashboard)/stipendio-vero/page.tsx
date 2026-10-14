@@ -5,7 +5,7 @@ import { TrueSalaryView } from "@/components/true-salary/true-salary-view";
 import { requireSpace } from "@/lib/auth/session";
 import { getLastYearAmounts, getTrueSalary } from "@/lib/data/true-salary";
 
-export const metadata = { title: "Stipendio vero · FinTrack" };
+export const metadata = { title: "Stipendio vero · Orbitly" };
 
 export default async function TrueSalaryPage() {
   const space = await requireSpace();

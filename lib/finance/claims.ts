@@ -3,7 +3,7 @@ import { looksLikeBankFee } from "@/lib/finance/found-money";
 import { normalizeDescription } from "@/lib/finance/recurring";
 
 /*
- * "Riprenditeli": FinTrack doesn't stop at finding lost money (lib/finance/found-money.ts), it
+ * "Riprenditeli": Orbitly doesn't stop at finding lost money (lib/finance/found-money.ts), it
  * helps get it back. The user sends the letters (lib/claims/letters.ts); this module keeps the
  * deadlines the rules set and says what to do next. Dates are YYYY-MM-DD strings.
  *

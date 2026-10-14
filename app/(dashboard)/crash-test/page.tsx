@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { CrashView } from "@/components/crash-test/crash-view";
 
-export const metadata = { title: "Il crash test · FinTrack" };
+export const metadata = { title: "Il crash test · Orbitly" };
 
 export default async function CrashTestPage() {
   const space = await requireSpace();

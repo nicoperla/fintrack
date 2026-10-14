@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
   pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
-      name: "FinTrack",
+      name: "Orbitly",
       // No password here: the sign-in server action checked it and issued the ticket
       // (lib/auth/login-ticket.ts). This step only adds the 2FA code, when it's on.
       credentials: {

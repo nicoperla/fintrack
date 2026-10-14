@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { TalkView } from "@/components/money-talk/talk-view";
 
-export const metadata = { title: "Il caffè dei conti · FinTrack" };
+export const metadata = { title: "Il caffè dei conti · Orbitly" };
 
 type SearchParams = { month?: string | string[] };
 
@@ -28,7 +28,7 @@ export default async function MoneyTalkPage({ searchParams }: { searchParams: Se
         <EmptyState
           illustration="celebrate"
           title="Il caffè dei conti si fa in due (o più)"
-          description="Invita il partner o chi vive con te nello spazio: ogni mese FinTrack vi prepara l'agenda con i vostri numeri, e voi vi sedete a parlarne."
+          description="Invita il partner o chi vive con te nello spazio: ogni mese Orbitly vi prepara l'agenda con i vostri numeri, e voi vi sedete a parlarne."
           action={
             <Link href="/settings" className={buttonVariants()}>
               Invita qualcuno
@@ -45,7 +45,7 @@ export default async function MoneyTalkPage({ searchParams }: { searchParams: Se
         <EmptyState
           illustration="calendar"
           title={`Il primo caffè, a inizio ${data.nextTalk ?? data.nextMonthName}`}
-          description={`Quando ${data.nextMonthName} sarà finito, FinTrack prepara l'agenda con i vostri numeri. Intanto registrate le spese, ognuno le sue.`}
+          description={`Quando ${data.nextMonthName} sarà finito, Orbitly prepara l'agenda con i vostri numeri. Intanto registrate le spese, ognuno le sue.`}
         />
       ) : (
         <TalkView key={data.month} data={data} />

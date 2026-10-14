@@ -290,7 +290,7 @@ ${local(text)}`
         >
           <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>
-            <span className="font-medium">Il coach AI fa parte di FinTrack Pro.</span>{" "}
+            <span className="font-medium">Il coach AI fa parte di Orbitly Pro.</span>{" "}
             <span className="text-muted-foreground">
               Risponde a qualsiasi domanda con i tuoi numeri. Intanto le risposte rapide qui sotto
               sono gratis.

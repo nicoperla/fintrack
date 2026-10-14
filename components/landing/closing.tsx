@@ -46,7 +46,7 @@ export function Found730() {
               <span className="lp-gradient-text">che il precompilato non sa.</span>
             </>
           }
-          text="Farmacia, visite, dentista, veterinario, scuola e sport dei figli, abbonamento ai mezzi: mentre registri le spese, FinTrack mette da parte quelle detraibili e ti dice quanto ti torna. Quando esce il precompilato, il Radar dei diritti le confronta con il tuo e ti mostra cosa manca."
+          text="Farmacia, visite, dentista, veterinario, scuola e sport dei figli, abbonamento ai mezzi: mentre registri le spese, Orbitly mette da parte quelle detraibili e ti dice quanto ti torna. Quando esce il precompilato, il Radar dei diritti le confronta con il tuo e ti mostra cosa manca."
         />
         <Reveal delay={0.1}>
           <ul className="grid gap-3 text-white/75">
@@ -432,14 +432,14 @@ const FAQ = [
   },
   {
     q: "Come funziona Riprenditeli? Mandate voi le lettere?",
-    a: "No, le mandi tu: FinTrack prepara la lettera con le norme giuste (disdetta, rimborso di un addebito SEPA, reclamo alla banca, addebito doppio), tu la invii per email, PEC o raccomandata. Poi FinTrack tiene le scadenze di legge per la risposta e ti dice il passo successivo.",
+    a: "No, le mandi tu: Orbitly prepara la lettera con le norme giuste (disdetta, rimborso di un addebito SEPA, reclamo alla banca, addebito doppio), tu la invii per email, PEC o raccomandata. Poi Orbitly tiene le scadenze di legge per la risposta e ti dice il passo successivo.",
   },
   {
     q: "Come fa a stimare il rimborso del 730?",
     a: "Riconosce le spese detraibili dalla categoria e dalla descrizione e applica le regole del 19%: franchigie, limiti per tipo e per figlio, pagamento tracciabile. Il Radar dei diritti le confronta con il tuo precompilato. È una stima da verificare col CAF: lo diciamo chiaramente anche nel dossier.",
   },
   {
-    q: "FinTrack mi dice dove investire o quale polizza fare?",
+    q: "Orbitly mi dice dove investire o quale polizza fare?",
     a: "No. Non è una consulenza e non vendiamo prodotti. Il Tariffometro e la Radiografia dei costi confrontano quello che paghi con medie pubbliche (IVASS, Banca d'Italia, ARERA, ESMA) e ti lasciano le domande giuste da fare: la scelta resta tua.",
   },
   {
@@ -561,7 +561,7 @@ export function Footer() {
             Registrati
           </Link>
         </nav>
-        <p>© {new Date().getFullYear()} FinTrack · Fatto in Italia</p>
+        <p>© {new Date().getFullYear()} Orbitly · Fatto in Italia</p>
       </div>
     </footer>
   );

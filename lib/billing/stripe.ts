@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/db/prisma";
 
 /*
- * FinTrack Pro on Stripe: Checkout for subscribing, the Customer Portal for managing and
+ * Orbitly Pro on Stripe: Checkout for subscribing, the Customer Portal for managing and
  * cancelling, webhooks to keep `users.plan` in sync. Card data never touches our servers.
  */
 

@@ -115,4 +115,4 @@ export function StepNote({
 }
 
 export const CLAIMS_DISCLAIMER =
-  "Le lettere sono modelli da completare e controllare prima dell'invio: non sono consulenza legale. FinTrack non invia niente al posto tuo.";
+  "Le lettere sono modelli da completare e controllare prima dell'invio: non sono consulenza legale. Orbitly non invia niente al posto tuo.";

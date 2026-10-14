@@ -11,11 +11,17 @@ type Who = { email?: string | null; name?: string | null };
 export const PASSWORD_MAX = 72;
 export const MIN_DISTINCT_CHARS = 5;
 
+/** The app's names, today's and the one before: the first words anyone would try. */
+const APP_NAMES = ["orbitly", "fintrack"];
+
 /** Which personal detail the password repeats: the email (or the app's name), the first name. */
 export function personalPart(password: string, { email, name }: Who = {}) {
   const lower = password.toLowerCase();
   const local = email?.split("@")[0]?.toLowerCase();
-  if ((local && local.length >= 4 && lower.includes(local)) || lower.includes("fintrack")) {
+  if (
+    (local && local.length >= 4 && lower.includes(local)) ||
+    APP_NAMES.some((app) => lower.includes(app))
+  ) {
     return "email" as const;
   }
   const first = name?.trim().split(/\s+/)[0]?.toLowerCase();
@@ -52,7 +58,7 @@ export function passwordChecks(password: string, who: Who = {}): PasswordCheck[]
     },
     {
       id: "personal",
-      label: "Niente nome, email o «FinTrack»",
+      label: "Niente nome, email o «Orbitly»",
       ok: password.length > 0 && !personalPart(password, who),
     },
   ];

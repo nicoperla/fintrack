@@ -8,7 +8,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       <header className="border-b">
         <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between px-4">
           <Link href="/" className="font-semibold tracking-tight">
-            FinTrack
+            Orbitly
           </Link>
           <Link href="/login" className="text-muted-foreground hover:text-foreground text-sm">
             Accedi

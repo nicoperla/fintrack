@@ -46,19 +46,19 @@ async function notify(user: Recipient, subject: string, lines: string[]) {
 }
 
 export const notifyNewDevice = (user: Recipient, where: SignInPlace) =>
-  notify(user, "Nuovo accesso al tuo account FinTrack", [
+  notify(user, "Nuovo accesso al tuo account Orbitly", [
     `È stato fatto un accesso al tuo account da un dispositivo che non avevamo mai visto: ${describe(where)}.`,
     "Se sei stato tu, non devi fare niente.",
   ]);
 
 export const notifyWrongCode = (user: Recipient, where: SignInPlace) =>
-  notify(user, "Qualcuno conosce la tua password FinTrack", [
+  notify(user, "Qualcuno conosce la tua password Orbitly", [
     `Qualcuno ha inserito la password giusta del tuo account, ma codici di verifica sbagliati: ${describe(where)}.`,
     "La verifica in due passaggi l'ha fermato. Se non eri tu, la tua password non è più segreta: cambiala adesso.",
   ]);
 
 export const notifyPasswordChanged = (user: Recipient) =>
-  notify(user, "La tua password FinTrack è cambiata", [
+  notify(user, "La tua password Orbitly è cambiata", [
     "La password del tuo account è appena stata cambiata, e abbiamo chiuso le sessioni aperte sugli altri dispositivi.",
   ]);
 
@@ -68,7 +68,7 @@ export const notifyTwoFactor = (user: Recipient, enabled: boolean) =>
     enabled ? "Verifica in due passaggi attivata" : "Verifica in due passaggi disattivata",
     enabled
       ? [
-          "Da ora, per entrare in FinTrack servono la password e il codice dell'app di autenticazione.",
+          "Da ora, per entrare in Orbitly servono la password e il codice dell'app di autenticazione.",
           "Tieni i codici di recupero in un posto sicuro: servono se perdi il telefono.",
         ]
       : [

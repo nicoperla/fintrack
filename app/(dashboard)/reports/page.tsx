@@ -7,7 +7,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { prisma } from "@/lib/db/prisma";
 import { currentMonth, formatMonthYear } from "@/lib/dates";
 
-export const metadata = { title: "Report · FinTrack" };
+export const metadata = { title: "Report · Orbitly" };
 
 const monthKey = (d: Date) =>
   `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;

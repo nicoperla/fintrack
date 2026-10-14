@@ -12,7 +12,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { getInvestments, STALE_AFTER_DAYS } from "@/lib/data/investments";
 import { downsample } from "@/lib/finance/investments";
 
-export const metadata = { title: "Investimenti · FinTrack" };
+export const metadata = { title: "Investimenti · Orbitly" };
 
 const STEPS = [
   {
@@ -28,7 +28,7 @@ const STEPS = [
   {
     icon: RefreshCw,
     title: "Ogni tanto aggiorna il valore",
-    text: `Copia il valore dall'app della banca o del broker, anche una volta al mese: FinTrack calcola guadagno o perdita. Dopo ${STALE_AFTER_DAYS} giorni te lo ricordo.`,
+    text: `Copia il valore dall'app della banca o del broker, anche una volta al mese: Orbitly calcola guadagno o perdita. Dopo ${STALE_AFTER_DAYS} giorni te lo ricordo.`,
   },
 ];
 

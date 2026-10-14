@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { buttonVariants } from "@/components/ui/button";
 import { verifyEmailToken } from "@/lib/auth/email-verification";
 
-export const metadata = { title: "Conferma email · FinTrack" };
+export const metadata = { title: "Conferma email · Orbitly" };
 export const dynamic = "force-dynamic";
 
 export default async function VerifyEmailPage({
@@ -34,7 +34,7 @@ export default async function VerifyEmailPage({
       </CardHeader>
       <CardContent>
         <Link href="/dashboard" className={buttonVariants({ className: "w-full" })}>
-          Vai a FinTrack
+          Vai a Orbitly
         </Link>
       </CardContent>
     </Card>

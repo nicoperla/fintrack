@@ -21,7 +21,7 @@ import { validationError, type ActionResult } from "@/lib/action-result";
 
 /*
  * "Riprenditeli" claims. Every query is scoped to the active space, so nobody can read or change
- * someone else's claims by guessing an id. FinTrack never sends anything: the user does.
+ * someone else's claims by guessing an id. Orbitly never sends anything: the user does.
  */
 
 const NOT_FOUND: ActionResult = { ok: false, error: "Pratica non trovata." };

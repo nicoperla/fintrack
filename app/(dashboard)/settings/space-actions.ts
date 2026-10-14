@@ -197,9 +197,9 @@ export async function inviteMember(input: unknown): Promise<InviteResult> {
   try {
     await sendEmail({
       to: email,
-      subject: `${inviter} ti ha invitato su FinTrack`,
-      text: `${inviter} ti ha invitato a gestire insieme le finanze nello spazio «${space.name}» su FinTrack.\n\nAccetta l'invito (valido 7 giorni):\n${link}`,
-      html: `<p>${escapeHtml(inviter)} ti ha invitato a gestire insieme le finanze nello spazio <strong>${escapeHtml(space.name)}</strong> su FinTrack.</p><p><a href="${escapeHtml(link)}">Accetta l'invito</a> (valido 7 giorni)</p>`,
+      subject: `${inviter} ti ha invitato su Orbitly`,
+      text: `${inviter} ti ha invitato a gestire insieme le finanze nello spazio «${space.name}» su Orbitly.\n\nAccetta l'invito (valido 7 giorni):\n${link}`,
+      html: `<p>${escapeHtml(inviter)} ti ha invitato a gestire insieme le finanze nello spazio <strong>${escapeHtml(space.name)}</strong> su Orbitly.</p><p><a href="${escapeHtml(link)}">Accetta l'invito</a> (valido 7 giorni)</p>`,
     });
   } catch (error) {
     // The link is also shown to the owner, who can send it another way.

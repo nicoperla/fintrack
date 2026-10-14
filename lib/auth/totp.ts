@@ -91,7 +91,7 @@ export function verifyTotp(
 }
 
 /** The link an authenticator app reads from the QR code. */
-export function otpauthUri(secret: string, account: string, issuer = "FinTrack") {
+export function otpauthUri(secret: string, account: string, issuer = "Orbitly") {
   const label = `${encodeURIComponent(issuer)}:${encodeURIComponent(account)}`;
   const params = new URLSearchParams({
     secret,

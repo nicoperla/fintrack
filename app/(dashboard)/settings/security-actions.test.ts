@@ -94,7 +94,7 @@ describe("startTwoFactorSetup", () => {
     expect(result.ok).toBe(true);
     expect(result.secret).toMatch(/^([A-Z2-7]{4} ){7}[A-Z2-7]{4}$/);
     expect(result.qr).toContain("<svg");
-    expect(result.uri).toMatch(/^otpauth:\/\/totp\/FinTrack:anna%40example\.com\?secret=/);
+    expect(result.uri).toMatch(/^otpauth:\/\/totp\/Orbitly:anna%40example\.com\?secret=/);
 
     const stored = prisma.user.update.mock.calls[0][0].data.totpSecret;
     expect(stored).not.toContain(result.secret!.replace(/ /g, ""));

@@ -130,7 +130,7 @@ export async function renderStoryCard(story: StoryData, monthName: string, year:
 
   ctx.globalAlpha = 0.8;
   ctx.font = font(600, 32);
-  ctx.fillText("FinTrack", PAD, HEIGHT - 70);
+  ctx.fillText("Orbitly", PAD, HEIGHT - 70);
   ctx.textAlign = "right";
   ctx.fillText("Il mese in storie", WIDTH - PAD, HEIGHT - 70);
 

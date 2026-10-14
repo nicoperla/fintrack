@@ -15,7 +15,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           <div className="flex items-center justify-between gap-2">
             <p className="flex items-center gap-2 text-sm font-semibold tracking-wide text-white uppercase">
               <ShieldCheck className="text-accent size-5" aria-hidden />
-              FinTrack Admin
+              Orbitly Admin
             </p>
             <form action={logout} className="lg:hidden">
               <button className="text-muted flex items-center gap-1.5 text-sm hover:text-white">

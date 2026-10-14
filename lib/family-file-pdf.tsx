@@ -143,7 +143,7 @@ export function FamilyFilePdf({ content }: { content: FamilyFileContent }) {
 
         <Text style={s.footer}>
           Non è un testamento e non contiene password: è una mappa, per sapere dove cercare e chi
-          chiamare. Preparato con FinTrack.
+          chiamare. Preparato con Orbitly.
         </Text>
       </Page>
     </Document>

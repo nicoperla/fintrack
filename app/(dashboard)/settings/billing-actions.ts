@@ -40,7 +40,7 @@ async function customerFor(userId: string) {
   });
 }
 
-/** Sends the user to Stripe Checkout for FinTrack Pro (or to the portal if already Pro). */
+/** Sends the user to Stripe Checkout for Orbitly Pro (or to the portal if already Pro). */
 export async function startCheckout(): Promise<ActionResult> {
   const session = await requireUser();
   if (!billingEnabled()) return NOT_AVAILABLE;

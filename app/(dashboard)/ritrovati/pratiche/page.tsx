@@ -5,7 +5,7 @@ import { ClaimsBoard } from "@/components/claims/claims-board";
 import { requireSpace } from "@/lib/auth/session";
 import { getClaimsOverview } from "@/lib/data/claims";
 
-export const metadata = { title: "Riprenditeli · FinTrack" };
+export const metadata = { title: "Riprenditeli · Orbitly" };
 
 export default async function ClaimsPage() {
   const space = await requireSpace();

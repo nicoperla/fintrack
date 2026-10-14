@@ -5,7 +5,7 @@ import { ClaimDetail } from "@/components/claims/claim-detail";
 import { requireSpace } from "@/lib/auth/session";
 import { getClaim } from "@/lib/data/claims";
 
-export const metadata = { title: "Pratica · FinTrack" };
+export const metadata = { title: "Pratica · Orbitly" };
 
 export default async function ClaimPage({ params }: { params: { id: string } }) {
   const space = await requireSpace();

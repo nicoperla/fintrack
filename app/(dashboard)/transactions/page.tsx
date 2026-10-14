@@ -16,7 +16,7 @@ import { transactionFiltersSchema } from "@/lib/validations/finance";
 import { QuickEntry } from "@/components/quick-entry/quick-entry";
 import { getQuickEntryContext } from "@/lib/data/intelligence";
 
-export const metadata = { title: "Transazioni · FinTrack" };
+export const metadata = { title: "Transazioni · Orbitly" };
 
 type SearchParams = Record<string, string | string[] | undefined>;
 

@@ -59,7 +59,7 @@ export function BankSection({ data }: { data: Tariffometro }) {
       {data.bankAccounts.length === 0 ? (
         <Card className="justify-items-start">
           <p className="text-sm">
-            Non hai conti correnti in FinTrack. Aggiungine uno, con i suoi movimenti: le commissioni
+            Non hai conti correnti in Orbitly. Aggiungine uno, con i suoi movimenti: le commissioni
             le trovo da lì.
           </p>
           <Link href="/accounts" className={buttonVariants({ variant: "outline" })}>

@@ -159,7 +159,7 @@ export async function getReportData(
     title: period.kind === "month" ? "Report mensile" : "Report annuale",
     label: r.label,
     previousLabel: r.previousLabel,
-    fileName: `fintrack-report-${r.fileSuffix}.pdf`,
+    fileName: `orbitly-report-${r.fileSuffix}.pdf`,
     kind: period.kind,
     owner: space.name,
     currency: space.currency,

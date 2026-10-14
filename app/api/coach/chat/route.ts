@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
   const access = await getCoachAccess(session.user.id);
   if (access.status === "off") return fail(503, "off", "Coach AI non configurato");
-  if (access.status === "pro") return fail(402, "pro", "Il coach AI fa parte di FinTrack Pro.");
+  if (access.status === "pro") return fail(402, "pro", "Il coach AI fa parte di Orbitly Pro.");
   if (access.status === "verify") {
     return fail(403, "verify", "Conferma la tua email per usare il coach AI.");
   }

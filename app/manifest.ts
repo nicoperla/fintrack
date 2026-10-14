@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "FinTrack",
-    short_name: "FinTrack",
+    name: "Orbitly",
+    short_name: "Orbitly",
     description: "Le tue finanze personali: conti, budget, obiettivi e analisi.",
     lang: "it",
     start_url: "/dashboard",

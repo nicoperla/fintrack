@@ -2,7 +2,7 @@ import { SavingsSimulator } from "@/components/planning/savings-simulator";
 import { requireSpace } from "@/lib/auth/session";
 import { getSimulatorDefaults } from "@/lib/data/intelligence";
 
-export const metadata = { title: "Simulatore · FinTrack" };
+export const metadata = { title: "Simulatore · Orbitly" };
 
 export default async function SimulatorPage() {
   const space = await requireSpace();

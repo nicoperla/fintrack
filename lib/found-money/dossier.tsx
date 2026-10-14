@@ -115,9 +115,9 @@ export function DossierDocument({ data }: { data: DossierData }) {
   const valid = summary.byType.reduce((sum, t) => sum + t.eligible, 0);
 
   return (
-    <Document title={`Dossier 730/${data.year + 1}`} author="FinTrack">
+    <Document title={`Dossier 730/${data.year + 1}`} author="Orbitly">
       <Page size="A4" style={s.page}>
-        <Text style={s.brand}>FinTrack · Soldi ritrovati</Text>
+        <Text style={s.brand}>Orbitly · Soldi ritrovati</Text>
         <Text style={s.title}>Dossier 730/{data.year + 1}</Text>
         <Text style={s.subtitle}>
           Spese detraibili del {data.year} · {data.holder} · generato il {data.generatedOn}
@@ -192,7 +192,7 @@ export function DossierDocument({ data }: { data: DossierData }) {
         )}
 
         <Text style={s.footer} fixed>
-          Stima calcolata da FinTrack con le regole in vigore a {RULES_CHECKED_AT}, sulle spese
+          Stima calcolata da Orbitly con le regole in vigore a {RULES_CHECKED_AT}, sulle spese
           registrate nell&apos;app. Non considera i tetti per redditi oltre 75.000 euro né
           l&apos;imposta effettivamente dovuta. Non è consulenza fiscale: verifica col CAF o il
           commercialista e conserva i documenti originali.

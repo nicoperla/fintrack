@@ -150,7 +150,7 @@ export async function deletePact(id: string): Promise<ActionResult> {
 }
 
 /**
- * The pact is lost and the fine is in the goal: the goal grows by it. FinTrack doesn't move the
+ * The pact is lost and the fine is in the goal: the goal grows by it. Orbitly doesn't move the
  * money; the author confirms they did.
  */
 export async function payFine(id: string): Promise<ActionResult> {

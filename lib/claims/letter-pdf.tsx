@@ -50,7 +50,7 @@ export function LetterDocument({ data }: { data: LetterPdfData }) {
           </Text>
         ))}
         <Text style={s.footer} fixed>
-          Lettera preparata con FinTrack. Completa i dati tra parentesi quadre e firmala prima di
+          Lettera preparata con Orbitly. Completa i dati tra parentesi quadre e firmala prima di
           spedirla. È un modello, non una consulenza legale.
         </Text>
       </Page>

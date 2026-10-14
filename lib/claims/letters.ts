@@ -3,7 +3,7 @@ import { formatCurrency } from "@/lib/format";
 
 /*
  * The letters of "Riprenditeli", one per kind of claim. The user completes the parts in square
- * brackets (IBAN, customer number) in their own email: FinTrack never stores bank details. The
+ * brackets (IBAN, customer number) in their own email: Orbitly never stores bank details. The
  * norms cited are informative: the texts are a template, not legal advice.
  */
 

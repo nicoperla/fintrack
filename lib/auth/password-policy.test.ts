@@ -48,7 +48,7 @@ describe("passwordProblem", () => {
     expect(await passwordProblem("anna.rossi2026", { email: "anna.rossi@example.com" })).toMatch(
       /email/,
     );
-    expect(await passwordProblem("FinTrack2026!")).toMatch(/email o il nome/);
+    expect(await passwordProblem("Orbitly2026!")).toMatch(/email o il nome/);
     expect(await passwordProblem("Giuseppe-1990", { name: "Giuseppe Verdi" })).toMatch(/nome/);
   });
 

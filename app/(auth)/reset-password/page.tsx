@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ResetPasswordForm } from "@/components/forms/reset-password-form";
 import { FormMessage } from "@/components/forms/form-field";
 
-export const metadata = { title: "Reimposta password · FinTrack" };
+export const metadata = { title: "Reimposta password · Orbitly" };
 
 export default function ResetPasswordPage({ searchParams }: { searchParams: { token?: string } }) {
   const token = typeof searchParams.token === "string" ? searchParams.token : "";

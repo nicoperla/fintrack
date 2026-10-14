@@ -129,7 +129,7 @@ const GROUPS: Group[] = [
     id: "ritrova",
     label: "Ritrova i soldi",
     title: "I soldi che stai perdendo, trovati e ripresi",
-    text: "È qui che FinTrack si ripaga.",
+    text: "È qui che Orbitly si ripaga.",
     features: [
       {
         icon: HandCoins,
@@ -169,7 +169,7 @@ const GROUPS: Group[] = [
     id: "abitudini",
     label: "Abitudini",
     title: "Spendere meglio, senza prediche",
-    text: "Le regole le decidi tu; FinTrack ti aiuta a rispettarle.",
+    text: "Le regole le decidi tu; Orbitly ti aiuta a rispettarle.",
     features: [
       {
         icon: Sparkles,

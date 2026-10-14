@@ -179,7 +179,7 @@ const STEPS: {
     title: "Sai quanto puoi spendere.",
     text: "Lo stipendio vero: quanto puoi spendere fino al prossimo stipendio, con le spese grosse dell'anno già messe da parte. Più la previsione dei prossimi 45 giorni, che ti avvisa prima di andare in rosso.",
     image: SHOTS.mobileDashboard,
-    alt: "La dashboard di FinTrack sul telefono con i soldi disponibili e gli investimenti",
+    alt: "La dashboard di Orbitly sul telefono con lo stipendio vero e gli investimenti",
   },
   {
     icon: HandCoins,
@@ -225,13 +225,13 @@ export function StoryScroll() {
   return (
     <section id="come-funziona" className="relative mx-auto max-w-6xl scroll-mt-24 px-4 py-24">
       <SectionTitle
-        eyebrow="Dentro FinTrack"
+        eyebrow="Dentro Orbitly"
         title={
           <>
             Come funziona, <span className="lp-gradient-text">in cinque passi.</span>
           </>
         }
-        text="Non un altro foglio Excel: FinTrack fa i conti al posto tuo e te li racconta in modo che restino in testa."
+        text="Non un altro foglio Excel: Orbitly fa i conti al posto tuo e te li racconta in modo che restino in testa."
       />
       <div className="mt-16 grid gap-10 lg:grid-cols-2 lg:gap-20">
         <div className="grid gap-6 lg:gap-0">
@@ -358,13 +358,13 @@ export function VideoShowcase() {
           }}
         />
         <Tilt max={3}>
-          <BrowserFrame title="FinTrack · Dashboard">
+          <BrowserFrame title="Orbitly · Dashboard">
             <div className="aspect-[1280/800]">
               <SmartVideo
                 ref={player}
                 src={VIDEOS.desktop.src}
                 poster={VIDEOS.desktop.poster}
-                label="Video dimostrativo di FinTrack: dashboard, inserimento rapido, Soldi ritrovati, coach e il mese in storie"
+                label="Video dimostrativo di Orbitly: dashboard, inserimento rapido, Soldi ritrovati, coach e il mese in storie"
                 onTime={setTime}
               />
             </div>

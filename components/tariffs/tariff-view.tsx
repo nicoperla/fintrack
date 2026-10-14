@@ -237,7 +237,7 @@ function PoolCard({ data }: { data: Tariffometro }) {
         </h2>
         <p className="text-muted-foreground text-sm">
           Le medie pubbliche sono un inizio. Il passo dopo è sapere quanto pagano le famiglie
-          FinTrack della tua provincia per internet, luce e assicurazioni: funzionerà quando saremo
+          Orbitly della tua provincia per internet, luce e assicurazioni: funzionerà quando saremo
           abbastanza, e solo con chi sceglie di partecipare.
         </p>
       </div>
@@ -308,7 +308,7 @@ function Sources() {
           ARERA
         </a>{" "}
         (prezzo di riferimento della luce per i clienti vulnerabili). Sono medie, non preventivi.
-        FinTrack non vende polizze né contratti e non prende commissioni: i link portano solo ai
+        Orbitly non vende polizze né contratti e non prende commissioni: i link portano solo ai
         comparatori pubblici. Dati verificati a {TARIFF_DATA_CHECKED_AT}.
       </span>
     </p>

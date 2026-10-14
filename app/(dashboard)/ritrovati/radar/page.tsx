@@ -5,7 +5,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { getRightsRadar } from "@/lib/data/rights";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Radar dei diritti · FinTrack" };
+export const metadata = { title: "Radar dei diritti · Orbitly" };
 
 type SearchParams = { anno?: string | string[] };
 

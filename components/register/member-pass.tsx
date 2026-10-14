@@ -9,7 +9,7 @@ import { STRENGTH_COLORS } from "@/components/register/password-meter";
 import { cn } from "@/lib/utils";
 
 /**
- * The FinTrack card that fills in while the user signs up: the name and the email as they're
+ * The Orbitly card that fills in while the user signs up: the name and the email as they're
  * typed, the password's strength, the priorities picked. A recap of each answer at a glance,
  * so it's hidden from screen readers (the fields say the same).
  */

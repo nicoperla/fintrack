@@ -1,7 +1,7 @@
 /*
  * "Il patto": a bet against yourself. A spending limit on a category until the end of a month,
- * a stake (a friend who referees, a promise, a fine into a savings goal) and FinTrack checking
- * the movements at the end. The stake is only social: FinTrack never moves money.
+ * a stake (a friend who referees, a promise, a fine into a savings goal) and Orbitly checking
+ * the movements at the end. The stake is only social: Orbitly never moves money.
  */
 
 const DAY_MS = 86_400_000;

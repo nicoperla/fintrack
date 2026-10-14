@@ -18,7 +18,7 @@ describe("security emails", () => {
     await notifyNewDevice(anna, { device: "Safari su iPhone", place: "Milano, IT", at });
     const email = sendEmail.mock.calls[0][0];
     expect(email.to).toBe("anna@example.com");
-    expect(email.subject).toBe("Nuovo accesso al tuo account FinTrack");
+    expect(email.subject).toBe("Nuovo accesso al tuo account Orbitly");
     expect(email.text).toContain("Ciao Anna,");
     expect(email.text).toContain(
       "Safari su iPhone, da Milano, IT, il 9 ottobre 2026 alle ore 10:30",

@@ -15,7 +15,7 @@ import { AffordCard, type AffordData } from "@/components/coach/afford-card";
 import { CoachChat } from "@/components/coach/coach-chat";
 import { CoachSetup, CoachStyleButton } from "@/components/coach/coach-style";
 
-export const metadata = { title: "Coach · FinTrack" };
+export const metadata = { title: "Coach · Orbitly" };
 
 const count = (n: number, one: string, many: string) =>
   `${n.toLocaleString("it-IT")} ${n === 1 ? one : many}`;

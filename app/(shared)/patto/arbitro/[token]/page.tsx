@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 // The title stays generic: chat apps show it in their link previews.
 export const metadata: Metadata = {
-  title: "Il patto · FinTrack",
+  title: "Il patto · Orbitly",
   robots: { index: false, follow: false },
 };
 
@@ -101,12 +101,12 @@ export default async function RefereePage({ params }: { params: { token: string 
       </section>
 
       <p className="text-muted-foreground text-sm">
-        Il controllo lo fa FinTrack sulle spese che {pact.author} registra: tu non devi fare niente,
+        Il controllo lo fa Orbitly sulle spese che {pact.author} registra: tu non devi fare niente,
         solo ricordarglielo al momento giusto. Non vedi i suoi movimenti, solo quanto del limite ha
         usato. Il link funziona fino {toDate(pact.expiresOn)}.
       </p>
       <p className="text-muted-foreground text-xs">
-        FinTrack è un&apos;app per i soldi di casa.{" "}
+        Orbitly è un&apos;app per i soldi di casa.{" "}
         <Link href="/" className="underline underline-offset-2">
           Scopri com&apos;è fatta
         </Link>

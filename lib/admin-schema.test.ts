@@ -6,7 +6,7 @@ import { HEADER } from "../scripts/sync-admin-schema.mjs";
 const root = path.resolve(import.meta.dirname, "..");
 
 describe("admin panel schema", () => {
-  it("is the same as FinTrack's (run node scripts/sync-admin-schema.mjs)", () => {
+  it("is the same as Orbitly's (run node scripts/sync-admin-schema.mjs)", () => {
     // Line endings aside: git may check either file out with CRLF on Windows.
     const read = (file: string) =>
       readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n");

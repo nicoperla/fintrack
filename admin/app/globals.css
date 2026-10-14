@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* "Control room": slate surfaces with an amber accent, so it never looks like FinTrack. */
+/* "Control room": slate surfaces with an amber accent, so it never looks like Orbitly. */
 @theme {
   --color-ink: oklch(0.16 0.012 260);
   --color-panel: oklch(0.2 0.014 260);

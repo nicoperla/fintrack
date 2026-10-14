@@ -42,7 +42,7 @@ export function Landing({
             {deleted && (
               <p className="mx-auto mt-24 max-w-xl rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm text-white/80 backdrop-blur">
                 Il tuo account è stato eliminato, insieme ai tuoi dati. Grazie per aver usato
-                FinTrack.
+                Orbitly.
               </p>
             )}
             <Hero />

@@ -44,7 +44,7 @@ export async function createFamilyShare(input: unknown): Promise<ActionResult & 
     select: { plan: true },
   });
   if (!hasPro(user)) {
-    return { ok: false, error: "La condivisione del fascicolo fa parte di FinTrack Pro." };
+    return { ok: false, error: "La condivisione del fascicolo fa parte di Orbitly Pro." };
   }
   const parsed = shareSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);

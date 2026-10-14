@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 
 /*
- * The same fixed-window counters as FinTrack (table rate_limits), with keys starting with
+ * The same fixed-window counters as Orbitly (table rate_limits), with keys starting with
  * "admin-". One atomic upsert per check.
  */
 

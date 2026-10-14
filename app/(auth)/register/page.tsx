@@ -4,7 +4,7 @@ import { RegisterWizard } from "@/components/register/register-wizard";
 import { getSession } from "@/lib/auth/session";
 import { safeCallbackUrl } from "@/lib/auth/callback-url";
 
-export const metadata = { title: "Registrati · FinTrack" };
+export const metadata = { title: "Registrati · Orbitly" };
 
 type SearchParams = { callbackUrl?: string | string[]; email?: string | string[] };
 
@@ -16,7 +16,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
   return (
     <Card>
       <CardContent>
-        <h1 className="sr-only">Crea il tuo account FinTrack</h1>
+        <h1 className="sr-only">Crea il tuo account Orbitly</h1>
         <RegisterWizard callbackUrl={callbackUrl} email={email} />
       </CardContent>
     </Card>

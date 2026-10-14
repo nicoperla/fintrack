@@ -17,7 +17,7 @@ import { PROVIDER_NAMES } from "@/lib/coach/access";
 import { RULES } from "@/lib/rate-limit";
 import { formatCurrency } from "@/lib/format";
 
-export const metadata = { title: "Impostazioni · FinTrack" };
+export const metadata = { title: "Impostazioni · Orbitly" };
 
 type SearchParams = { billing?: string | string[] };
 
@@ -182,7 +182,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Sea
           <FormMessage tone="success">
             Grazie!{" "}
             {user.plan === "PRO"
-              ? "FinTrack Pro è attivo."
+              ? "Orbitly Pro è attivo."
               : "Stiamo attivando Pro: ricarica tra qualche secondo."}
           </FormMessage>
         )}

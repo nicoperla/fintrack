@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "FinTrack Admin", template: "%s · FinTrack Admin" },
+  title: { default: "Orbitly Admin", template: "%s · Orbitly Admin" },
   robots: { index: false, follow: false },
 };
 

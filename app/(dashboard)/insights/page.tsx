@@ -12,7 +12,7 @@ import {
   type NetWorthRange,
 } from "@/lib/data/analytics";
 
-export const metadata = { title: "Analisi · FinTrack" };
+export const metadata = { title: "Analisi · Orbitly" };
 
 type SearchParams = { month?: string | string[]; range?: string | string[] };
 

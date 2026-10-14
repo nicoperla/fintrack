@@ -9,10 +9,10 @@ const description =
   "L'app italiana per i soldi di casa: tiene i conti in tre secondi anche a voce, ti dice quanto puoi spendere davvero e trova i soldi che stai perdendo, dal rimborso del 730 agli abbonamenti dimenticati, con le lettere per riprenderteli. Gratis per iniziare.";
 
 export const metadata: Metadata = {
-  title: "FinTrack · I tuoi soldi, finalmente chiari",
+  title: "Orbitly · I tuoi soldi, finalmente chiari",
   description,
   openGraph: {
-    title: "FinTrack · I tuoi soldi, finalmente chiari",
+    title: "Orbitly · I tuoi soldi, finalmente chiari",
     description,
     type: "website",
     locale: "it_IT",

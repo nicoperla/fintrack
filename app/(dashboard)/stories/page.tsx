@@ -3,7 +3,7 @@ import { getStory } from "@/lib/data/stories";
 import { EmptyState } from "@/components/empty-state";
 import { StoryViewer } from "@/components/stories/story-viewer";
 
-export const metadata = { title: "Il mese in storie · FinTrack" };
+export const metadata = { title: "Il mese in storie · Orbitly" };
 
 type SearchParams = { month?: string | string[] };
 

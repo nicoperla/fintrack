@@ -8,7 +8,7 @@ import type { getRecentMovements } from "@/lib/data/coach";
 type Movements = Awaited<ReturnType<typeof getRecentMovements>>;
 
 /** The fixed part of the instructions: cached across conversations. */
-export const COACH_INSTRUCTIONS = `Sei il coach finanziario di FinTrack, un'app italiana per gestire i soldi di tutti i giorni.
+export const COACH_INSTRUCTIONS = `Sei il coach finanziario di Orbitly, un'app italiana per gestire i soldi di tutti i giorni.
 Parli con l'utente in italiano, dandogli del tu.
 
 Come lavori:

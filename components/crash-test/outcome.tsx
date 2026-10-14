@@ -65,9 +65,9 @@ export function Outcome({
     setSharing(true);
     try {
       const blob = await renderCrashCard({ ...share, tone });
-      const file = new File([blob], "fintrack-crash-test.png", { type: "image/png" });
+      const file = new File([blob], "orbitly-crash-test.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Il mio crash test su FinTrack" });
+        await navigator.share({ files: [file], title: "Il mio crash test su Orbitly" });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

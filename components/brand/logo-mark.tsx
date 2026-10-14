@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 /**
- * The FinTrack mark: a small glowing planet with a moon in orbit. The faint ring takes the text
+ * The Orbitly mark: a small glowing planet with a moon in orbit. The faint ring takes the text
  * colour, so it works on the dark landing page and on both app themes. A faster moon is the
  * loading indicator.
  */

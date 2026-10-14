@@ -7,7 +7,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { getGoals } from "@/lib/data/goals";
 import { Amount } from "@/components/amount";
 
-export const metadata = { title: "Obiettivi · FinTrack" };
+export const metadata = { title: "Obiettivi · Orbitly" };
 
 export default async function GoalsPage() {
   const space = await requireSpace();

@@ -11,7 +11,7 @@ const STEPS = [
   {
     icon: Search,
     title: "Trova",
-    text: "Mentre registri le spese, FinTrack cerca i soldi persi: rimborsi del 730, doppi addebiti, abbonamenti aumentati, commissioni.",
+    text: "Mentre registri le spese, Orbitly cerca i soldi persi: rimborsi del 730, doppi addebiti, abbonamenti aumentati, commissioni.",
   },
   {
     icon: FileText,
@@ -21,7 +21,7 @@ const STEPS = [
   {
     icon: Send,
     title: "Invia",
-    text: "La mandi tu, per email, PEC o raccomandata. FinTrack segna le scadenze di legge per la risposta.",
+    text: "La mandi tu, per email, PEC o raccomandata. Orbitly segna le scadenze di legge per la risposta.",
   },
   {
     icon: HandCoins,
@@ -57,7 +57,7 @@ const TIMELINE = [
   { text: "Rimborsato", detail: "+39,90 € sul conto", done: true },
 ];
 
-/** The reason to pay: FinTrack finds money and helps getting it back. */
+/** The reason to pay: Orbitly finds money and helps getting it back. */
 export function PaysBack() {
   return (
     <section id="recupera" className="relative mx-auto max-w-6xl scroll-mt-24 px-4 py-24">
@@ -68,7 +68,7 @@ export function PaysBack() {
             Non solo conti. <span className="lp-gradient-text">Soldi che tornano a te.</span>
           </>
         }
-        text="Le altre app ti mostrano dove sono finiti i soldi. FinTrack va a cercare quelli che stai perdendo e ti aiuta a riprenderteli, con le regole italiane."
+        text="Le altre app ti mostrano dove sono finiti i soldi. Orbitly va a cercare quelli che stai perdendo e ti aiuta a riprenderteli, con le regole italiane."
       />
 
       <div className="mt-16 grid items-center gap-12 lg:grid-cols-2">

@@ -20,7 +20,7 @@ export const stripeConfigured = () => Boolean(process.env.STRIPE_SECRET_KEY);
 export const emailConfigured = () =>
   Boolean(process.env.RESEND_API_KEY && process.env.EMAIL_FROM && fintrackUrl());
 
-/** FinTrack's public address, for links in emails to users. */
+/** Orbitly's public address, for links in emails to users. */
 export function fintrackUrl() {
   const url = process.env.FINTRACK_URL?.replace(/\/$/, "");
   return url && /^https?:\/\//.test(url) ? url : null;

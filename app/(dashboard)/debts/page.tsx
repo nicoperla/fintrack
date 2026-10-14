@@ -6,7 +6,7 @@ import { DebtFormDialog } from "@/components/planning/debt-form-dialog";
 import { requireSpace } from "@/lib/auth/session";
 import { getDebts } from "@/lib/data/intelligence";
 
-export const metadata = { title: "Piano debiti · FinTrack" };
+export const metadata = { title: "Piano debiti · Orbitly" };
 
 export default async function DebtsPage() {
   const space = await requireSpace();

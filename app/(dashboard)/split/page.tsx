@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { SplitView } from "@/components/split/split-view";
 
-export const metadata = { title: "Conti chiari · FinTrack" };
+export const metadata = { title: "Conti chiari · Orbitly" };
 
 export default async function SplitPage() {
   const space = await requireSpace();
@@ -34,7 +34,7 @@ export default async function SplitPage() {
         <EmptyState
           illustration="celebrate"
           title="Qui si fanno i conti in due (o più)"
-          description="Invita il partner o chi vive con te nello spazio: FinTrack terrà il conto di chi paga cosa e vi dirà chi deve quanto, a metà o in base alle entrate."
+          description="Invita il partner o chi vive con te nello spazio: Orbitly terrà il conto di chi paga cosa e vi dirà chi deve quanto, a metà o in base alle entrate."
           action={
             <Link href="/settings" className={buttonVariants()}>
               Invita qualcuno

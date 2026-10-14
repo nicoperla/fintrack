@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 export const HEADER =
   "// COPY of ../../prisma/schema.prisma, written by scripts/sync-admin-schema.mjs: don't edit.\n" +
-  "// The FinTrack app owns the schema and its migrations.\n\n";
+  "// The Orbitly app owns the schema and its migrations.\n\n";
 
 const root = new URL("..", import.meta.url);
 const source = readFileSync(new URL("prisma/schema.prisma", root), "utf8");

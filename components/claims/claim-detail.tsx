@@ -259,7 +259,7 @@ function LetterCard({ claim, pro }: { claim: ClaimWithStep; pro: boolean }) {
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           <span>
             Nella tua email, prima di inviarla, completa: {missing.join(" · ")}. Qui puoi lasciarli
-            così: FinTrack non salva i tuoi dati bancari.
+            così: Orbitly non salva i tuoi dati bancari.
           </span>
         </p>
       )}

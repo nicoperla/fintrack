@@ -170,7 +170,7 @@ function Hero({ data }: { data: FoundMoney }) {
         style={{ background: "radial-gradient(circle, #a7f3d0, transparent 70%)" }}
       />
       <p className="flex items-center gap-2 text-sm text-white/80">
-        <Sparkles className="size-4" aria-hidden /> Nel {data.year} FinTrack ha trovato
+        <Sparkles className="size-4" aria-hidden /> Nel {data.year} Orbitly ha trovato
       </p>
       <AnimatedCurrency
         value={data.total}

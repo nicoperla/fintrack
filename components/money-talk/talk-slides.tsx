@@ -356,7 +356,7 @@ export function TalkSlides({
           <div className="grid gap-4">
             <p className="text-2xl font-semibold">Non avete ancora un obiettivo comune.</p>
             <p className="text-white/85">
-              Le vacanze, un fondo per gli imprevisti, la caparra di casa: con una data, FinTrack vi
+              Le vacanze, un fondo per gli imprevisti, la caparra di casa: con una data, Orbitly vi
               dice quanto mettere al mese, e chi quanto.
             </p>
             <Link

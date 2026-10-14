@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function page(title: string, body: string, status = 200) {
-  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)} · FinTrack</title>
+  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)} · Orbitly</title>
 <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fafafa;color:#171717;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:16px;box-sizing:border-box}
 main{max-width:420px;background:#fff;border:1px solid #eee;border-radius:16px;padding:28px;text-align:center}
 h1{font-size:20px;margin:0 0 8px}p{color:#737373;font-size:14px;line-height:1.5;margin:0 0 20px}
@@ -27,7 +27,7 @@ function readParams(request: Request) {
 const invalid = () =>
   page(
     "Link non valido",
-    `<p>Il link è incompleto o non è più valido. Puoi disattivare il riepilogo dalle impostazioni di FinTrack.</p><a class="btn" href="${escapeHtml(getAppUrl())}/settings">Vai alle impostazioni</a>`,
+    `<p>Il link è incompleto o non è più valido. Puoi disattivare il riepilogo dalle impostazioni di Orbitly.</p><a class="btn" href="${escapeHtml(getAppUrl())}/settings">Vai alle impostazioni</a>`,
     400,
   );
 

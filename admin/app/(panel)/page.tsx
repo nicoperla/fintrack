@@ -54,7 +54,7 @@ export default async function OverviewPage() {
 
   return (
     <>
-      <PageTitle title="Panoramica" text="Come sta andando FinTrack, oggi." />
+      <PageTitle title="Panoramica" text="Come sta andando Orbitly, oggi." />
 
       {alerts.length > 0 && (
         <div className="mb-6 grid gap-2">

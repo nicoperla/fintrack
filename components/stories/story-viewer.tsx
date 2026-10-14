@@ -419,9 +419,9 @@ export function StoryViewer({ page }: { page: StoryPage }) {
     setSharing(true);
     try {
       const blob = await renderStoryCard(story, monthName, year);
-      const file = new File([blob], `fintrack-${story.month}.png`, { type: "image/png" });
+      const file = new File([blob], `orbitly-${story.month}.png`, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `Il mio ${monthName} su FinTrack` });
+        await navigator.share({ files: [file], title: `Il mio ${monthName} su Orbitly` });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
@@ -476,7 +476,7 @@ export function StoryViewer({ page }: { page: StoryPage }) {
         </div>
         <div className="flex items-center justify-between px-4 pt-3">
           <p className="text-sm font-medium text-white/80">
-            FinTrack · {capitalize(monthName)} {year}
+            Orbitly · {capitalize(monthName)} {year}
           </p>
           <button
             type="button"

@@ -46,7 +46,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="flex items-center gap-5">
               <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                 <LogoMark />
-                <span className="font-display text-[1.05rem] tracking-tight">FinTrack</span>
+                <span className="font-display text-[1.05rem] tracking-tight">Orbitly</span>
               </Link>
               <DesktopNav />
             </div>

@@ -10,7 +10,7 @@ import type { ActionResult } from "@/lib/action-result";
 
 const PRO_ONLY: ActionResult = {
   ok: false,
-  error: "I dettagli di Soldi ritrovati fanno parte di FinTrack Pro.",
+  error: "I dettagli di Soldi ritrovati fanno parte di Orbitly Pro.",
 };
 
 async function requirePro() {

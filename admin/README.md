@@ -1,7 +1,7 @@
-# FinTrack Admin
+# Orbitly Admin
 
-Il pannello di amministrazione di FinTrack: un'app separata (Next.js 15), con un suo indirizzo e
-un suo accesso, che lavora sullo **stesso database** di FinTrack. Non è collegata all'app per gli
+Il pannello di amministrazione di Orbitly: un'app separata (Next.js 15), con un suo indirizzo e
+un suo accesso, che lavora sullo **stesso database** di Orbitly. Non è collegata all'app per gli
 utenti: nessun link, nessuna pagina in comune.
 
 ## Cosa fa
@@ -12,7 +12,7 @@ utenti: nessun link, nessuna pagina in comune.
   2FA e stato; esportazione CSV dei risultati.
 - **Scheda utente**: account, abbonamento (con link a Stripe), sicurezza e dispositivi, conteggio
   dei dati (mai il contenuto dei movimenti), spazi, note interne, registro delle operazioni. Azioni:
-  - sospendere e riattivare (FinTrack lo disconnette subito e non lo fa più entrare);
+  - sospendere e riattivare (Orbitly lo disconnette subito e non lo fa più entrare);
   - chiudere tutte le sue sessioni;
   - mandargli il link di reset password, confermare l'email a mano;
   - azzerare la verifica in due passaggi (chiede il tuo codice);
@@ -58,16 +58,16 @@ Serve un **secondo progetto Vercel** collegato allo stesso repository GitHub.
    - **Root Directory**: clicca **Edit**, scegli la cartella `admin` e conferma;
    - **Framework Preset**: Next.js (lo riconosce da solo).
 4. Apri **Environment Variables** e aggiungi:
-   - `DATABASE_URL` e `DIRECT_URL`: **gli stessi valori** del progetto FinTrack (li trovi in
-     FinTrack › Settings › Environment Variables);
+   - `DATABASE_URL` e `DIRECT_URL`: **gli stessi valori** del progetto Orbitly (li trovi in
+     Orbitly › Settings › Environment Variables);
    - `ADMIN_SECRET`: il primo valore del punto 1;
    - `ADMIN_SETUP_TOKEN`: il secondo valore del punto 1;
    - `FINTRACK_URL`: `https://fintrack-six-iota.vercel.app`;
-   - facoltative, gli stessi valori di FinTrack: `STRIPE_SECRET_KEY` (abbonamenti e pagamenti),
+   - facoltative, gli stessi valori di Orbitly: `STRIPE_SECRET_KEY` (abbonamenti e pagamenti),
      `RESEND_API_KEY` ed `EMAIL_FROM` (email agli utenti).
 5. Clicca **Deploy** e aspetta la fine (un paio di minuti).
 6. Apri l'indirizzo del nuovo progetto e aggiungi `/setup` in fondo. Inserisci:
-   `ADMIN_SETUP_TOKEN`, il tuo nome, la tua email e una password nuova (non quella di FinTrack).
+   `ADMIN_SETUP_TOKEN`, il tuo nome, la tua email e una password nuova (non quella di Orbitly).
 7. Inquadra il codice QR con l'app di autenticazione (Google Authenticator, Microsoft
    Authenticator, 1Password, Bitwarden), scrivi il codice di 6 cifre e **salva i 10 codici di
    recupero**.
@@ -92,12 +92,12 @@ npm run build && npm start   # http://localhost:3002
 
 ## Schema del database
 
-`prisma/schema.prisma` qui è una **copia** di quello di FinTrack: lo schema e le migrazioni sono
-di FinTrack, il pannello non migra mai il database. Dopo ogni modifica allo schema, dalla cartella
+`prisma/schema.prisma` qui è una **copia** di quello di Orbitly: lo schema e le migrazioni sono
+di Orbitly, il pannello non migra mai il database. Dopo ogni modifica allo schema, dalla cartella
 principale:
 
 ```bash
 node scripts/sync-admin-schema.mjs
 ```
 
-Un test di FinTrack (`lib/admin-schema.test.ts`) fallisce finché la copia non è aggiornata.
+Un test di Orbitly (`lib/admin-schema.test.ts`) fallisce finché la copia non è aggiornata.

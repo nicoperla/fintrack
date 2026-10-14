@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { CostView } from "@/components/fund-costs/cost-view";
 
-export const metadata = { title: "Radiografia dei costi · FinTrack" };
+export const metadata = { title: "Radiografia dei costi · Orbitly" };
 
 export default async function FundCostsPage() {
   const space = await requireSpace();

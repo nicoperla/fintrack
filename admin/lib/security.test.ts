@@ -11,7 +11,7 @@ const row = (key: string, count: number, minutesAgo: number) => ({
 });
 
 describe("classify", () => {
-  it("reads FinTrack and panel counters with their limits", () => {
+  it("reads Orbitly and panel counters with their limits", () => {
     expect(classify(row("login:email:anna@example.com", 9, 5), NOW)).toMatchObject({
       label: "Accesso",
       who: "anna@example.com",

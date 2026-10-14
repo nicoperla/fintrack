@@ -122,7 +122,7 @@ export function spendingTrend(expense: number, previousExpense: number) {
 }
 
 function subjectFor(input: DigestInput) {
-  if (input.count === 0) return "La tua settimana su FinTrack: tutto tranquillo?";
+  if (input.count === 0) return "La tua settimana su Orbitly: tutto tranquillo?";
   const eur = moneyIn(input.currency);
   const trend = spendingTrend(input.expense, input.previousExpense);
   const base = `La tua settimana: ${eur(input.expense)} spesi`;
@@ -207,7 +207,7 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
     streakLine(input.streak),
     `Livello ${input.level.level}: ${input.level.name}.`,
     "",
-    `Apri FinTrack: ${input.appUrl}/dashboard`,
+    `Apri Orbitly: ${input.appUrl}/dashboard`,
     "",
     `Non vuoi più ricevere il riepilogo? ${input.unsubscribeUrl}`,
   );
@@ -329,7 +329,7 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
   }
   parts.push(
     `<tr><td style="padding:20px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:14px 16px;background:#fff7ed;border-radius:10px;font-size:14px;">🔥 ${e(streakLine(input.streak))}<br><span style="${muted}font-size:12px;">Livello ${input.level.level} · ${e(input.level.name)}</span></td></tr></table></td></tr>`,
-    `<tr><td style="padding:24px 0 0;" align="center"><a href="${e(input.appUrl)}/dashboard" style="display:inline-block;background:#171717;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;font-size:14px;">Apri FinTrack</a></td></tr>`,
+    `<tr><td style="padding:24px 0 0;" align="center"><a href="${e(input.appUrl)}/dashboard" style="display:inline-block;background:#171717;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;font-size:14px;">Apri Orbitly</a></td></tr>`,
   );
 
   const html = `<!doctype html>
@@ -337,7 +337,7 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
 <body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#171717;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;"><tr><td align="center" style="padding:24px 12px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #eeeeee;border-radius:16px;padding:24px;">
-<tr><td><p style="margin:0;font-weight:700;font-size:15px;">FinTrack<span style="color:#2a78d6;">.</span></p>
+<tr><td><p style="margin:0;font-weight:700;font-size:15px;">Orbitly<span style="color:#2a78d6;">.</span></p>
 <h1 style="margin:16px 0 4px;font-size:22px;">La tua settimana</h1>
 <p style="margin:0 0 16px;${muted}font-size:14px;">${e(greeting)} ecco com'è andata la settimana ${e(input.weekLabel)}${e(where)}.</p></td></tr>
 ${parts.join("\n")}

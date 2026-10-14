@@ -26,7 +26,7 @@ export function RadarView({ data }: { data: RightsRadar }) {
       <p className="text-muted-foreground flex items-start gap-2 text-xs">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <span>
-          FinTrack ti informa, non fa assistenza fiscale: il 730 lo modifichi tu sul sito
+          Orbitly ti informa, non fa assistenza fiscale: il 730 lo modifichi tu sul sito
           dell&apos;Agenzia delle Entrate, oppure con un CAF o un professionista. Le cifre sono
           stime; regole verificate a {RULES_CHECKED_AT}.
         </span>
@@ -61,7 +61,7 @@ function PrecompiledCheck({ data }: { data: RightsRadar }) {
   });
   const missingRows = result.rows.filter((r) => compared.includes(r.type) && r.missing > 0);
   const seen = DEDUCTION_TYPES.filter((t) => (data.fintrack[t] ?? 0) > 0);
-  // Types FinTrack saw first: those are the ones worth checking.
+  // Types Orbitly saw first: those are the ones worth checking.
   const order = [...seen, ...DEDUCTION_TYPES.filter((t) => !seen.includes(t))];
 
   return (

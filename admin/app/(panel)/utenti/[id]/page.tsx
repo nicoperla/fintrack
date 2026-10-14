@@ -166,7 +166,7 @@ export default async function UserPage(props: { params: Promise<{ id: string }> 
               label="Riattiva"
               icon={<Undo2 />}
               title="Riattivare l'account?"
-              description="L'utente potrà di nuovo accedere a FinTrack."
+              description="L'utente potrà di nuovo accedere a Orbitly."
               confirmLabel="Riattiva"
               action={reactivateUser.bind(null, id)}
             />

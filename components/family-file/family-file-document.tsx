@@ -154,7 +154,7 @@ export function FamilyFileDocument({ content }: { content: FamilyFileContent }) 
 
       <p className="text-muted-foreground border-t pt-4 text-xs">
         Non è un testamento e non contiene password: è una mappa, per sapere dove cercare e chi
-        chiamare. Preparato con FinTrack.
+        chiamare. Preparato con Orbitly.
       </p>
     </article>
   );

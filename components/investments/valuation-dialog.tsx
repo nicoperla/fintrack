@@ -64,7 +64,7 @@ export function ValuationDialog({
           <DialogTitle>Aggiorna il valore</DialogTitle>
           <DialogDescription>
             Quanto vale oggi «{account.name}»? Copialo dall&apos;app della banca o del broker:
-            FinTrack calcola da solo guadagno o perdita su quello che hai versato.
+            Orbitly calcola da solo guadagno o perdita su quello che hai versato.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="grid gap-4" noValidate>

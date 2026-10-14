@@ -6,7 +6,7 @@ import { getTariffometro } from "@/lib/data/tariffs";
 import { FoundMoneyView } from "@/components/found-money/found-money-view";
 import { cn } from "@/lib/utils";
 
-export const metadata = { title: "Soldi ritrovati · FinTrack" };
+export const metadata = { title: "Soldi ritrovati · Orbitly" };
 
 type SearchParams = { anno?: string | string[] };
 

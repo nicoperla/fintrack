@@ -9,7 +9,7 @@ import { requireSpace } from "@/lib/auth/session";
 import { getClaimPrefill, getClaimsOverview } from "@/lib/data/claims";
 import { KIND_LABELS, isOpenClaim } from "@/lib/finance/claims";
 
-export const metadata = { title: "Nuova pratica · FinTrack" };
+export const metadata = { title: "Nuova pratica · Orbitly" };
 
 type SearchParams = {
   ritrovato?: string | string[];

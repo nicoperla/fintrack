@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { buttonVariants } from "@/components/ui/button";
 import { TogetherView } from "@/components/together/together-view";
 
-export const metadata = { title: "Mio, tuo, nostro · FinTrack" };
+export const metadata = { title: "Mio, tuo, nostro · Orbitly" };
 
 export default async function TogetherPage() {
   const space = await requireSpace();

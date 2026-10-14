@@ -629,7 +629,7 @@ function Welcome({ name }: { name: string }) {
         />
       </svg>
       <h2 className="font-display text-xl font-semibold tracking-tight">
-        Eccoti su FinTrack{name ? `, ${name}` : ""}!
+        Eccoti su Orbitly{name ? `, ${name}` : ""}!
       </h2>
       <p className="text-muted-foreground flex items-center gap-2 text-sm">
         <LogoMark seconds={1.2} className="size-5" />

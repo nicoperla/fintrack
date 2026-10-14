@@ -13,8 +13,8 @@ import { confirmAdmin } from "@/lib/auth/step-up";
 import { applySubscription, customerSubscriptions, stripe } from "@/lib/stripe";
 
 /*
- * What the panel can do to a FinTrack account. Each action is logged with the admin, the user
- * and the IP. FinTrack checks suspensions and session versions on every request, so blocking
+ * What the panel can do to a Orbitly account. Each action is logged with the admin, the user
+ * and the IP. Orbitly checks suspensions and session versions on every request, so blocking
  * someone or closing their sessions takes effect on their next click.
  */
 
@@ -41,7 +41,7 @@ async function load(userId: string) {
 
 const refresh = (userId: string) => revalidatePath(`/utenti/${userId}`);
 
-/** Ends every FinTrack session of the user and any half-done sign-in. */
+/** Ends every Orbitly session of the user and any half-done sign-in. */
 const signOutEverywhere = (userId: string) => [
   prisma.user.update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } }),
   prisma.loginTicket.deleteMany({ where: { userId } }),
@@ -106,8 +106,8 @@ export async function resetUserTwoFactor(userId: string, form: FormData): Promis
     await sendEmail({
       to: user.email,
       subject: "Verifica in due passaggi disattivata dall'assistenza",
-      text: `Su tua richiesta l'assistenza di FinTrack ha disattivato la verifica in due passaggi del tuo account. Accedi con la password e riattivala da Impostazioni › Sicurezza.\n\nSe non l'hai chiesto tu, rispondi subito a questa email.`,
-      html: `<p>Su tua richiesta l'assistenza di FinTrack ha disattivato la verifica in due passaggi del tuo account. Accedi con la password e riattivala da <a href="${fintrackUrl()}/settings#sicurezza">Impostazioni › Sicurezza</a>.</p><p>Se non l'hai chiesto tu, rispondi subito a questa email.</p>`,
+      text: `Su tua richiesta l'assistenza di Orbitly ha disattivato la verifica in due passaggi del tuo account. Accedi con la password e riattivala da Impostazioni › Sicurezza.\n\nSe non l'hai chiesto tu, rispondi subito a questa email.`,
+      html: `<p>Su tua richiesta l'assistenza di Orbitly ha disattivato la verifica in due passaggi del tuo account. Accedi con la password e riattivala da <a href="${fintrackUrl()}/settings#sicurezza">Impostazioni › Sicurezza</a>.</p><p>Se non l'hai chiesto tu, rispondi subito a questa email.</p>`,
     }).catch((error) => console.error("[admin] email 2FA non inviata", error));
   }
   refresh(userId);
@@ -127,7 +127,7 @@ export async function verifyUserEmail(userId: string): Promise<ActionResult> {
   return done("Email confermata.");
 }
 
-/** The same reset link FinTrack sends from "Password dimenticata?" (valid 1 hour). */
+/** The same reset link Orbitly sends from "Password dimenticata?" (valid 1 hour). */
 export async function sendUserPasswordReset(userId: string): Promise<ActionResult> {
   const { admin, user } = await load(userId);
   if (!user) return fail("Utente non trovato.");
@@ -142,7 +142,7 @@ export async function sendUserPasswordReset(userId: string): Promise<ActionResul
     prisma.passwordResetToken.create({
       data: {
         userId,
-        // As in FinTrack: only the SHA-256 of the token is stored.
+        // As in Orbitly: only the SHA-256 of the token is stored.
         tokenHash: createHash("sha256").update(token).digest("hex"),
         expiresAt: new Date(Date.now() + 60 * 60 * 1000),
       },
@@ -153,7 +153,7 @@ export async function sendUserPasswordReset(userId: string): Promise<ActionResul
   try {
     await sendEmail({
       to: user.email,
-      subject: "Reimposta la tua password FinTrack",
+      subject: "Reimposta la tua password Orbitly",
       text: `${hello}\n\nper reimpostare la password apri questo link (valido 1 ora):\n${link}\n\nSe non l'hai chiesto tu, ignora questa email.`,
       html: `<p>${escapeHtml(hello)}</p><p>per reimpostare la password clicca qui (valido 1 ora):</p><p><a href="${link}">Reimposta password</a></p><p>Se non l'hai chiesto tu, ignora questa email.</p>`,
     });
@@ -167,7 +167,7 @@ export async function sendUserPasswordReset(userId: string): Promise<ActionResul
 
 const PAYING = new Set(["active", "trialing", "past_due"]);
 
-/** Pro without paying, until a date ("comp"); FinTrack's nightly job ends it on time. */
+/** Pro without paying, until a date ("comp"); Orbitly's nightly job ends it on time. */
 export async function grantPro(userId: string, form: FormData): Promise<ActionResult> {
   const { admin, user } = await load(userId);
   if (!user) return fail("Utente non trovato.");
@@ -266,7 +266,7 @@ export async function deleteNote(userId: string, noteId: string): Promise<Action
 }
 
 /**
- * Deletes the account as FinTrack does when the user asks (settings/account-actions.ts there):
+ * Deletes the account as Orbitly does when the user asks (settings/account-actions.ts there):
  * Stripe stopped first, shared spaces passed to their longest-standing member, the rest deleted.
  */
 export async function deleteUser(userId: string, form: FormData): Promise<ActionResult> {

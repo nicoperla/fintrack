@@ -92,7 +92,7 @@ describe("refundFor", () => {
 });
 
 describe("compareWithPrecompiled", () => {
-  it("adds what FinTrack saw and the precompilato lacks, and the rent", () => {
+  it("adds what Orbitly saw and the precompilato lacks, and the rent", () => {
     const result = compareWithPrecompiled({
       fintrack: { sanitarie: 1000, sport: 300, veterinarie: 100 },
       precompiled: { sanitarie: 800, veterinarie: 400 },

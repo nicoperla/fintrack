@@ -1,6 +1,6 @@
 import { emailConfigured } from "@/lib/config";
 
-/** Emails to FinTrack users through Resend (same account as the app). */
+/** Emails to Orbitly users through Resend (same account as the app). */
 export async function sendEmail(email: {
   to: string;
   subject: string;

@@ -6,7 +6,7 @@ import { getSession } from "@/lib/auth/session";
 import { findInvite } from "@/lib/households";
 import { acceptInvite } from "./actions";
 
-export const metadata = { title: "Invito · FinTrack" };
+export const metadata = { title: "Invito · Orbitly" };
 
 export default async function InvitePage({ params }: { params: { token: string } }) {
   const [invite, session] = await Promise.all([findInvite(params.token), getSession()]);
@@ -23,7 +23,7 @@ export default async function InvitePage({ params }: { params: { token: string }
         </CardHeader>
         <CardContent>
           <Link href="/dashboard" className={buttonVariants({ variant: "outline" })}>
-            Vai a FinTrack
+            Vai a Orbitly
           </Link>
         </CardContent>
       </Card>

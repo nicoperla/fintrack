@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * Stripe → FinTrack: keeps each user's plan in sync with their subscription. Configure the
+ * Stripe → Orbitly: keeps each user's plan in sync with their subscription. Configure the
  * endpoint in Stripe with the events checkout.session.completed and customer.subscription.*.
  */
 export async function POST(request: Request) {

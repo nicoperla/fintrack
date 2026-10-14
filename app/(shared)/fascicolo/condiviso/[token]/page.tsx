@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 // The title stays generic: chat apps show it in their link previews.
 export const metadata: Metadata = {
-  title: "Fascicolo di famiglia · FinTrack",
+  title: "Fascicolo di famiglia · Orbitly",
   robots: { index: false, follow: false },
 };
 

@@ -145,11 +145,11 @@ export function ReportDocument({ data }: { data: ReportData }) {
   const incomeDelta = delta(data.income, data.previous.income, true);
 
   return (
-    <Document title={`FinTrack · ${data.title} · ${data.label}`} author="FinTrack" language="it-IT">
+    <Document title={`Orbitly · ${data.title} · ${data.label}`} author="Orbitly" language="it-IT">
       <Page size="A4" style={s.page}>
         <View style={s.header}>
           <Text style={s.brand}>
-            FinTrack<Text style={s.brandDot}>.</Text>
+            Orbitly<Text style={s.brandDot}>.</Text>
           </Text>
           <Text style={s.small}>{data.owner}</Text>
         </View>
@@ -371,7 +371,7 @@ export function ReportDocument({ data }: { data: ReportData }) {
         </View>
 
         <View style={s.footer} fixed>
-          <Text>Generato da FinTrack il {generated}</Text>
+          <Text>Generato da Orbitly il {generated}</Text>
           <Text render={({ pageNumber, totalPages }) => `Pagina ${pageNumber} di ${totalPages}`} />
         </View>
       </Page>

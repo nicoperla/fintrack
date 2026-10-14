@@ -113,7 +113,7 @@ export function SharePanel({
         >
           <Lock className="size-4 shrink-0" aria-hidden />
           <span>
-            <span className="font-medium">La condivisione fa parte di FinTrack Pro.</span>{" "}
+            <span className="font-medium">La condivisione fa parte di Orbitly Pro.</span>{" "}
             <span className="text-muted-foreground">Le note e il riepilogo restano gratuiti.</span>
           </span>
         </Link>

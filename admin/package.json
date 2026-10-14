@@ -2,7 +2,7 @@
   "name": "fintrack-admin",
   "version": "0.1.0",
   "private": true,
-  "description": "Pannello di amministrazione di FinTrack: app separata, stesso database.",
+  "description": "Pannello di amministrazione di Orbitly: app separata, stesso database.",
   "scripts": {
     "dev": "next dev -p 3002",
     "build": "prisma generate && next build",

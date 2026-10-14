@@ -127,7 +127,7 @@ export function AccountFormDialog({
             inputMode="decimal"
             defaultValue={account ? account.initialBalance.replace(".", ",") : ""}
             placeholder="0,00"
-            hint="Il saldo quando inizi a usare FinTrack. Per un debito (es. carta di credito) usa un valore negativo."
+            hint="Il saldo quando inizi a usare Orbitly. Per un debito (es. carta di credito) usa un valore negativo."
             errors={errors?.initialBalance}
           />
           <DialogFooter>

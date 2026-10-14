@@ -230,7 +230,7 @@ export function PactView({ data }: { data: PactsPage }) {
       <p className="text-muted-foreground flex items-start gap-2 text-xs">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <span>
-          La posta è solo sociale: FinTrack non muove soldi, non incassa multe e non li manda a
+          La posta è solo sociale: Orbitly non muove soldi, non incassa multe e non li manda a
           nessuno. Il controllo usa i movimenti che registri: il patto è con te stesso.
         </span>
       </p>
@@ -298,9 +298,9 @@ function PactCard({
         month: monthName.format(parse(p.to)),
         used: s.used,
       });
-      const file = new File([blob], "fintrack-patto.png", { type: "image/png" });
+      const file = new File([blob], "orbitly-patto.png", { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: "Il mio patto su FinTrack" });
+        await navigator.share({ files: [file], title: "Il mio patto su Orbitly" });
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");

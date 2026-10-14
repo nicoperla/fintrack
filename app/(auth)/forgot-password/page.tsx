@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ForgotPasswordForm } from "@/components/forms/forgot-password-form";
 
-export const metadata = { title: "Password dimenticata · FinTrack" };
+export const metadata = { title: "Password dimenticata · Orbitly" };
 
 export default function ForgotPasswordPage() {
   return (

@@ -2,23 +2,23 @@ import Link from "next/link";
 import { ContactLine, LegalDocument } from "@/components/marketing/legal-document";
 import { LEGAL } from "@/lib/legal";
 
-export const metadata = { title: "Termini di servizio · FinTrack" };
+export const metadata = { title: "Termini di servizio · Orbitly" };
 
 export default function TermsPage() {
   return (
     <LegalDocument title="Termini di servizio">
       <p>
-        Questi termini regolano l&apos;uso di FinTrack, fornito da {LEGAL.owner}. Creando un account
+        Questi termini regolano l&apos;uso di Orbitly, fornito da {LEGAL.owner}. Creando un account
         li accetti, insieme all&apos;<Link href="/privacy">informativa sulla privacy</Link>.
       </p>
 
       <section>
         <h2>Il servizio</h2>
         <p>
-          FinTrack ti aiuta a registrare entrate e spese, a pianificare budget e obiettivi e a
-          capire le tue abitudini. Il piano gratuito comprende tutte le funzioni tranne la chat con
-          il coach AI e i dettagli di Soldi ritrovati (le spese una per una, il dossier 730 e le
-          lettere di disdetta), che fanno parte di FinTrack Pro.
+          Orbitly ti aiuta a registrare entrate e spese, a pianificare budget e obiettivi e a capire
+          le tue abitudini. Il piano gratuito comprende tutte le funzioni tranne la chat con il
+          coach AI e i dettagli di Soldi ritrovati (le spese una per una, il dossier 730 e le
+          lettere di disdetta), che fanno parte di Orbitly Pro.
         </p>
       </section>
 
@@ -44,14 +44,14 @@ export default function TermsPage() {
             invita solo chi vuoi davvero.
           </li>
           <li>
-            Non usare FinTrack per attività illecite, per inviare inviti indesiderati o per
+            Non usare Orbitly per attività illecite, per inviare inviti indesiderati o per
             sovraccaricare il servizio (per esempio con richieste automatiche al coach AI).
           </li>
         </ul>
       </section>
 
       <section>
-        <h2>FinTrack Pro</h2>
+        <h2>Orbitly Pro</h2>
         <ul>
           <li>
             Pro è un abbonamento mensile. Il prezzo, IVA inclusa, è indicato prima del pagamento,
@@ -88,7 +88,7 @@ export default function TermsPage() {
       <section>
         <h2>Disponibilità e responsabilità</h2>
         <p>
-          Facciamo il possibile perché FinTrack sia sempre disponibile e corretto, ma il servizio è
+          Facciamo il possibile perché Orbitly sia sempre disponibile e corretto, ma il servizio è
           fornito così com&apos;è e può avere interruzioni o errori: tieni una copia dei dati
           importanti con la funzione di esportazione. Nei limiti consentiti dalla legge non
           rispondiamo di danni indiretti derivanti dall&apos;uso del servizio; restano salvi i

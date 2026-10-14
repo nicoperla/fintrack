@@ -88,7 +88,7 @@ export async function renderPactCard(card: {
 
   ctx.globalAlpha = 0.8;
   ctx.font = font(600, 32);
-  ctx.fillText("FinTrack", PAD, HEIGHT - 80);
+  ctx.fillText("Orbitly", PAD, HEIGHT - 80);
   ctx.textAlign = "right";
   ctx.fillText("Il patto", WIDTH - PAD, HEIGHT - 80);
 

@@ -136,7 +136,7 @@ export function SpendingHeatmap({ data }: { data: HeatmapData }) {
           <p className="font-medium capitalize">{dayLong.format(parse(hover.cell.date))}</p>
           <p className="text-muted-foreground">
             {hover.cell.beforeTracking
-              ? "Nessun dato: non usavi ancora FinTrack"
+              ? "Nessun dato: non usavi ancora Orbitly"
               : hover.cell.amount > 0
                 ? `${money(hover.cell.amount)} · ${hover.cell.count} ${hover.cell.count === 1 ? "movimento" : "movimenti"}`
                 : "Nessuna spesa"}

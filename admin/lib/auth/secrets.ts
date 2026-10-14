@@ -72,7 +72,7 @@ export function normalizeRecoveryCode(input: string) {
 export const hashRecoveryCode = (normalized: string) =>
   createHash("sha256").update(`admin-recovery:${normalized}`).digest("hex");
 
-/** Password rules for the admin: longer than FinTrack's, it opens everything. */
+/** Password rules for the admin: longer than Orbitly's, it opens everything. */
 export function adminPasswordProblem(password: string, email: string) {
   if (password.length < 12) return "Almeno 12 caratteri";
   if (password.length > 72) return "Al massimo 72 caratteri";

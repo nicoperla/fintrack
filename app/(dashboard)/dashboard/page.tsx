@@ -39,7 +39,7 @@ import { getCategoryTree } from "@/lib/data/categories";
 import { toCategoryOptions } from "@/lib/dto";
 import { BudgetsOverview, GoalsOverview } from "@/components/dashboard/planning-overview";
 
-export const metadata = { title: "Dashboard · FinTrack" };
+export const metadata = { title: "Dashboard · Orbitly" };
 
 const percent = new Intl.NumberFormat("it-IT", { style: "percent", maximumFractionDigits: 0 });
 

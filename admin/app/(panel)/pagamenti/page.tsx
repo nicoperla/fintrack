@@ -32,7 +32,7 @@ export default async function PaymentsPage() {
         <Card>
           <p className="text-muted text-sm">
             Stripe non è collegato al pannello. Aggiungi <code>STRIPE_SECRET_KEY</code> (la stessa
-            di FinTrack) nelle variabili d&apos;ambiente del pannello per vedere fatture e incassi.
+            di Orbitly) nelle variabili d&apos;ambiente del pannello per vedere fatture e incassi.
           </p>
         </Card>
       </>

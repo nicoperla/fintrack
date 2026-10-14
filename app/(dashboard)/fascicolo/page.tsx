@@ -9,7 +9,7 @@ import { hasPro } from "@/lib/billing/plan";
 import { getFamilyFileInput, getFamilyShares } from "@/lib/data/family-file";
 import { buildFamilyFile } from "@/lib/family-file";
 
-export const metadata = { title: "Fascicolo di famiglia · FinTrack" };
+export const metadata = { title: "Fascicolo di famiglia · Orbitly" };
 
 export default async function FamilyFilePage() {
   const space = await requireSpace();

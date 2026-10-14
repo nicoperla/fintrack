@@ -10,7 +10,7 @@ import { delPct } from "@/lib/finance/insights";
 import { Amount } from "@/components/amount";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 
-export const metadata = { title: "Abbonamenti · FinTrack" };
+export const metadata = { title: "Abbonamenti · Orbitly" };
 
 const DAY_MS = 86_400_000;
 const dayMonth = new Intl.DateTimeFormat("it-IT", {

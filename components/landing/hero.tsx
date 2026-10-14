@@ -33,7 +33,7 @@ export function Logo({ className }: { className?: string }) {
   return (
     <Link href="/" className={cn("flex items-center gap-2 font-semibold text-white", className)}>
       <LogoMark />
-      <span className={DISPLAY}>FinTrack</span>
+      <span className={DISPLAY}>Orbitly</span>
     </Link>
   );
 }
@@ -266,7 +266,7 @@ function HeroDevice() {
             <SmartVideo
               src={VIDEOS.mobile.src}
               poster={VIDEOS.mobile.poster}
-              label="FinTrack sul telefono: inserimento rapido, Soldi ritrovati e il mese in storie"
+              label="Orbitly sul telefono: inserimento rapido, Soldi ritrovati e il mese in storie"
               buttonClassName="size-8 right-2 bottom-16"
             />
           </PhoneFrame>
@@ -334,7 +334,7 @@ export function Hero() {
             className="lp-rise max-w-xl text-lg text-pretty text-white/65"
             style={{ animationDelay: "0.3s" }}
           >
-            FinTrack tiene i conti al posto tuo, ti dice quanto puoi spendere davvero e va a cercare
+            Orbitly tiene i conti al posto tuo, ti dice quanto puoi spendere davvero e va a cercare
             i soldi che stai perdendo: il rimborso del 730, gli abbonamenti dimenticati, la luce e
             l&apos;RC auto che paghi più degli altri. Poi ti aiuta a riprenderteli.
           </p>

@@ -21,7 +21,7 @@ const csp = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // The panel is its own app: FinTrack's lockfile one folder up is not its workspace root.
+  // The panel is its own app: Orbitly's lockfile one folder up is not its workspace root.
   outputFileTracingRoot: fileURLToPath(new URL(".", import.meta.url)),
   poweredByHeader: false,
   async headers() {

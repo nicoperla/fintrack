@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/forms/login-form";
 import { getSession } from "@/lib/auth/session";
 import { safeCallbackUrl } from "@/lib/auth/callback-url";
 
-export const metadata = { title: "Accedi · FinTrack" };
+export const metadata = { title: "Accedi · Orbitly" };
 
 type SearchParams = { callbackUrl?: string | string[]; reset?: string };
 

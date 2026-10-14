@@ -496,7 +496,7 @@ function Notes({ data }: { data: CrashTestData }) {
         uscite sono le medie degli ultimi mesi; se cambiano, cambia anche il risultato.
         {data.euro &&
           " La NASpI è stimata con i valori INPS del 2026 (circolare n. 4 del 28 gennaio 2026) e l'Irpef 2026, senza addizionali né TFR: l'importo vero lo calcola l'INPS sulla domanda."}{" "}
-        FinTrack non vende prodotti finanziari: la risposta a ogni scenario è mettere da parte.
+        Orbitly non vende prodotti finanziari: la risposta a ogni scenario è mettere da parte.
       </span>
     </p>
   );

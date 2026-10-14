@@ -33,9 +33,9 @@ export async function sendVerificationEmail(user: {
   const hello = user.name ? `Ciao ${user.name.split(" ")[0]},` : "Ciao,";
   await sendEmail({
     to: user.email,
-    subject: "Conferma la tua email su FinTrack",
+    subject: "Conferma la tua email su Orbitly",
     text: `${hello}\n\nconferma il tuo indirizzo aprendo questo link (valido 48 ore):\n${link}\n\nSe non hai creato tu l'account, ignora questa email.`,
-    html: `<p>${hello}</p><p>conferma il tuo indirizzo per completare l'iscrizione a FinTrack:</p><p><a href="${link}">Conferma la mia email</a> (valido 48 ore)</p><p>Se non hai creato tu l'account, ignora questa email.</p>`,
+    html: `<p>${hello}</p><p>conferma il tuo indirizzo per completare l'iscrizione a Orbitly:</p><p><a href="${link}">Conferma la mia email</a> (valido 48 ore)</p><p>Se non hai creato tu l'account, ignora questa email.</p>`,
   });
 }
 

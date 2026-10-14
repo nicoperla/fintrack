@@ -27,7 +27,7 @@ describe("2FA secret encryption", () => {
   });
 });
 
-describe("TOTP (same as FinTrack)", () => {
+describe("TOTP (same as Orbitly)", () => {
   const secret = base32Encode(Buffer.from("12345678901234567890"));
   it.each([
     [59, "287082"],

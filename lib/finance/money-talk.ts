@@ -2,7 +2,7 @@ import { splitShares, type SplitMode } from "@/lib/finance/split";
 
 /*
  * "Il caffè dei conti": once a month the people sharing a space sit down for fifteen minutes.
- * FinTrack writes the agenda from the month's data: how the shared month went, who put in what,
+ * Orbitly writes the agenda from the month's data: how the shared month went, who put in what,
  * the goals, one decision to take and one thing to celebrate. No judgement and no products:
  * questions to talk about, and the decisions they write down.
  */

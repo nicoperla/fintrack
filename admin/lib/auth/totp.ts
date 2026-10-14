@@ -1,7 +1,7 @@
 import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 /*
- * Time-based one-time passwords (RFC 6238), as in FinTrack (lib/auth/totp.ts there): the panel
+ * Time-based one-time passwords (RFC 6238), as in Orbitly (lib/auth/totp.ts there): the panel
  * is a separate app and keeps its own copy. HMAC-SHA1, 6 digits, 30-second steps.
  */
 
@@ -81,7 +81,7 @@ export function verifyTotp(
 }
 
 export function otpauthUri(secret: string, account: string) {
-  const issuer = "FinTrack Admin";
+  const issuer = "Orbitly Admin";
   const params = new URLSearchParams({
     secret,
     issuer,

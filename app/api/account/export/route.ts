@@ -333,7 +333,7 @@ export async function GET() {
   return new Response(body, {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="fintrack-dati-${day}.json"`,
+      "Content-Disposition": `attachment; filename="orbitly-dati-${day}.json"`,
       "Cache-Control": "no-store",
     },
   });
