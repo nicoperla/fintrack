@@ -11,13 +11,17 @@ type Email = {
  * every other user would silently get nothing (reset, confirmation, invites, digest).
  */
 export const usesTestSender = (from = process.env.EMAIL_FROM) =>
-  /@resend.dev>?s*$/i.test(from ?? "");
+  /@resend\.dev>?\s*$/i.test(from ?? "");
 
 export async function sendEmail(email: Email) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
 
   if (!apiKey || !from) {
+    // Online, printing the email to the logs reaches nobody: fail, so the app doesn't say "sent".
+    if (process.env.VERCEL_ENV) {
+      throw new Error("[email] RESEND_API_KEY o EMAIL_FROM mancanti: nessuna email può partire");
+    }
     console.info(`[email] RESEND_API_KEY non configurata. Email per ${email.to}:\n${email.text}`);
     return;
   }
