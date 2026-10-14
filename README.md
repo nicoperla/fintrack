@@ -36,6 +36,7 @@ Se la porta 3000 è occupata, Next.js parte sulla 3001: in quel caso avvia con
 | `TWO_FACTOR_KEY`          | opzionale                    | Chiave per cifrare i segreti del 2FA; senza, deriva da `NEXTAUTH_SECRET` (cambiarla rende illeggibili i segreti salvati)                |
 | `RESEND_API_KEY`          | opzionale                    | Invio email (reset password, riepilogo settimanale); senza, le email vengono stampate nei log                                           |
 | `EMAIL_FROM`              | opzionale                    | Mittente delle email, es. `Orbitly <onboarding@resend.dev>`                                                                             |
+| `EMAIL_REPLY_TO`          | opzionale                    | Dove arrivano le risposte alle email (es. una casella Aruba `ciao@orbitly.it`); senza, `LEGAL_EMAIL`. Il mittente è un no-reply         |
 | `CRON_SECRET`             | Vercel                       | Protegge `/api/cron/weekly-digest`; Vercel Cron lo invia come `Authorization: Bearer …`. Senza, il riepilogo non parte                  |
 | `GROQ_API_KEY`            | opzionale                    | Coach AI gratuito (piano free di Groq, senza carta, con limiti al minuto)                                                               |
 | `ANTHROPIC_API_KEY`       | opzionale                    | Coach AI con Claude (a pagamento, ha la precedenza su Groq); senza nessuna delle due, la chat usa le risposte rapide calcolate dall'app |
@@ -213,3 +214,5 @@ Non usare `migrate dev`, `migrate reset` o `db push --force-reset` su un databas
 Il progetto è pensato per essere deployato su [Vercel](https://vercel.com). Collega il repository, imposta `DATABASE_URL` nelle Environment Variables del progetto Vercel e il deploy parte automaticamente ad ogni push.
 
 Per il riepilogo settimanale servono anche `CRON_SECRET` (una stringa casuale lunga), `RESEND_API_KEY` ed `EMAIL_FROM`. Con il mittente di prova `onboarding@resend.dev` Resend consegna solo all'indirizzo del proprio account: per scrivere a qualunque utente serve un dominio verificato su Resend.
+
+Le email hanno la grafica del sito: layout e testi sono in `lib/emails/` (le immagini, generate dall'app, in `/email-assets/`). Con `npm run dev` le vedi tutte con dati di esempio su [http://localhost:3000/api/dev/emails](http://localhost:3000/api/dev/emails). Dopo averle modificate esegui `node scripts/sync-admin-schema.mjs`: il pannello admin ne usa una copia.

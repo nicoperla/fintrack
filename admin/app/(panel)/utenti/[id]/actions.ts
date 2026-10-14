@@ -7,7 +7,8 @@ import { prisma } from "@/lib/db";
 import { audit } from "@/lib/audit";
 import { done, fail, type ActionResult } from "@/lib/action";
 import { emailConfigured, fintrackUrl, stripeConfigured } from "@/lib/config";
-import { escapeHtml, sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/email";
+import { passwordResetEmail, supportTwoFactorResetEmail } from "@/lib/emails/templates";
 import { requireAdmin } from "@/lib/auth/session";
 import { confirmAdmin } from "@/lib/auth/step-up";
 import { applySubscription, customerSubscriptions, stripe } from "@/lib/stripe";
@@ -102,12 +103,11 @@ export async function resetUserTwoFactor(userId: string, form: FormData): Promis
     ...signOutEverywhere(userId),
   ]);
   await audit(admin.id, "user.two_factor_reset", { target: user });
-  if (emailConfigured()) {
+  const appUrl = fintrackUrl();
+  if (emailConfigured() && appUrl) {
     await sendEmail({
       to: user.email,
-      subject: "Verifica in due passaggi disattivata dall'assistenza",
-      text: `Su tua richiesta l'assistenza di Orbitly ha disattivato la verifica in due passaggi del tuo account. Accedi con la password e riattivala da Impostazioni › Sicurezza.\n\nSe non l'hai chiesto tu, rispondi subito a questa email.`,
-      html: `<p>Su tua richiesta l'assistenza di Orbitly ha disattivato la verifica in due passaggi del tuo account. Accedi con la password e riattivala da <a href="${fintrackUrl()}/settings#sicurezza">Impostazioni › Sicurezza</a>.</p><p>Se non l'hai chiesto tu, rispondi subito a questa email.</p>`,
+      ...supportTwoFactorResetEmail({ appUrl, name: user.name }),
     }).catch((error) => console.error("[admin] email 2FA non inviata", error));
   }
   refresh(userId);
@@ -136,6 +136,8 @@ export async function sendUserPasswordReset(userId: string): Promise<ActionResul
       "Le email non sono configurate nel pannello (RESEND_API_KEY, EMAIL_FROM, FINTRACK_URL).",
     );
   }
+  const appUrl = fintrackUrl();
+  if (!appUrl) return fail("Imposta FINTRACK_URL nel pannello per mandare il link.");
   const token = randomBytes(32).toString("base64url");
   await prisma.$transaction([
     prisma.passwordResetToken.deleteMany({ where: { userId } }),
@@ -148,15 +150,9 @@ export async function sendUserPasswordReset(userId: string): Promise<ActionResul
       },
     }),
   ]);
-  const link = `${fintrackUrl()}/reset-password?token=${token}`;
-  const hello = user.name ? `Ciao ${user.name.split(" ")[0]},` : "Ciao,";
+  const link = `${appUrl}/reset-password?token=${token}`;
   try {
-    await sendEmail({
-      to: user.email,
-      subject: "Reimposta la tua password Orbitly",
-      text: `${hello}\n\nper reimpostare la password apri questo link (valido 1 ora):\n${link}\n\nSe non l'hai chiesto tu, ignora questa email.`,
-      html: `<p>${escapeHtml(hello)}</p><p>per reimpostare la password clicca qui (valido 1 ora):</p><p><a href="${link}">Reimposta password</a></p><p>Se non l'hai chiesto tu, ignora questa email.</p>`,
-    });
+    await sendEmail({ to: user.email, ...passwordResetEmail({ appUrl, name: user.name, link }) });
   } catch (error) {
     console.error("[admin] email di reset non inviata", error);
     return fail("Invio non riuscito. Riprova tra poco.");

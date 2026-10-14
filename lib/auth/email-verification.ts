@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import { prisma } from "@/lib/db/prisma";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
+import { verificationEmail } from "@/lib/emails/templates";
 
 /*
  * Email confirmation: a link sent at sign-up (and on request). Unconfirmed accounts can use the
@@ -29,13 +30,11 @@ export async function sendVerificationEmail(user: {
     }),
   ]);
 
-  const link = `${getAppUrl()}/verify-email?token=${token}`;
-  const hello = user.name ? `Ciao ${user.name.split(" ")[0]},` : "Ciao,";
+  const appUrl = getAppUrl();
+  const link = `${appUrl}/verify-email?token=${token}`;
   await sendEmail({
     to: user.email,
-    subject: "Conferma la tua email su Orbitly",
-    text: `${hello}\n\nconferma il tuo indirizzo aprendo questo link (valido 48 ore):\n${link}\n\nSe non hai creato tu l'account, ignora questa email.`,
-    html: `<p>${hello}</p><p>conferma il tuo indirizzo per completare l'iscrizione a Orbitly:</p><p><a href="${link}">Conferma la mia email</a> (valido 48 ore)</p><p>Se non hai creato tu l'account, ignora questa email.</p>`,
+    ...verificationEmail({ appUrl, name: user.name, email: user.email, link }),
   });
 }
 

@@ -6,14 +6,16 @@ import { getAppUrl } from "@/lib/app-url";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// The page behind the link in the digest: the same night sky and card as the email itself.
 function page(title: string, body: string, status = 200) {
-  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${escapeHtml(title)} · Orbitly</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fafafa;color:#171717;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:16px;box-sizing:border-box}
-main{max-width:420px;background:#fff;border:1px solid #eee;border-radius:16px;padding:28px;text-align:center}
-h1{font-size:20px;margin:0 0 8px}p{color:#737373;font-size:14px;line-height:1.5;margin:0 0 20px}
-button,a.btn{display:inline-block;background:#171717;color:#fff;border:0;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:600;text-decoration:none;cursor:pointer}
-@media (prefers-color-scheme:dark){body{background:#0a0a0a;color:#fafafa}main{background:#171717;border-color:#262626}p{color:#a3a3a3}button,a.btn{background:#fafafa;color:#171717}}</style></head>
-<body><main><h1>${escapeHtml(title)}</h1>${body}</main></body></html>`;
+  const appUrl = escapeHtml(getAppUrl());
+  const html = `<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="color-scheme" content="dark"><title>${escapeHtml(title)} · Orbitly</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#05050c url('${appUrl}/email-assets/stars.png?v=1');color:#c4c6dc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;padding:16px;box-sizing:border-box}
+.logo{display:flex;align-items:center;justify-content:center;gap:10px;margin:0 0 20px;color:#fff;font-size:20px;font-weight:700;letter-spacing:-0.02em;text-decoration:none}
+main{max-width:420px;background:#0d0d1d;border:1px solid #24243f;border-radius:24px;padding:32px 28px;text-align:center;box-shadow:0 30px 80px -40px rgba(124,58,237,.6)}
+h1{color:#fff;font-size:21px;letter-spacing:-0.01em;margin:0 0 10px}p{color:#8b8ca8;font-size:14px;line-height:1.6;margin:0 0 22px}
+button,a.btn{display:inline-block;background:#7c3aed linear-gradient(135deg,#4f46e5,#7c3aed 55%,#a21caf);color:#fff;border:0;border-radius:12px;padding:13px 22px;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;box-shadow:0 12px 32px -12px rgba(139,92,246,.9)}</style></head>
+<body><div><a class="logo" href="${appUrl}"><img src="${appUrl}/email-assets/logo.png?v=1" width="30" height="30" alt="">Orbitly</a><main><h1>${escapeHtml(title)}</h1>${body}</main></div></body></html>`;
   return new Response(html, { status, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 

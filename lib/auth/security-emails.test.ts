@@ -30,7 +30,8 @@ describe("security emails", () => {
   it("escape what came from the request", async () => {
     await notifyWrongCode(anna, { device: "<img src=x onerror=alert(1)>", place: null, at });
     const { html } = sendEmail.mock.calls[0][0];
-    expect(html).not.toContain("<img");
+    // The email has pictures of its own (logo, banner): only the device's must be escaped.
+    expect(html).not.toContain("<img src=x");
     expect(html).toContain("&lt;img src=x onerror=alert(1)&gt;");
   });
 

@@ -1,5 +1,17 @@
 import { formatCurrency } from "@/lib/format";
 import { ilPct } from "@/lib/finance/insights";
+import {
+  bars,
+  button,
+  EMAIL_COLORS,
+  escapeHtml,
+  kpis,
+  panel,
+  paragraph,
+  renderEmail,
+  rows,
+  sectionTitle,
+} from "@/lib/emails/layout";
 
 export type DigestInput = {
   name: string | null;
@@ -88,14 +100,7 @@ function renewalLine(r: DigestInput["renewals"][number]) {
     : `Il prezzo bloccato di «${r.label}» scade ${when(r.days, r.date)}: confronta le offerte prima che cambi.`;
 }
 
-export function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+export { escapeHtml };
 
 const monthName = new Intl.DateTimeFormat("it-IT", { month: "long", timeZone: "UTC" });
 // "dall'1", "dall'8", "dall'11": the numbers read with a leading vowel sound.
@@ -214,40 +219,58 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
 
   // ---------- HTML ----------
   const e = escapeHtml;
-  const muted = "color:#737373;";
+  const subject = subjectFor(input);
+  const open = (path: string, label = "Apri") =>
+    `<a href="${e(input.appUrl)}${path}" target="_blank" style="color:${EMAIL_COLORS.link};font-weight:700;text-decoration:none;">${label}&nbsp;&rarr;</a>`;
   const section = (title: string, body: string) =>
-    `<tr><td style="padding:20px 0 0;"><p style="margin:0 0 8px;font-weight:600;font-size:15px;">${title}</p>${body}</td></tr>`;
-  const listRow = (left: string, right: string, rightStyle = "") =>
-    `<tr><td style="padding:6px 0;border-bottom:1px solid #eeeeee;">${left}</td><td style="padding:6px 0;border-bottom:1px solid #eeeeee;text-align:right;white-space:nowrap;${rightStyle}">${right}</td></tr>`;
-  const table = (rows: string) =>
-    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">${rows}</table>`;
-  const kpi = (label: string, value: string, color: string, note = "") =>
-    `<td style="padding:12px;background:#f5f5f5;border-radius:10px;vertical-align:top;" width="33%"><p style="margin:0;font-size:12px;${muted}">${label}</p><p style="margin:4px 0 0;font-size:18px;font-weight:700;color:${color};">${value}</p>${note}</td>`;
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin:30px 0 0;"><tr><td>${sectionTitle(title)}${body}</td></tr></table>`;
 
-  const parts: string[] = [];
+  const parts: string[] = [
+    paragraph(`${e(greeting)} ecco com'è andata la settimana ${e(input.weekLabel)}${e(where)}.`),
+  ];
   if (input.count === 0) {
     parts.push(
-      `<tr><td style="padding:16px;background:#f5f5f5;border-radius:10px;">Non hai registrato movimenti questa settimana. Se hai speso qualcosa, bastano pochi secondi per aggiungerlo.</td></tr>`,
+      panel(
+        "Non hai registrato movimenti questa settimana. Se hai speso qualcosa, bastano pochi secondi per aggiungerlo.",
+      ),
     );
   } else {
-    const note = trend
-      ? `<p style="margin:4px 0 0;font-size:12px;color:${trend.good ? "#16a34a" : "#dc2626"};">${e(trend.text)}</p>`
-      : "";
     parts.push(
-      `<tr><td><table role="presentation" width="100%" cellpadding="0" cellspacing="6"><tr>${kpi("Uscite", e(eur(input.expense)), "#eb6834", note)}${kpi("Entrate", e(eur(input.income)), "#2a78d6")}${kpi("Saldo", e(eur(net)), net >= 0 ? "#16a34a" : "#dc2626")}</tr></table></td></tr>`,
+      kpis([
+        {
+          label: "Uscite",
+          value: eur(input.expense),
+          color: "#fb923c",
+          note: trend?.text,
+          noteColor: trend ? (trend.good ? EMAIL_COLORS.good : EMAIL_COLORS.bad) : undefined,
+        },
+        { label: "Entrate", value: eur(input.income), color: "#60a5fa" },
+        {
+          label: "Saldo",
+          value: eur(net),
+          color: net >= 0 ? EMAIL_COLORS.good : EMAIL_COLORS.bad,
+        },
+      ]),
     );
     if (input.topCategories.length) {
+      const top = Math.max(...input.topCategories.map((c) => c.value));
       parts.push(
         section(
           "Dove hai speso di più",
-          table(input.topCategories.map((c) => listRow(e(c.name), e(eur(c.value)))).join("")),
+          bars(
+            input.topCategories.map((c) => ({
+              label: c.name,
+              value: eur(c.value),
+              ratio: top > 0 ? c.value / top : 0,
+            })),
+          ),
         ),
       );
     }
   }
   if (input.talk || input.welfare || input.renewals.length) {
     const notice = (text: string, path: string) =>
-      `<p style="margin:0 0 8px;padding:12px 14px;background:#fffbeb;border-radius:10px;font-size:14px;color:#92400e;">${e(text)} <a href="${e(input.appUrl)}${path}" style="color:#92400e;font-weight:600;">Apri</a></p>`;
+      panel(`${e(text)} ${open(path)}`, { tone: "amber", margin: "0 0 10px" });
     parts.push(
       section(
         "Da non perdere",
@@ -260,16 +283,15 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
     );
   }
   if (input.pacts.length) {
+    const color = { active: EMAIL_COLORS.text, won: EMAIL_COLORS.good, lost: EMAIL_COLORS.bad };
     parts.push(
       section(
         input.pacts.length === 1 ? "Il tuo patto" : "I tuoi patti",
         input.pacts
-          .map(
-            (x) =>
-              `<p style="margin:0 0 6px;font-size:14px;${x.state === "lost" ? "color:#b91c1c;" : x.state === "won" ? "color:#047857;" : ""}">${e(pactLine(x))}</p>`,
+          .map((x) =>
+            paragraph(e(pactLine(x)), { size: 14, color: color[x.state], margin: "0 0 8px" }),
           )
-          .join("") +
-          `<p style="margin:4px 0 0;font-size:13px;"><a href="${e(input.appUrl)}/patto" style="color:#047857;font-weight:600;">Apri i patti</a></p>`,
+          .join("") + paragraph(open("/patto", "Apri i patti"), { size: 14, margin: "4px 0 0" }),
       ),
     );
   }
@@ -277,15 +299,11 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
     parts.push(
       section(
         "Pratiche da seguire",
-        table(
-          input.claims
-            .map((c) =>
-              listRow(
-                `<strong>${e(c.counterparty)}</strong> <span style="${muted}font-size:12px;">${e(c.kind)}</span><br><span style="font-size:13px;${c.urgent ? "color:#b45309;" : muted}">${e(c.step)}</span>`,
-                `<a href="${e(input.appUrl)}/ritrovati/pratiche/${e(c.id)}" style="color:#047857;font-weight:600;">Apri</a>`,
-              ),
-            )
-            .join(""),
+        rows(
+          input.claims.map((c) => ({
+            left: `<strong style="color:${EMAIL_COLORS.heading};">${e(c.counterparty)}</strong> <span style="font-size:12px;color:${EMAIL_COLORS.muted};">${e(c.kind)}</span><br><span style="font-size:13px;color:${c.urgent ? EMAIL_COLORS.warn : EMAIL_COLORS.muted};">${e(c.step)}</span>`,
+            right: open(`/ritrovati/pratiche/${e(c.id)}`),
+          })),
         ),
       ),
     );
@@ -294,18 +312,20 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
     parts.push(
       section(
         "Budget da tenere d'occhio",
-        table(
-          input.budgets
-            .map((b) =>
-              b.status === "over"
-                ? listRow(e(b.name), `sforato di ${e(eur(-b.remaining))}`, "color:#dc2626;")
-                : listRow(
-                    e(b.name),
-                    `${Math.round(b.ratio * 100)}% · restano ${e(eur(b.remaining))}`,
-                    "color:#b45309;",
-                  ),
-            )
-            .join(""),
+        rows(
+          input.budgets.map((b) =>
+            b.status === "over"
+              ? {
+                  left: e(b.name),
+                  right: `sforato di ${e(eur(-b.remaining))}`,
+                  rightColor: EMAIL_COLORS.bad,
+                }
+              : {
+                  left: e(b.name),
+                  right: `${Math.round(b.ratio * 100)}% · restano ${e(eur(b.remaining))}`,
+                  rightColor: EMAIL_COLORS.warn,
+                },
+          ),
         ),
       ),
     );
@@ -314,37 +334,39 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
     parts.push(
       section(
         "In arrivo nei prossimi 7 giorni",
-        table(
-          input.upcoming
-            .map((u) =>
-              listRow(
-                `${e(u.name)} <span style="${muted}font-size:12px;">${e(day(u.date))}</span>`,
-                `~ ${e(eur(u.amount))}`,
-              ),
-            )
-            .join(""),
+        rows(
+          input.upcoming.map((u) => ({
+            left: `${e(u.name)} <span style="font-size:12px;color:${EMAIL_COLORS.muted};">${e(day(u.date))}</span>`,
+            right: `~ ${e(eur(u.amount))}`,
+          })),
         ),
       ),
     );
   }
   parts.push(
-    `<tr><td style="padding:20px 0 0;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="padding:14px 16px;background:#fff7ed;border-radius:10px;font-size:14px;">🔥 ${e(streakLine(input.streak))}<br><span style="${muted}font-size:12px;">Livello ${input.level.level} · ${e(input.level.name)}</span></td></tr></table></td></tr>`,
-    `<tr><td style="padding:24px 0 0;" align="center"><a href="${e(input.appUrl)}/dashboard" style="display:inline-block;background:#171717;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:600;font-size:14px;">Apri Orbitly</a></td></tr>`,
+    panel(
+      `<span style="font-size:20px;">🔥</span>&nbsp; <strong style="color:${EMAIL_COLORS.heading};">${e(streakLine(input.streak))}</strong><br><span style="font-size:12px;color:${EMAIL_COLORS.muted};">Livello ${input.level.level} · ${e(input.level.name)}</span>`,
+      { margin: "30px 0 0" },
+    ),
+    button(`${input.appUrl}/dashboard`, "Apri Orbitly"),
   );
 
-  const html = `<!doctype html>
-<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${e(subjectFor(input))}</title></head>
-<body style="margin:0;padding:0;background:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#171717;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fafafa;"><tr><td align="center" style="padding:24px 12px;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #eeeeee;border-radius:16px;padding:24px;">
-<tr><td><p style="margin:0;font-weight:700;font-size:15px;">Orbitly<span style="color:#2a78d6;">.</span></p>
-<h1 style="margin:16px 0 4px;font-size:22px;">La tua settimana</h1>
-<p style="margin:0 0 16px;${muted}font-size:14px;">${e(greeting)} ecco com'è andata la settimana ${e(input.weekLabel)}${e(where)}.</p></td></tr>
-${parts.join("\n")}
-</table>
-<p style="max-width:560px;margin:16px auto 0;font-size:12px;${muted}">Ricevi questa email perché hai attivato il riepilogo settimanale. <a href="${e(input.unsubscribeUrl)}" style="color:#737373;">Disattivalo</a> quando vuoi, anche dalle impostazioni.</p>
-</td></tr></table>
-</body></html>`;
+  const html = renderEmail({
+    appUrl: input.appUrl,
+    title: subject,
+    preheader:
+      input.count === 0
+        ? "Nessun movimento questa settimana: bastano pochi secondi per aggiungerli."
+        : `Uscite ${eur(input.expense)} · entrate ${eur(input.income)}${trend ? ` · ${trend.text}` : ""}`,
+    tone: "violet",
+    label: "Riepilogo settimanale",
+    eyebrow: input.weekLabel.charAt(0).toUpperCase() + input.weekLabel.slice(1),
+    heading: "La tua settimana",
+    html: parts.join("\n"),
+    reason: "Ricevi questa email perché hai attivato il riepilogo settimanale.",
+    footerHtml: `<a href="${e(input.unsubscribeUrl)}" target="_blank" style="color:${EMAIL_COLORS.muted};text-decoration:underline;">Disattivalo</a> quando vuoi, anche dalle impostazioni.`,
+    owner: process.env.LEGAL_OWNER || null,
+  });
 
-  return { subject: subjectFor(input), text: lines.join("\n"), html };
+  return { subject, text: lines.join("\n"), html };
 }

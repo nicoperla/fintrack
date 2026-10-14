@@ -11,7 +11,7 @@ import { currencySchema } from "@/lib/validations/finance";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
 import { formatRetryAfter, rateLimit, RULES } from "@/lib/rate-limit";
-import { escapeHtml } from "@/lib/reports/digest";
+import { inviteEmail } from "@/lib/emails/templates";
 import { CurrencyError } from "@/lib/currency/convert";
 import { createConverter, latestConverter } from "@/lib/currency/rates";
 import { hashInviteToken } from "@/lib/households";
@@ -192,14 +192,13 @@ export async function inviteMember(input: unknown): Promise<InviteResult> {
     }),
   ]);
 
-  const link = `${getAppUrl()}/invite/${token}`;
+  const appUrl = getAppUrl();
+  const link = `${appUrl}/invite/${token}`;
   const inviter = space.user.name ?? space.user.email ?? "Qualcuno";
   try {
     await sendEmail({
       to: email,
-      subject: `${inviter} ti ha invitato su Orbitly`,
-      text: `${inviter} ti ha invitato a gestire insieme le finanze nello spazio «${space.name}» su Orbitly.\n\nAccetta l'invito (valido 7 giorni):\n${link}`,
-      html: `<p>${escapeHtml(inviter)} ti ha invitato a gestire insieme le finanze nello spazio <strong>${escapeHtml(space.name)}</strong> su Orbitly.</p><p><a href="${escapeHtml(link)}">Accetta l'invito</a> (valido 7 giorni)</p>`,
+      ...inviteEmail({ appUrl, inviter, spaceName: space.name, link }),
     });
   } catch (error) {
     // The link is also shown to the owner, who can send it another way.

@@ -10,6 +10,7 @@ import { notifyPasswordChanged } from "@/lib/auth/security-emails";
 import { LEGAL } from "@/lib/legal";
 import { getAppUrl } from "@/lib/app-url";
 import { sendEmail } from "@/lib/email";
+import { passwordResetEmail } from "@/lib/emails/templates";
 import { ensurePersonalHousehold } from "@/lib/households";
 import { sendVerificationEmail } from "@/lib/auth/email-verification";
 import { type ActionResult, validationError } from "@/lib/action-result";
@@ -147,14 +148,10 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
     }),
   ]);
 
-  const link = `${getAppUrl()}/reset-password?token=${token}`;
+  const appUrl = getAppUrl();
+  const link = `${appUrl}/reset-password?token=${token}`;
   try {
-    await sendEmail({
-      to: user.email,
-      subject: "Reimposta la tua password Orbitly",
-      text: `Per reimpostare la password apri questo link (valido 1 ora):\n${link}\n\nSe non hai richiesto il reset, ignora questa email.`,
-      html: `<p>Per reimpostare la password clicca qui (valido 1 ora):</p><p><a href="${link}">Reimposta password</a></p><p>Se non hai richiesto il reset, ignora questa email.</p>`,
-    });
+    await sendEmail({ to: user.email, ...passwordResetEmail({ appUrl, name: user.name, link }) });
   } catch (err) {
     console.error("[password-reset] invio email fallito", err);
   }
