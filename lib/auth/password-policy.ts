@@ -1,4 +1,5 @@
 import { createHash } from "crypto";
+import { passwordRuleProblem } from "@/lib/auth/password-rules";
 
 /*
  * Checks on a new password beyond the length: not the email, not "aaaaaaaaaa", and not one of
@@ -35,20 +36,10 @@ export async function isPwnedPassword(password: string, timeoutMs = 2500) {
 /** Why this password isn't good enough, or null. The length is checked by the form schema. */
 export async function passwordProblem(
   password: string,
-  { email, name }: { email?: string | null; name?: string | null } = {},
+  who: { email?: string | null; name?: string | null } = {},
 ) {
-  const lower = password.toLowerCase();
-  const local = email?.split("@")[0]?.toLowerCase();
-  if ((local && local.length >= 4 && lower.includes(local)) || lower.includes("fintrack")) {
-    return "Non usare la tua email o il nome dell'app nella password";
-  }
-  const first = name?.trim().split(/\s+/)[0]?.toLowerCase();
-  if (first && first.length >= 4 && lower.includes(first)) {
-    return "Non usare il tuo nome nella password";
-  }
-  if (new Set(lower).size < 5) {
-    return "Troppo prevedibile: usa più caratteri diversi";
-  }
+  const problem = passwordRuleProblem(password, who);
+  if (problem) return problem;
   if (await isPwnedPassword(password)) {
     return "Questa password è già comparsa in un furto di dati online: scegline un'altra";
   }

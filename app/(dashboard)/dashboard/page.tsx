@@ -6,7 +6,7 @@ import { getInvestments } from "@/lib/data/investments";
 import { WorkTimeNote } from "@/components/dashboard/work-time-note";
 import { ForecastCard } from "@/components/dashboard/forecast-card";
 import { getForecast } from "@/lib/data/forecast";
-import { getCoachData } from "@/lib/data/coach";
+import { getCoachData, getPickedPriorities } from "@/lib/data/coach";
 import { getLatestStoryMonth } from "@/lib/data/stories";
 import {
   CoachTeaser,
@@ -109,7 +109,11 @@ export default async function DashboardPage() {
 
   if (data.accountCount === 0) {
     return (
-      <Onboarding name={user.name ?? null} hasCategories={quickContext.categories.length > 0} />
+      <Onboarding
+        name={user.name ?? null}
+        hasCategories={quickContext.categories.length > 0}
+        priorities={await getPickedPriorities(user.id)}
+      />
     );
   }
 

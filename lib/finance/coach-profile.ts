@@ -61,6 +61,8 @@ const methodKeys = Object.keys(COACH_METHODS) as [CoachMethod, ...CoachMethod[]]
 const priorityKeys = Object.keys(COACH_PRIORITIES) as [CoachPriority, ...CoachPriority[]];
 const toneKeys = Object.keys(COACH_TONES) as [CoachTone, ...CoachTone[]];
 
+export const coachPrioritySchema = z.enum(priorityKeys);
+
 export const coachProfileSchema = z.object({
   method: z.enum(methodKeys),
   savingsTarget: z.coerce
@@ -73,7 +75,7 @@ export const coachProfileSchema = z.object({
     .int("Solo mesi interi")
     .min(1, "Almeno 1 mese")
     .max(12, "Al massimo 12 mesi"),
-  priorities: z.array(z.enum(priorityKeys)).max(8),
+  priorities: z.array(coachPrioritySchema).max(8),
   /** Categories the coach never suggests cutting: what the user won't give up. */
   protectedCategoryIds: z.array(z.string().min(1).max(40)).max(40),
   tone: z.enum(toneKeys),
@@ -93,13 +95,19 @@ export const DEFAULT_COACH_PROFILE: CoachProfile = {
   note: "",
 };
 
+/** The priorities the user really picked, at sign-up or in the coach; none if never asked. */
+export function pickedPriorities(stored: unknown): CoachPriority[] {
+  const parsed = z.object({ priorities: z.array(coachPrioritySchema) }).safeParse(stored);
+  return parsed.success ? parsed.data.priorities : [];
+}
+
 /** The stored profile, or the defaults when it's missing or no longer valid. */
 export function readCoachProfile(stored: unknown): { profile: CoachProfile; configured: boolean } {
   if (stored === null || stored === undefined) {
     return { profile: DEFAULT_COACH_PROFILE, configured: false };
   }
   const parsed = coachProfileSchema.safeParse({ ...DEFAULT_COACH_PROFILE, ...(stored as object) });
-  return parsed.success
-    ? { profile: parsed.data, configured: true }
-    : { profile: DEFAULT_COACH_PROFILE, configured: false };
+  if (!parsed.success) return { profile: DEFAULT_COACH_PROFILE, configured: false };
+  // Sign-up stores only the priorities picked there: the coach still asks for the method.
+  return { profile: parsed.data, configured: typeof stored === "object" && "method" in stored };
 }

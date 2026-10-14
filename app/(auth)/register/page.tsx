@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { RegisterForm } from "@/components/forms/register-form";
+import { Card, CardContent } from "@/components/ui/card";
+import { RegisterWizard } from "@/components/register/register-wizard";
 import { getSession } from "@/lib/auth/session";
 import { safeCallbackUrl } from "@/lib/auth/callback-url";
 
@@ -16,21 +15,9 @@ export default async function RegisterPage({ searchParams }: { searchParams: Sea
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-xl">Crea il tuo account</CardTitle>
-        <CardDescription>Bastano pochi secondi per iniziare.</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-4">
-        <RegisterForm callbackUrl={callbackUrl} email={email} />
-        <p className="text-muted-foreground text-center text-sm">
-          Hai già un account?{" "}
-          <Link
-            href={`/login?${new URLSearchParams({ callbackUrl })}`}
-            className="text-foreground font-medium underline-offset-4 hover:underline"
-          >
-            Accedi
-          </Link>
-        </p>
+      <CardContent>
+        <h1 className="sr-only">Crea il tuo account FinTrack</h1>
+        <RegisterWizard callbackUrl={callbackUrl} email={email} />
       </CardContent>
     </Card>
   );

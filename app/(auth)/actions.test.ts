@@ -134,6 +134,18 @@ describe("registerUser", () => {
     expect(prisma.user.create.mock.calls[0][0].data.passwordHash).toBe(
       "hashed:treno lento sul lago",
     );
+    // Nothing picked, nothing stored: the coach shows its setup as before.
+    expect(prisma.user.create.mock.calls[0][0].data).not.toHaveProperty("coachProfile");
+  });
+
+  it("stores the priorities picked at sign-up for the coach", async () => {
+    prisma.user.create.mockResolvedValue({ id: "user-9", email: "anna@example.com", name: "Anna" });
+    await registerUser({ ...input, priorities: ["casa", "debiti", "casa"] });
+    expect(prisma.user.create.mock.calls[0][0].data.coachProfile).toEqual({
+      priorities: ["casa", "debiti"],
+    });
+    const result = await registerUser({ ...input, priorities: ["lotteria"] });
+    expect(result.fieldErrors?.priorities).toBeDefined();
   });
 
   it("refuses passwords shorter than 10 characters", async () => {

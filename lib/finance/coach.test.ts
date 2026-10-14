@@ -164,4 +164,11 @@ describe("helpers", () => {
     expect(readCoachProfile({ method: "fire", savingsTarget: 45 }).profile.method).toBe("fire");
     expect(readCoachProfile({ method: "boh" }).profile).toEqual(DEFAULT_COACH_PROFILE);
   });
+
+  it("keeps the priorities picked at sign-up but still asks for the method", () => {
+    const { profile, configured } = readCoachProfile({ priorities: ["casa", "viaggi"] });
+    expect(profile).toEqual({ ...DEFAULT_COACH_PROFILE, priorities: ["casa", "viaggi"] });
+    expect(configured).toBe(false);
+    expect(readCoachProfile({ method: "fire" }).configured).toBe(true);
+  });
 });

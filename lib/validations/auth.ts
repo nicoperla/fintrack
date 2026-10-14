@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { coachPrioritySchema } from "@/lib/finance/coach-profile";
 
 const email = z.string().trim().toLowerCase().pipe(z.email("Inserisci un'email valida"));
 
@@ -49,6 +50,12 @@ export const registerSchema = z.object({
   email,
   password: newPassword,
   acceptTerms: z.literal(true, "Per creare l'account accetta i termini e la privacy"),
+  /** What matters most to the user, asked at sign-up: the coach starts from these. */
+  priorities: z
+    .array(coachPrioritySchema)
+    .max(8)
+    .default([])
+    .transform((list) => list.filter((p, i) => list.indexOf(p) === i)),
 });
 
 export const forgotPasswordSchema = z.object({ email });

@@ -2,12 +2,13 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Check, CornerDownLeft, PartyPopper } from "lucide-react";
+import { ArrowRight, Check, CornerDownLeft, PartyPopper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelectOption } from "@/components/ui/native-select";
 import { FormField, FormMessage, SelectField } from "@/components/forms/form-field";
 import { Illustration } from "@/components/illustrations";
+import { PRIORITY_ICONS, PRIORITY_START } from "@/components/register/priorities";
 import {
   completeOnboarding,
   finishOnboarding,
@@ -17,6 +18,7 @@ import { saveTransaction } from "@/app/(dashboard)/transactions/actions";
 import { ACCOUNT_TYPE_OPTIONS } from "@/lib/account-types";
 import { CategoryIcon } from "@/lib/category-style";
 import { DEFAULT_CATEGORIES } from "@/lib/defaults/categories";
+import { COACH_PRIORITIES, type CoachPriority } from "@/lib/finance/coach-profile";
 import { parseQuickEntry } from "@/lib/quick-entry/parse";
 import { todayDateInputValue } from "@/lib/format";
 import { useMoney, useCurrencySymbol } from "@/components/currency-provider";
@@ -70,9 +72,12 @@ function Steps({ step }: { step: Step }) {
 export function Onboarding({
   name,
   hasCategories,
+  priorities = [],
 }: {
   name: string | null;
   hasCategories: boolean;
+  /** Picked at sign-up: the first one suggests where to go once the account is ready. */
+  priorities?: CoachPriority[];
 }) {
   const symbol = useCurrencySymbol();
   const money = useMoney();
@@ -150,11 +155,14 @@ export function Onboarding({
     }
   }
 
-  async function finish() {
+  async function finish(href?: string) {
     setPending(true);
     await finishOnboarding();
-    router.refresh();
+    if (href) router.push(href);
+    else router.refresh();
   }
+
+  const focus = priorities[0];
 
   const category = parsed?.categoryId
     ? context?.categories.find((c) => c.id === parsed.categoryId)
@@ -334,12 +342,54 @@ export function Onboarding({
                 ? `Hai registrato «${saved}» e sbloccato il tuo primo traguardo. Torna ogni giorno per far crescere la tua streak.`
                 : "Il tuo conto è pronto. Registra un movimento quando vuoi: nella dashboard premi / e scrivi, per esempio, «12 pranzo oggi»."}
             </p>
-            <Button size="lg" onClick={finish} disabled={pending}>
+            {focus && <NextStep priority={focus} onGo={finish} disabled={pending} />}
+            <Button
+              size="lg"
+              variant={focus ? "ghost" : "default"}
+              onClick={() => finish()}
+              disabled={pending}
+            >
               Vai alla dashboard
             </Button>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+/** Where to start, from what the user said matters most when signing up. */
+function NextStep({
+  priority,
+  onGo,
+  disabled,
+}: {
+  priority: CoachPriority;
+  onGo: (href: string) => void;
+  disabled: boolean;
+}) {
+  const Icon = PRIORITY_ICONS[priority];
+  const { href, action } = PRIORITY_START[priority];
+  return (
+    <button
+      type="button"
+      onClick={() => onGo(href)}
+      disabled={disabled}
+      className="hover:bg-muted/60 focus-visible:ring-ring/50 group mt-1 flex w-full max-w-sm items-center gap-3 rounded-xl border p-3 text-left transition-colors outline-none focus-visible:ring-3 disabled:opacity-50"
+    >
+      <span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-full">
+        <Icon className="size-5" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="text-muted-foreground block text-xs">
+          Per «{COACH_PRIORITIES[priority]}» parti da qui
+        </span>
+        <span className="block font-medium">{action}</span>
+      </span>
+      <ArrowRight
+        className="text-muted-foreground size-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </button>
   );
 }

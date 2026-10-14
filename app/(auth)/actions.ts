@@ -83,7 +83,7 @@ export async function registerUser(input: unknown): Promise<LoginStep> {
   if (!parsed.success) {
     return validationError(parsed.error);
   }
-  const { name, email, password } = parsed.data;
+  const { name, email, password, priorities } = parsed.data;
 
   const problem = await passwordProblem(password, { email, name });
   if (problem) return { ok: false, fieldErrors: { password: [problem] } };
@@ -99,6 +99,8 @@ export async function registerUser(input: unknown): Promise<LoginStep> {
         email,
         passwordHash: await hashPassword(password),
         termsAcceptedAt: new Date(),
+        // Only the priorities: the coach still asks for the method (lib/finance/coach-profile.ts).
+        ...(priorities.length > 0 && { coachProfile: { priorities } }),
       },
     });
     userId = user.id;

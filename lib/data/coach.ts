@@ -8,7 +8,7 @@ import { getGoals } from "@/lib/data/goals";
 import { getDebts, getRecurring } from "@/lib/data/intelligence";
 import { getWorkSettings } from "@/lib/data/work-time";
 import { buildCoachReport, isNeed, type CoachInput } from "@/lib/finance/coach";
-import { readCoachProfile } from "@/lib/finance/coach-profile";
+import { pickedPriorities, readCoachProfile } from "@/lib/finance/coach-profile";
 import { formatMonth, formatMonthYear, todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
 
@@ -17,6 +17,15 @@ const COMPLETE_MONTHS = 3;
 const VICE = /tabacc|sigarett|svapo|iqos|scommess|lotto|gratta/i;
 
 type MonthRow = { month: Date; type: string; category_id: string | null; total: unknown };
+
+/** What the user said matters most (at sign-up or in the coach), for the first-run screen. */
+export async function getPickedPriorities(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { coachProfile: true },
+  });
+  return pickedPriorities(user?.coachProfile);
+}
 
 /**
  * Everything the coach looks at for the user in the active space: the last complete months,
