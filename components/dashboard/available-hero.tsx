@@ -30,6 +30,7 @@ export function AvailableHero({
 }) {
   return (
     <section
+      data-tour="hero"
       aria-label={trueSalary ? "Lo stipendio vero" : "Soldi disponibili"}
       className="bg-card relative overflow-hidden rounded-2xl border p-6 sm:p-8"
     >

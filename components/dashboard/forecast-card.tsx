@@ -80,7 +80,11 @@ export function ForecastCard({ data }: { data: ForecastData }) {
   const min = axis.ticks[0];
 
   return (
-    <section className="bg-card grid gap-4 rounded-xl border p-4" aria-labelledby="forecast-title">
+    <section
+      data-tour="forecast"
+      className="bg-card grid gap-4 rounded-xl border p-4"
+      aria-labelledby="forecast-title"
+    >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 id="forecast-title" className="flex items-center gap-2 font-medium">

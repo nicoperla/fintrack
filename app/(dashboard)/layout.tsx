@@ -17,6 +17,8 @@ import { prisma } from "@/lib/db/prisma";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { AppBackdrop } from "@/components/layout/app-backdrop";
 import { CardSpotlight } from "@/components/layout/card-spotlight";
+import { ProductTour } from "@/components/tour/product-tour";
+import { TourButton } from "@/components/tour/tour-button";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const space = await requireSpace();
@@ -54,8 +56,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <SpaceSwitcher current={space.id} spaces={space.spaces} />
               <PrivacyToggle />
               <ThemeToggle />
+              <TourButton />
               <Link
                 href="/settings"
+                data-tour="settings"
                 aria-label="Impostazioni"
                 title="Impostazioni"
                 className={buttonVariants({ variant: "ghost", size: "icon-sm" })}
@@ -70,6 +74,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {!account.emailVerifiedAt && <VerifyEmailBanner email={account.email} />}
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pt-6 pb-32 lg:pb-12">{children}</main>
         <MobileNav />
+        <ProductTour />
       </div>
     </CurrencyProvider>
   );

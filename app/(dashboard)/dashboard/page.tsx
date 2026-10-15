@@ -150,7 +150,7 @@ export default async function DashboardPage() {
 
       <InvestmentsCard data={investments} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div data-tour="month-stats" className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatTile
           label={`Entrate di ${data.monthName}`}
           icon={ArrowDownLeft}
@@ -228,7 +228,7 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+      <div data-tour="charts" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
           <TrendChart data={data.trend} />
         </div>
@@ -241,7 +241,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div data-tour="planning" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <BudgetsOverview budgets={budgets} />
         <GoalsOverview goals={goals} />
       </div>

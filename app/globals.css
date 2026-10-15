@@ -841,3 +841,42 @@
     display: none;
   }
 }
+
+/* The guided tour (components/tour/product-tour.tsx): the frame of light breathes softly. */
+@keyframes tour-ring {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.tour-ring {
+  animation: tour-ring 2.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-ring {
+    animation: none;
+  }
+}
+
+/* Each step of the tour slides in from the side it comes from (--tour-from). */
+@keyframes tour-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--tour-from, 0px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tour-step {
+  animation: tour-step-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-step {
+    animation: none;
+  }
+}

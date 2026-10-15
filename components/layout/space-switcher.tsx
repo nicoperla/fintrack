@@ -46,6 +46,7 @@ export function SpaceSwitcher({ current, spaces }: Props) {
     return (
       <Link
         href="/settings"
+        data-tour="space-switcher"
         className="text-muted-foreground hover:text-foreground hover:bg-muted flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm"
         title={`Spazio condiviso: ${active.name}`}
         aria-label={`Spazio condiviso: ${active.name}`}
@@ -60,6 +61,7 @@ export function SpaceSwitcher({ current, spaces }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
+        data-tour="space-switcher"
         disabled={pending}
         className="text-muted-foreground hover:text-foreground hover:bg-muted flex shrink-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm outline-none disabled:opacity-60"
         aria-label={`Spazio: ${active.name}. Cambia spazio`}

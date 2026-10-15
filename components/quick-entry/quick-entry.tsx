@@ -194,6 +194,7 @@ export function QuickEntry({
 
   return (
     <section
+      data-tour="quick-entry"
       aria-label="Inserimento rapido"
       className="bg-card rounded-xl border p-3 focus-within:border-violet-400/60 focus-within:shadow-[0_0_0_4px_rgb(139_92_246/0.12),0_16px_40px_-16px_rgb(139_92_246/0.5)]"
     >

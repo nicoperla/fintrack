@@ -10,6 +10,7 @@ export function ProgressChips({ data }: { data: Gamification }) {
   return (
     <Link
       href="/achievements"
+      data-tour="progress"
       className="hover:bg-muted/60 flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
       title={atRisk ? "Registra un movimento oggi per non perdere la streak" : undefined}
     >

@@ -72,6 +72,9 @@ const TOOLS: NavItem[] = [
   { href: "/reports", label: "Report PDF", icon: FileText },
 ];
 
+/** The name the guided tour uses for a menu item (components/tour/tour-steps.ts). */
+const tourName = (href: string) => `nav-${href.slice(1)}`;
+
 const MOBILE_BAR = ["/dashboard", "/transactions", "/coach", "/budgets"];
 const MOBILE_MORE = [...PRIMARY.filter((item) => !MOBILE_BAR.includes(item.href)), ...TOOLS];
 
@@ -164,6 +167,7 @@ export function DesktopNav() {
             href={item.href}
             aria-current={active ? "page" : undefined}
             data-active={active || undefined}
+            data-tour={tourName(item.href)}
             className={linkClass(active)}
           >
             {item.label}
@@ -172,6 +176,7 @@ export function DesktopNav() {
       })}
       <DropdownMenu>
         <DropdownMenuTrigger
+          data-tour="nav-tools"
           data-active={toolsActive || undefined}
           className={linkClass(toolsActive)}
         >
@@ -230,6 +235,7 @@ export function MobileNav() {
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
+              data-tour={tourName(href)}
               className={dockItemClass(active)}
             >
               <Icon className={dockIconClass(active)} />
@@ -238,7 +244,7 @@ export function MobileNav() {
           );
         })}
         <DropdownMenu>
-          <DropdownMenuTrigger className={dockItemClass(moreActive)}>
+          <DropdownMenuTrigger data-tour="nav-more" className={dockItemClass(moreActive)}>
             <Ellipsis className={dockIconClass(moreActive)} />
             Altro
           </DropdownMenuTrigger>

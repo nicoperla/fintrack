@@ -14,6 +14,7 @@ export function PrivacyToggle() {
       size="icon-sm"
       aria-label={label}
       title={label}
+      data-tour="privacy"
       aria-pressed={hidden}
       onClick={() => setHidden(!hidden)}
     >
