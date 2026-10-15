@@ -120,7 +120,20 @@ export async function registerUser(input: unknown): Promise<LoginStep> {
   return { ok: true, ticket: await issueTicket(userId, currentDevice({ refresh: true })) };
 }
 
-export async function requestPasswordReset(input: unknown): Promise<ActionResult> {
+/** The answer to "Password dimenticata?": where the link went, or why it didn't leave. */
+export type ResetStep = ActionResult & {
+  /** The address the link was sent to. */
+  sentTo?: string;
+  /** No account has this email: the form offers to create one. */
+  noAccount?: boolean;
+};
+
+/**
+ * Says plainly whether the email has an account, as sign-up already does ("Esiste già un
+ * account con questa email"). Guessing addresses is held back by the limit per connection,
+ * checked before looking the address up.
+ */
+export async function requestPasswordReset(input: unknown): Promise<ResetStep> {
   const parsed = forgotPasswordSchema.safeParse(input);
   if (!parsed.success) {
     return validationError(parsed.error);
@@ -128,13 +141,23 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
 
   const byIp = await rateLimit(`reset:ip:${clientIp()}`, RULES.resetIp);
   if (!byIp.ok) return tooMany(byIp.retryAfterSeconds);
-  // Per address the limit is silent: an error would reveal that the account exists.
-  const byEmail = await rateLimit(`reset:email:${parsed.data.email}`, RULES.resetEmail);
-  if (!byEmail.ok) return { ok: true };
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  // Same response whether or not the account exists, to avoid leaking registered emails.
-  if (!user) return { ok: true };
+  if (!user) {
+    return {
+      ok: false,
+      noAccount: true,
+      fieldErrors: { email: ["Non c'è nessun account con questa email"] },
+    };
+  }
+
+  const byEmail = await rateLimit(`reset:email:${user.email}`, RULES.resetEmail);
+  if (!byEmail.ok) {
+    return {
+      ok: false,
+      error: `Ti abbiamo già mandato diversi link: controlla la posta, anche nello spam, oppure riprova tra ${formatRetryAfter(byEmail.retryAfterSeconds)}.`,
+    };
+  }
 
   const token = randomBytes(32).toString("base64url");
   await prisma.$transaction([
@@ -154,8 +177,13 @@ export async function requestPasswordReset(input: unknown): Promise<ActionResult
     await sendEmail({ to: user.email, ...passwordResetEmail({ appUrl, name: user.name, link }) });
   } catch (err) {
     console.error("[password-reset] invio email fallito", err);
+    // Saying "sent" here would leave the user waiting for an email that never comes.
+    return {
+      ok: false,
+      error: "Non siamo riusciti a mandarti l'email. Riprova tra qualche minuto.",
+    };
   }
-  return { ok: true };
+  return { ok: true, sentTo: user.email };
 }
 
 export async function resetPassword(input: unknown): Promise<ActionResult> {

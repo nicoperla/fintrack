@@ -1,20 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { registerUser, resetPassword, startLogin } from "./actions";
+import { registerUser, requestPasswordReset, resetPassword, startLogin } from "./actions";
 
-const { prisma, rateLimit, verifyPassword, passwordProblem, issueTicket, notifyPasswordChanged } =
-  vi.hoisted(() => ({
-    prisma: {
-      user: { findUnique: vi.fn(), findUniqueOrThrow: vi.fn(), create: vi.fn(), update: vi.fn() },
-      passwordResetToken: { findUnique: vi.fn(), deleteMany: vi.fn() },
-      loginTicket: { deleteMany: vi.fn() },
-      $transaction: vi.fn(),
-    },
-    rateLimit: vi.fn(),
-    verifyPassword: vi.fn(),
-    passwordProblem: vi.fn(),
-    issueTicket: vi.fn(),
-    notifyPasswordChanged: vi.fn(),
-  }));
+const {
+  prisma,
+  rateLimit,
+  verifyPassword,
+  passwordProblem,
+  issueTicket,
+  notifyPasswordChanged,
+  sendEmail,
+} = vi.hoisted(() => ({
+  prisma: {
+    user: { findUnique: vi.fn(), findUniqueOrThrow: vi.fn(), create: vi.fn(), update: vi.fn() },
+    passwordResetToken: { findUnique: vi.fn(), deleteMany: vi.fn(), create: vi.fn() },
+    loginTicket: { deleteMany: vi.fn() },
+    $transaction: vi.fn(),
+  },
+  rateLimit: vi.fn(),
+  verifyPassword: vi.fn(),
+  passwordProblem: vi.fn(),
+  issueTicket: vi.fn(),
+  notifyPasswordChanged: vi.fn(),
+  sendEmail: vi.fn(),
+}));
 vi.mock("@/lib/db/prisma", () => ({ prisma }));
 vi.mock("@/lib/rate-limit", () => ({
   RULES: {
@@ -22,6 +30,8 @@ vi.mock("@/lib/rate-limit", () => ({
     loginIp: { limit: 30, windowSeconds: 900 },
     register: { limit: 5, windowSeconds: 3600 },
     resetSubmit: { limit: 10, windowSeconds: 3600 },
+    resetIp: { limit: 10, windowSeconds: 3600 },
+    resetEmail: { limit: 3, windowSeconds: 3600 },
   },
   rateLimit,
   clientIp: () => "203.0.113.7",
@@ -42,7 +52,7 @@ vi.mock("@/lib/auth/email-verification", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/households", () => ({ ensurePersonalHousehold: vi.fn() }));
-vi.mock("@/lib/email", () => ({ sendEmail: vi.fn() }));
+vi.mock("@/lib/email", () => ({ sendEmail }));
 vi.mock("@/lib/app-url", () => ({ getAppUrl: () => "https://fintrack.example" }));
 
 beforeEach(() => {
@@ -204,5 +214,63 @@ describe("resetPassword", () => {
     passwordProblem.mockResolvedValue("Non usare la tua email o il nome dell'app nella password");
     expect((await resetPassword(input)).fieldErrors?.password).toHaveLength(1);
     expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+});
+
+describe("requestPasswordReset", () => {
+  const anna = { id: "user-1", email: "anna@example.com", name: "Anna Rossi" };
+
+  beforeEach(() => {
+    prisma.user.findUnique.mockResolvedValue(anna);
+    sendEmail.mockResolvedValue(undefined);
+  });
+
+  it("sends the link and says where it went", async () => {
+    expect(await requestPasswordReset({ email: " Anna@Example.com " })).toEqual({
+      ok: true,
+      sentTo: "anna@example.com",
+    });
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "anna@example.com", tag: "password-reset" }),
+    );
+    expect(sendEmail.mock.calls[0][0].text).toContain(
+      "https://fintrack.example/reset-password?token=",
+    );
+  });
+
+  it("says when no account has that email, and sends nothing", async () => {
+    prisma.user.findUnique.mockResolvedValue(null);
+    const result = await requestPasswordReset({ email: "nessuno@example.com" });
+    expect(result).toMatchObject({ ok: false, noAccount: true });
+    expect(result.fieldErrors?.email?.[0]).toMatch(/nessun account/);
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it("limits each connection before looking the address up", async () => {
+    rateLimit.mockResolvedValueOnce({ ok: false, remaining: 0, retryAfterSeconds: 600 });
+    expect((await requestPasswordReset({ email: "anna@example.com" })).error).toMatch(
+      /Troppi tentativi/,
+    );
+    expect(prisma.user.findUnique).not.toHaveBeenCalled();
+  });
+
+  it("tells openly when that address already got too many links", async () => {
+    rateLimit
+      .mockResolvedValueOnce({ ok: true, remaining: 5, retryAfterSeconds: 0 })
+      .mockResolvedValueOnce({ ok: false, remaining: 0, retryAfterSeconds: 600 });
+    const result = await requestPasswordReset({ email: "anna@example.com" });
+    expect(result.error).toMatch(/già mandato diversi link.*10 minuti/);
+    expect(rateLimit).toHaveBeenLastCalledWith("reset:email:anna@example.com", expect.anything());
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("does not say sent when the email did not leave", async () => {
+    sendEmail.mockRejectedValue(new Error("Resend down"));
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const result = await requestPasswordReset({ email: "anna@example.com" });
+    expect(result.ok).toBe(false);
+    expect(result.error).toMatch(/Non siamo riusciti a mandarti/);
+    error.mockRestore();
   });
 });
