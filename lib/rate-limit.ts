@@ -25,6 +25,8 @@ export const RULES = {
   /** "Someone knows your password" emails, per user. */
   securityAlert: { limit: 1, windowSeconds: 6 * 60 * 60 },
   register: { limit: 5, windowSeconds: 60 * 60 },
+  /** The pre-launch access code (lib/gate.ts), per IP: a typo or two, never a guessing run. */
+  gate: { limit: 8, windowSeconds: 15 * 60 },
   resetEmail: { limit: 3, windowSeconds: 60 * 60 },
   resetIp: { limit: 10, windowSeconds: 60 * 60 },
   resetSubmit: { limit: 10, windowSeconds: 60 * 60 },

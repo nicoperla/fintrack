@@ -1,13 +1,15 @@
-import { NextResponse } from "next/server";
-import { withAuth } from "next-auth/middleware";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
+import { withAuth, type NextRequestWithAuth } from "next-auth/middleware";
 import {
   deviceCookieName,
   deviceCookieOptions,
   isDeviceId,
   newDeviceId,
 } from "@/lib/auth/device-cookie";
+import { needsSession } from "@/lib/auth/public-paths";
+import { GATE_COOKIE, GATE_PAGE, gateEnabled, isOpenPath, validPass } from "@/lib/gate";
 
-export default withAuth(
+const withSession = withAuth(
   // Signed-in browsers always carry the device cookie, so the security settings never have to
   // set it in a server action (see currentDevice in lib/auth/login-ticket.ts). Sessions opened
   // before the cookie existed get one on their next page.
@@ -21,14 +23,45 @@ export default withAuth(
   { pages: { signIn: "/login" } },
 );
 
-// Everything requires a session except the landing page ("/": the pattern needs at least one
-// character), the auth and legal pages, the email links, the family file shared with a trusted
-// person (its token is the key), NextAuth's API, the cron jobs, the Stripe webhook, static
-// assets (landing/: the landing page media; icon: the browser tab's; email-assets/: the
-// pictures in the emails, fetched by mail clients) and the email preview of `next dev`, so new
-// pages are protected by default.
+const CLOSED_HEADERS = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" };
+
+/** Without the pass: people go to the page that asks for the code, scripts get a plain no. */
+function closed(req: NextRequest) {
+  const { pathname, search } = req.nextUrl;
+  if (pathname.startsWith("/api/") || (req.method !== "GET" && req.method !== "HEAD")) {
+    return new NextResponse("Accesso riservato", { status: 401, headers: CLOSED_HEADERS });
+  }
+  const url = req.nextUrl.clone();
+  url.pathname = GATE_PAGE;
+  url.search = "";
+  if (pathname !== "/") url.searchParams.set("next", pathname + search);
+  const res = NextResponse.redirect(url);
+  for (const [name, value] of Object.entries(CLOSED_HEADERS)) res.headers.set(name, value);
+  return res;
+}
+
+/**
+ * Every request goes through here. First the pre-launch gate (lib/gate.ts): without a valid
+ * pass, nothing but the gate itself is served. Then, for the app's pages, the session.
+ */
+export default async function middleware(req: NextRequest, event: NextFetchEvent) {
+  const { pathname } = req.nextUrl;
+  if (gateEnabled() && !isOpenPath(pathname)) {
+    let allowed = false;
+    try {
+      allowed = await validPass(req.cookies.get(GATE_COOKIE)?.value);
+    } catch (error) {
+      // A configuration problem keeps the site closed, never open.
+      console.error("[gate]", error);
+    }
+    if (!allowed) return closed(req);
+  }
+  if (needsSession(pathname)) return withSession(req as NextRequestWithAuth, event);
+  return NextResponse.next();
+}
+
+// Everything, the root and the files in public/ included, except the build's own JS and CSS
+// (the gate page needs them; they hold code, never data) and the old favicon path.
 export const config = {
-  matcher: [
-    "/((?!login|register|forgot-password|reset-password|verify-email|privacy|terms|api/auth|api/cron|api/billing/webhook|invite|fascicolo/condiviso/|patto/arbitro/|api/digest/unsubscribe|api/dev/|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|icon|icons/|email-assets/|landing/|apple-icon|opengraph-image).+)",
-  ],
+  matcher: ["/((?!_next/static/|favicon.ico).*)"],
 };
