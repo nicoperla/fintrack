@@ -19,6 +19,8 @@ const taxProfile = {
   birthYear: 1980,
   rent: { contract: null, since: null, transferred: false },
   welfare: { balance: null, expiresOn: null, fringe: null, fringeYear: null },
+  isee: { value: null, year: null },
+  homeBonuses: [],
 };
 
 beforeEach(() => {

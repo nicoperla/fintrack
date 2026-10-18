@@ -44,6 +44,8 @@ describe("saveRentProfile", () => {
           birthYear: 1999,
           rent: { contract: "libero", since: 2024, transferred: false },
           welfare,
+          isee: { value: null, year: null },
+          homeBonuses: [],
         },
       },
     });

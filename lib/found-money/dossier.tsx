@@ -10,8 +10,10 @@ import { formatCurrency } from "@/lib/format";
 
 /*
  * The 730 dossier: the year's deductible expenses grouped by type, with what counts, what was
- * lost to cash, what to confirm and which documents to keep. To bring to the CAF or to check the
- * precompilato.
+ * lost to cash, what to confirm, which documents to keep and where each goes in the 730. With a
+ * `guide` it becomes the "Il mio 730" reminder: the next step, the traffic light, the dates and
+ * the documents checklist. Always a personal reminder, never a document for the CAF or the
+ * Agenzia: those want the originals.
  */
 
 const C = {
@@ -99,6 +101,16 @@ function Table({ lines }: { lines: DeductionLine[] }) {
   );
 }
 
+/** "Il mio 730": what the reminder adds to the dossier. */
+export type DossierGuide = {
+  next: { title: string; text: string; due?: string };
+  light: { title: string; reasons: string[] } | null;
+  dates: { label: string; date: string }[];
+  documents: { label: string; detail: string; state: "have" | "todo" | "skip"; cafOnly: boolean }[];
+  /** The marginal IRPEF rate deduzioni are worth. */
+  marginal: number;
+};
+
 export type DossierData = {
   year: number;
   /** "Anna Rossi", or "Spazio «Casa» (tutte le persone)". */
@@ -106,19 +118,40 @@ export type DossierData = {
   generatedOn: string;
   summary: DeductionsSummary;
   children: number;
+  guide?: DossierGuide;
 };
 
+const whereText = (type: keyof typeof RULES) => {
+  const w = RULES[type].where;
+  return w.code ? `quadro E, rigo ${w.line}, codice ${w.code}` : `quadro E, rigo ${w.line}`;
+};
+
+const dayMonth = (iso: string) =>
+  new Intl.DateTimeFormat("it-IT", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${iso}T00:00:00Z`));
+
 export function DossierDocument({ data }: { data: DossierData }) {
-  const { summary } = data;
+  const { summary, guide } = data;
   const lines = summary.lines.filter((l) => l.status !== "excluded");
   const toCheck = lines.filter((l) => l.status === "check");
   const valid = summary.byType.reduce((sum, t) => sum + t.eligible, 0);
 
   return (
-    <Document title={`Dossier 730/${data.year + 1}`} author="Orbitly">
+    <Document
+      title={guide ? `Il mio 730/${data.year + 1}` : `Dossier 730/${data.year + 1}`}
+      author="Orbitly"
+    >
       <Page size="A4" style={s.page}>
-        <Text style={s.brand}>Orbitly · Soldi ritrovati</Text>
-        <Text style={s.title}>Dossier 730/{data.year + 1}</Text>
+        <Text style={s.brand}>
+          {guide ? "Orbitly · Il mio 730 · promemoria personale" : "Orbitly · Soldi ritrovati"}
+        </Text>
+        <Text style={s.title}>
+          {guide ? "Il mio 730" : "Dossier 730"}/{data.year + 1}
+        </Text>
         <Text style={s.subtitle}>
           Spese detraibili del {data.year} · {data.holder} · generato il {data.generatedOn}
         </Text>
@@ -144,13 +177,69 @@ export function DossierDocument({ data }: { data: DossierData }) {
           </View>
         </View>
 
+        {guide && (
+          <View style={s.section}>
+            <Text style={s.h2}>Il prossimo passo</Text>
+            <Text style={[s.bold, { marginTop: 4 }]}>
+              {guide.next.title}
+              {guide.next.due ? ` (entro il ${dayMonth(guide.next.due)})` : ""}
+            </Text>
+            <Text style={s.note}>{guide.next.text}</Text>
+            {guide.light && (
+              <View style={s.docs}>
+                <Text style={s.bold}>{guide.light.title}</Text>
+                {guide.light.reasons.map((r) => (
+                  <Text key={r}>· {r}</Text>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        {guide && guide.dates.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.h2}>Le date</Text>
+            {guide.dates.map((d) => (
+              <View key={d.label} style={s.row}>
+                <Text style={s.cDesc}>{d.label}</Text>
+                <Text style={{ width: 140, textAlign: "right" }}>{dayMonth(d.date)}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {guide && guide.documents.length > 0 && (
+          <View style={s.section}>
+            <Text style={s.h2}>I documenti da preparare</Text>
+            <Text style={s.rule}>
+              Gli originali: questo promemoria serve a te per non dimenticare niente.
+            </Text>
+            {guide.documents.map((d) => (
+              <View key={d.label} style={s.row} wrap={false}>
+                <Text style={{ width: 22, color: d.state === "have" ? C.green : C.muted }}>
+                  {d.state === "have" ? "[x]" : d.state === "skip" ? " - " : "[ ]"}
+                </Text>
+                <View style={s.cDesc}>
+                  <Text style={s.bold}>
+                    {d.label}
+                    {d.cafOnly ? " (per il CAF)" : ""}
+                  </Text>
+                  <Text style={{ color: C.muted, fontSize: 8 }}>{d.detail}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
         {DEDUCTION_TYPES.map((type) => {
           const ofType = lines.filter((l) => l.type === type && l.status !== "check");
           if (ofType.length === 0) return null;
           const rule = RULES[type];
           const totals = summary.byType.find((t) => t.type === type);
           const limits = [
-            `Detrazione del ${Math.round(rule.rate * 100)}%`,
+            rule.kind === "deduzione"
+              ? `Deduzione dal reddito (vale la tua aliquota IRPEF${guide ? `, ${Math.round(guide.marginal * 100)}%` : ""})`
+              : `Detrazione del ${Math.round(rule.rate * 100)}%`,
             rule.franchigia ? `franchigia di ${money(rule.franchigia)}` : null,
             rule.cap
               ? `limite di ${money(rule.cap)}${rule.perChild ? ` per figlio (figli indicati: ${Math.max(1, data.children)})` : ""}`
@@ -159,7 +248,9 @@ export function DossierDocument({ data }: { data: DossierData }) {
           return (
             <View key={type} style={s.section}>
               <Text style={s.h2}>{rule.label}</Text>
-              <Text style={s.rule}>{limits.join(", ")}.</Text>
+              <Text style={s.rule}>
+                {limits.join(", ")}. Nel 730: {whereText(type)}.
+              </Text>
               <Table lines={ofType} />
               {totals && (
                 <View style={s.total}>
@@ -192,10 +283,9 @@ export function DossierDocument({ data }: { data: DossierData }) {
         )}
 
         <Text style={s.footer} fixed>
-          Stima calcolata da Orbitly con le regole in vigore a {RULES_CHECKED_AT}, sulle spese
-          registrate nell&apos;app. Non considera i tetti per redditi oltre 75.000 euro né
-          l&apos;imposta effettivamente dovuta. Non è consulenza fiscale: verifica col CAF o il
-          commercialista e conserva i documenti originali.
+          {guide
+            ? `Promemoria personale creato da Orbitly, non è un documento fiscale e non sostituisce gli originali. Stime con le regole verificate a ${RULES_CHECKED_AT}, sulle spese registrate nell'app. Orbitly non compila e non invia la dichiarazione: verifica sul sito dell'Agenzia delle Entrate o con un CAF.`
+            : `Stima calcolata da Orbitly con le regole in vigore a ${RULES_CHECKED_AT}, sulle spese registrate nell'app. Non considera i tetti per redditi oltre 75.000 euro né l'imposta effettivamente dovuta. Non è consulenza fiscale: verifica col CAF o il commercialista e conserva i documenti originali.`}
         </Text>
       </Page>
     </Document>

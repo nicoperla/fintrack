@@ -33,6 +33,8 @@ export type DigestInput = {
   claims: { id: string; counterparty: string; kind: string; step: string; urgent: boolean }[];
   /** "Radar dei diritti": company welfare credit that expires within a month. */
   welfare: { balance: number; expiresOn: string; days: number } | null;
+  /** "Il mio 730": the next step, when its date is close (lib/tax/next-step.ts, digestNote). */
+  tax730?: { title: string; text: string } | null;
   /** "Il Tariffometro": RC auto policies and fixed light prices ending within a month. */
   renewals: { kind: "CAR_INSURANCE" | "ELECTRICITY"; label: string; date: string; days: number }[];
   /** "Il caffè dei conti": last month's talk is ready and not done yet (shared spaces). */
@@ -169,8 +171,11 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       input.topCategories.forEach((c) => lines.push(`- ${c.name}: ${eur(c.value)}`));
     }
   }
-  if (input.talk || input.welfare || input.renewals.length) {
+  if (input.talk || input.welfare || input.renewals.length || input.tax730) {
     lines.push("", "Da non perdere:");
+    if (input.tax730) {
+      lines.push(`- ${input.tax730.title}: ${input.tax730.text}`, `  ${input.appUrl}/730`);
+    }
     if (input.talk) lines.push(`- ${talkLine(input.talk)}`, `  ${input.appUrl}/caffe`);
     if (input.welfare) lines.push(`- ${welfareLine(eur, input.welfare)}`);
     input.renewals.forEach((r) =>
@@ -268,13 +273,14 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       );
     }
   }
-  if (input.talk || input.welfare || input.renewals.length) {
+  if (input.talk || input.welfare || input.renewals.length || input.tax730) {
     const notice = (text: string, path: string) =>
       panel(`${e(text)} ${open(path)}`, { tone: "amber", margin: "0 0 10px" });
     parts.push(
       section(
         "Da non perdere",
         [
+          input.tax730 ? notice(`${input.tax730.title}. ${input.tax730.text}`, "/730") : "",
           input.talk ? notice(talkLine(input.talk), "/caffe") : "",
           input.welfare ? notice(welfareLine(eur, input.welfare), "/ritrovati/radar") : "",
           ...input.renewals.map((r) => notice(renewalLine(r), "/ritrovati/tariffometro")),

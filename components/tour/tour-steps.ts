@@ -1,12 +1,14 @@
 import {
   ArrowLeftRight,
   BadgeEuro,
+  BadgePercent,
   Calculator,
   CalendarDays,
   ChartPie,
   CircleHelp,
   Coffee,
   EyeOff,
+  FileCheck2,
   FilePen,
   FileText,
   Flag,
@@ -21,6 +23,7 @@ import {
   LayoutGrid,
   LifeBuoy,
   Lightbulb,
+  MailOpen,
   Map as MapIcon,
   PartyPopper,
   Radar,
@@ -340,6 +343,24 @@ export const FEATURE_MAP: { title: string; features: MapFeature[] }[] = [
     title: "Ritrova i soldi",
     features: [
       {
+        href: "/730",
+        label: "Il mio 730",
+        icon: FileCheck2,
+        text: "Passo dopo passo: cosa preparare, se puoi fare da solo, cosa portare al CAF, quando arrivano i soldi.",
+      },
+      {
+        href: "/isee",
+        label: "ISEE e bonus",
+        icon: BadgePercent,
+        text: "Quando rinnovare l'ISEE, i saldi e le giacenze dei conti, i bonus a cui potresti avere diritto.",
+      },
+      {
+        href: "/730/lettera",
+        label: "Spiegami questa lettera",
+        icon: MailOpen,
+        text: "Una lettera dell'Agenzia, dell'INPS o del Comune spiegata in parole semplici, con la scadenza.",
+      },
+      {
         href: "/ritrovati",
         label: "Soldi ritrovati",
         icon: HandCoins,
@@ -355,7 +376,7 @@ export const FEATURE_MAP: { title: string; features: MapFeature[] }[] = [
         href: "/ritrovati/radar",
         label: "Radar dei diritti",
         icon: Radar,
-        text: "Cosa manca nel 730 precompilato e il welfare aziendale in scadenza.",
+        text: "La detrazione per l'affitto che il precompilato non sa e il welfare aziendale in scadenza.",
       },
       {
         href: "/ritrovati/tariffometro",

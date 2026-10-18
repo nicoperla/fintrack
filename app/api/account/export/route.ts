@@ -34,6 +34,23 @@ export async function GET() {
       subscriptionStatus: true,
       planRenewsAt: true,
       memberships: { select: { role: true, joinedAt: true, householdId: true, shares: true } },
+      // "Il mio 730": personal, so it belongs to the profile, not to a space.
+      taxYears: {
+        orderBy: { year: "asc" },
+        select: {
+          year: true,
+          answers: true,
+          cu: true,
+          documents: true,
+          decision: true,
+          channel: true,
+          sentAt: true,
+          result: true,
+          secondAdvance: true,
+          refundReceivedAt: true,
+          shareCapacity: true,
+        },
+      },
     },
   });
 
@@ -197,6 +214,8 @@ export async function GET() {
           description: t.description,
           notes: t.notes,
           tags: t.tags,
+          deduction730: t.deduction,
+          receipt730: t.deductionDoc === "have",
           recordedBy: who(t.userId),
           recordedAt: t.createdAt,
         })),

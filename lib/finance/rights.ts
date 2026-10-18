@@ -1,4 +1,4 @@
-import { DEDUCTION_TYPES, RULES, type DeductionType } from "@/lib/finance/deductions";
+import { DEDUCTION_TYPES, RULES, rateOf, type DeductionType } from "@/lib/finance/deductions";
 
 /*
  * "Radar dei diritti": what the 730 precompilato misses compared with the expenses Orbitly saw,
@@ -33,6 +33,22 @@ export const RENT_CONTRACT_LABELS: Record<RentContract, string> = {
   concordato: "Canone concordato (3+2)",
 };
 
+export const HOME_BONUS_KINDS = ["ristrutturazione", "energetico", "mobili"] as const;
+export type HomeBonusKind = (typeof HOME_BONUS_KINDS)[number];
+
+/** A home bonus being paid back in ten yearly instalments ("Il mio 730", lib/tax/home-bonus.ts). */
+export type HomeBonus = {
+  id: string;
+  kind: HomeBonusKind;
+  /** The year the works were paid: the first instalment goes in that year's 730. */
+  year: number;
+  /** What was spent (your share, if the works are shared). */
+  amount: number;
+  /** The percentage: 50, 36, 30, 65… as on the invoices or last year's 730. */
+  rate: number;
+  label: string;
+};
+
 /** Saved per person in `users.tax_profile`: the 730 is everyone's own. */
 export type TaxProfile = {
   /** Reddito complessivo of the year, by band: it decides rent deductions. */
@@ -54,6 +70,9 @@ export type TaxProfile = {
     fringe: number | null;
     fringeYear: number | null;
   };
+  /** "ISEE e bonus": the last ISEE the user wrote down. */
+  isee: { value: number | null; year: number | null };
+  homeBonuses: HomeBonus[];
 };
 
 export const EMPTY_TAX_PROFILE: TaxProfile = {
@@ -61,6 +80,8 @@ export const EMPTY_TAX_PROFILE: TaxProfile = {
   birthYear: null,
   rent: { contract: null, since: null, transferred: false },
   welfare: { balance: null, expiresOn: null, fringe: null, fringeYear: null },
+  isee: { value: null, year: null },
+  homeBonuses: [],
 };
 
 // ---------- Rent ----------
@@ -172,11 +193,18 @@ export function rentDeduction(input: {
 // ---------- The precompilato ----------
 
 /** The refund an amount of expenses brings, after the type's franchigia and limit. */
-export function refundFor(type: DeductionType, amount: number, children: number) {
+export function refundFor(
+  type: DeductionType,
+  amount: number,
+  children: number,
+  marginalRate?: number,
+) {
   const rule = RULES[type];
   const cap =
     rule.cap === undefined ? Infinity : rule.cap * (rule.perChild ? Math.max(1, children) : 1);
-  return cents(Math.max(0, Math.min(amount, cap) - (rule.franchigia ?? 0)) * rule.rate);
+  return cents(
+    Math.max(0, Math.min(amount, cap) - (rule.franchigia ?? 0)) * rateOf(type, marginalRate),
+  );
 }
 
 export type ComparisonRow = {
@@ -199,13 +227,15 @@ export function compareWithPrecompiled(input: {
   children: number;
   /** The rent deduction due, and whether the precompilato already has it. */
   rent: { amount: number; inPrecompiled: boolean } | null;
+  /** What deduzioni are worth: the person's marginal IRPEF rate, if known. */
+  marginalRate?: number;
 }) {
   const rows: ComparisonRow[] = DEDUCTION_TYPES.map((type) => {
     const fintrack = cents(input.fintrack[type] ?? 0);
     const precompiled = cents(input.precompiled[type] ?? 0);
     const extraRefund = cents(
-      refundFor(type, Math.max(fintrack, precompiled), input.children) -
-        refundFor(type, precompiled, input.children),
+      refundFor(type, Math.max(fintrack, precompiled), input.children, input.marginalRate) -
+        refundFor(type, precompiled, input.children, input.marginalRate),
     );
     return {
       type,
@@ -274,6 +304,8 @@ export function readTaxProfile(raw: unknown): TaxProfile {
   const o = (raw ?? {}) as Record<string, unknown>;
   const rent = (o.rent ?? {}) as Record<string, unknown>;
   const welfare = (o.welfare ?? {}) as Record<string, unknown>;
+  const isee = (o.isee ?? {}) as Record<string, unknown>;
+  const bonuses = Array.isArray(o.homeBonuses) ? o.homeBonuses : [];
   return {
     incomeBand: isBand(o.incomeBand) ? o.incomeBand : null,
     birthYear: numberOrNull(o.birthYear),
@@ -288,5 +320,21 @@ export function readTaxProfile(raw: unknown): TaxProfile {
       fringe: numberOrNull(welfare.fringe),
       fringeYear: numberOrNull(welfare.fringeYear),
     },
+    isee: { value: numberOrNull(isee.value), year: numberOrNull(isee.year) },
+    homeBonuses: bonuses.slice(0, 20).flatMap((raw) => {
+      const b = (raw ?? {}) as Record<string, unknown>;
+      const kind = HOME_BONUS_KINDS.includes(b.kind as HomeBonusKind)
+        ? (b.kind as HomeBonusKind)
+        : null;
+      const year = numberOrNull(b.year);
+      const amount = numberOrNull(b.amount);
+      const rate = numberOrNull(b.rate);
+      if (!kind || year === null || amount === null || rate === null || typeof b.id !== "string") {
+        return [];
+      }
+      return [
+        { id: b.id, kind, year, amount, rate, label: typeof b.label === "string" ? b.label : "" },
+      ];
+    }),
   };
 }

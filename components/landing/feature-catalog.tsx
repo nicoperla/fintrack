@@ -3,9 +3,11 @@
 import { useState } from "react";
 import {
   BadgeEuro,
+  BadgePercent,
   CalendarClock,
   Coffee,
   Coins,
+  FileCheck2,
   FileText,
   FolderHeart,
   Gauge,
@@ -18,6 +20,7 @@ import {
   LifeBuoy,
   Lightbulb,
   Mail,
+  MailOpen,
   Mic,
   Radar,
   Repeat,
@@ -132,6 +135,23 @@ const GROUPS: Group[] = [
     text: "È qui che Orbitly si ripaga.",
     features: [
       {
+        icon: FileCheck2,
+        name: "Il mio 730",
+        text: "Il tuo 730 passo dopo passo: se puoi fare da solo, i documenti da preparare, la stima dalla CU, il precompilato confrontato riga per riga con il rigo dove scrivere, cosa portare al CAF e quando arriva il rimborso.",
+        pro: "Con Pro carichi il PDF del precompilato e lo leggo io, nel tuo browser, e scarichi il promemoria.",
+      },
+      {
+        icon: BadgePercent,
+        name: "ISEE e bonus",
+        text: "Quando rinnovare l'ISEE, il saldo al 31 dicembre e la giacenza media di ogni conto già calcolati, e i bonus nazionali a cui potresti avere diritto.",
+      },
+      {
+        icon: MailOpen,
+        name: "Spiegami questa lettera",
+        text: "Una lettera dell'Agenzia, dell'INPS o del Comune che non capisci: la fotografi e ti dico cos'è, cosa fare ed entro quando.",
+        pro: "Con Pro, con l'AI e il tuo consenso: la foto non viene salvata.",
+      },
+      {
         icon: HandCoins,
         name: "Soldi ritrovati",
         text: "Un contatore di quello che puoi recuperare: il rimborso del 730, i doppi addebiti, gli abbonamenti aumentati o dimenticati, le commissioni della banca.",
@@ -146,7 +166,7 @@ const GROUPS: Group[] = [
       {
         icon: Radar,
         name: "Radar dei diritti",
-        text: "Il 730 precompilato confrontato con le spese che hai fatto: cosa manca, la detrazione per l'affitto, il credito welfare che sta per scadere.",
+        text: "La detrazione per l'affitto che il precompilato di solito non ha, e il credito welfare che sta per scadere.",
       },
       {
         icon: Gauge,

@@ -6,6 +6,13 @@ import {
   AlertTriangle,
   Baby,
   Banknote,
+  BedDouble,
+  FileCheck2,
+  Flower2,
+  GraduationCap,
+  HandHelping,
+  HeartHandshake,
+  PiggyBank,
   Bus,
   Check,
   ChevronRight,
@@ -18,7 +25,6 @@ import {
   Landmark,
   Lock,
   PawPrint,
-  Radar,
   School,
   ShieldCheck,
   Sparkles,
@@ -61,6 +67,12 @@ export const DEDUCTION_ICONS: Record<DeductionType, LucideIcon> = {
   trasporto: Bus,
   assicurazione: ShieldCheck,
   mutuo: House,
+  universita: GraduationCap,
+  funebri: Flower2,
+  studenti: BedDouble,
+  donazioni: HeartHandshake,
+  previdenza: PiggyBank,
+  colf: HandHelping,
 };
 
 const shortDate = new Intl.DateTimeFormat("it-IT", {
@@ -501,10 +513,11 @@ function TaxSection({ data }: { data: FoundMoney }) {
       )}
 
       <p className="text-muted-foreground text-xs">
-        Stima con le regole in vigore a {RULES_CHECKED_AT} (19% di detrazione, franchigie e limiti
-        per tipo). Non tiene conto dei tetti per redditi oltre 75.000 € né dell&apos;IRPEF che paghi
-        davvero, che è il massimo che puoi recuperare. Verifica sempre col CAF o il commercialista:
-        non è consulenza fiscale.
+        Stima con le regole in vigore a {RULES_CHECKED_AT} (19% di detrazione per quasi tutte, 30%
+        per le donazioni; fondo pensione e contributi per colf valgono almeno il 23%,
+        l&apos;aliquota più bassa; franchigie e limiti per tipo). Non tiene conto dei tetti per
+        redditi oltre 75.000 € né dell&apos;IRPEF che paghi davvero, che è il massimo che puoi
+        recuperare. Verifica sempre col CAF o il commercialista: non è consulenza fiscale.
         {you && data.shared && " Le spese sono attribuite a chi le ha registrate."}
       </p>
     </Section>
@@ -550,21 +563,21 @@ function ClaimAction({
   );
 }
 
-/** "Radar dei diritti": the 730 checked against the precompilato, rent and company welfare. */
+/** "Il mio 730": the whole journey, from the documents to the refund, one step away. */
 function RadarStrip({ year }: { year: number }) {
   return (
     <Link
-      href={`/ritrovati/radar?anno=${year}`}
+      href={`/730?anno=${year}`}
       className="bg-card hover:bg-muted/40 group flex items-center gap-3 rounded-2xl border p-4 transition-colors"
     >
-      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-700 dark:text-sky-400">
-        <Radar className="size-5" aria-hidden />
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-violet-500/10 text-violet-700 dark:text-violet-400">
+        <FileCheck2 className="size-5" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="font-medium">Radar dei diritti</p>
+        <p className="font-medium">Il mio 730, passo dopo passo</p>
         <p className="text-muted-foreground text-sm">
-          Confronta il precompilato con le spese che ho visto, scopri se ti spetta la detrazione per
-          l&apos;affitto e non perdere il welfare aziendale.
+          Se puoi fare da solo, i documenti da preparare, il confronto col precompilato, cosa
+          portare al CAF e quando arriva il rimborso.
         </p>
       </div>
       <ChevronRight

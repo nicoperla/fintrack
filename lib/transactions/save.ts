@@ -5,8 +5,10 @@ import { getBudgetWarnings } from "@/lib/data/budgets";
 import { currentMonth } from "@/lib/dates";
 import { CurrencyError } from "@/lib/currency/convert";
 import { createConverter } from "@/lib/currency/rates";
-import { inferDeduction, refundOf, RULES } from "@/lib/finance/deductions";
-import { formatCurrency } from "@/lib/format";
+import { classifyDeduction, inferDeduction, refundOf, RULES } from "@/lib/finance/deductions";
+import { crossingNote } from "@/lib/tax/alerts";
+import { formatCurrency, toDateInputValue } from "@/lib/format";
+import { utcDate } from "@/lib/dates";
 
 type SpaceRef = { id: string; currency: string; userId: string };
 
@@ -113,6 +115,7 @@ export async function saveTransactionInSpace(
     throw error;
   }
 
+  let savedId = id;
   if (id) {
     const { count } = await prisma.transaction.updateMany({
       where: { id, householdId: space.id },
@@ -120,9 +123,11 @@ export async function saveTransactionInSpace(
     });
     if (count === 0) return NOT_FOUND;
   } else {
-    await prisma.transaction.create({
+    const created = await prisma.transaction.create({
       data: { ...data, householdId: space.id, userId: space.userId },
+      select: { id: true },
     });
+    savedId = created.id;
   }
 
   const { start, end } = currentMonth();
@@ -148,5 +153,81 @@ export async function saveTransactionInSpace(
       );
     }
   }
+  if (data.type === "EXPENSE" && savedId) {
+    const note = await crossing730(space, savedId, data, {
+      accountType: ownership.accountTypes.get(data.accountId) ?? "CHECKING",
+      category: ownership.category,
+    });
+    if (note) warnings.push(note);
+  }
   return { ok: true, warnings };
+}
+
+/**
+ * "Il mio 730": a deductible expense that crosses the franchigia (from here on it pays back) or
+ * the yearly limit (the next ones won't) is worth a word while recording it. Only for the
+ * person's own expenses, like the 730.
+ */
+async function crossing730(
+  space: SpaceRef,
+  savedId: string,
+  data: { date: Date; description: string; baseAmount: string },
+  saved: { accountType: string; category: { name: string; parent: string | null } | null },
+) {
+  const line = classifyDeduction({
+    id: savedId,
+    date: toDateInputValue(data.date),
+    description: data.description,
+    amount: Number(data.baseAmount),
+    account: "",
+    accountType: saved.accountType,
+    memberId: space.userId,
+    category: saved.category?.name ?? null,
+    parent: saved.category?.parent ?? null,
+    override: null,
+  });
+  if (!line.type || line.status !== "ok") return null;
+  const rule = RULES[line.type];
+  if (!rule.franchigia && !rule.cap) return null;
+
+  const year = data.date.getUTCFullYear();
+  const [others, user] = await Promise.all([
+    prisma.transaction.findMany({
+      where: {
+        householdId: space.id,
+        userId: space.userId,
+        type: "EXPENSE",
+        id: { not: savedId },
+        date: { gte: utcDate(year, 0, 1), lt: utcDate(year + 1, 0, 1) },
+      },
+      select: {
+        id: true,
+        date: true,
+        description: true,
+        baseAmount: true,
+        deduction: true,
+        account: { select: { name: true, type: true } },
+        category: { select: { name: true, parent: { select: { name: true } } } },
+      },
+    }),
+    prisma.user.findUnique({ where: { id: space.userId }, select: { dependentChildren: true } }),
+  ]);
+  const before = others
+    .map((tx) =>
+      classifyDeduction({
+        id: tx.id,
+        date: toDateInputValue(tx.date),
+        description: tx.description,
+        amount: Number(tx.baseAmount),
+        account: tx.account.name,
+        accountType: tx.account.type,
+        memberId: space.userId,
+        category: tx.category?.name ?? null,
+        parent: tx.category?.parent?.name ?? null,
+        override: tx.deduction,
+      }),
+    )
+    .filter((l) => l.type === line.type && l.status === "ok")
+    .reduce((sum, l) => sum + l.amount, 0);
+  return crossingNote(line.type, before, line.amount, user?.dependentChildren ?? 0);
 }

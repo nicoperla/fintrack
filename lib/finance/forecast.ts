@@ -38,6 +38,8 @@ export function forecastBalance(input: {
   /** Average spending per day outside the recurring movements. */
   dailySpend: number;
   recurring: ForecastRecurring[];
+  /** Movements expected once, on their day (e.g. the 730 refund in the July pay). */
+  oneOff?: ForecastEvent[];
 }): Forecast {
   const last = addDays(input.today, input.days);
   const graceStart = addDays(input.today, -LATE_GRACE_DAYS);
@@ -50,6 +52,9 @@ export function forecastBalance(input: {
     for (; date <= last; date = nextOccurrence(date, r.frequency)) {
       events.push({ date, name: r.name, amount: r.type === "INCOME" ? r.amount : -r.amount });
     }
+  }
+  for (const e of input.oneOff ?? []) {
+    if (e.date >= input.today && e.date <= last) events.push(e);
   }
   events.sort((a, b) => a.date.localeCompare(b.date) || b.amount - a.amount);
 

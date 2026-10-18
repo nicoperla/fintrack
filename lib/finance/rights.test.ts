@@ -175,6 +175,8 @@ describe("readTaxProfile", () => {
       birthYear: 1990,
       rent: { contract: null, since: 2024, transferred: true },
       welfare: { balance: 350, expiresOn: null, fringe: 600, fringeYear: 2026 },
+      isee: { value: null, year: null },
+      homeBonuses: [],
     });
   });
 });

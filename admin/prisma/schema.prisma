@@ -148,6 +148,7 @@ model User {
   moneyTalksHeld      MoneyTalk[]              @relation("MoneyTalkHeldBy")
   decisionsOwned      MoneyDecision[]          @relation("MoneyDecisionOwner")
   pacts               Pact[]
+  taxYears            TaxYear[]
 
   @@map("users")
 }
@@ -389,6 +390,8 @@ model Transaction {
   tags              String[]        @default([])
   /// 730 deduction chosen by hand: a type (lib/finance/deductions.ts) or "none"; null = automatic.
   deduction         String?
+  /// "Il mio 730", the folder: "have" once the user has the receipt or invoice the deduction needs.
+  deductionDoc      String?         @map("deduction_doc")
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
 
@@ -858,4 +861,39 @@ model AdminNote {
 
   @@index([userId])
   @@map("admin_notes")
+}
+
+/// "Il mio 730": one person's journey through the 730 of an income year (2026 → 730/2027).
+/// Personal, like the 730: the space's other members never see it. The precompilato, the 730-3
+/// and the health expenses are never stored here: they stay in the browser.
+model TaxYear {
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  /// The income year.
+  year             Int
+  /// "Chi sei": work, employers, home, family, other income, what happened (lib/tax/situation.ts).
+  answers          Json?
+  /// Figures of the Certificazioni Uniche for the estimate (lib/tax/simulate.ts): income, days, IRPEF withheld.
+  cu               Json?
+  /// Documents to prepare, by key (lib/tax/documents.ts): "have" or "skip".
+  documents        Json?
+  /// After reading the precompilato: ACCEPT, MODIFY or CAF.
+  decision         String?
+  /// How it was filed: SELF (on the Agenzia's site) or CAF (CAF or professional).
+  channel          String?
+  sentAt           DateTime? @map("sent_at") @db.Date
+  /// The result in the 730-3, as typed by the user: positive to get back, negative to pay.
+  result           Decimal?  @db.Decimal(14, 2)
+  /// The second (or only) IRPEF advance withheld in November, from the 730-3.
+  secondAdvance    Decimal?  @map("second_advance") @db.Decimal(14, 2)
+  refundReceivedAt DateTime? @map("refund_received_at") @db.Date
+  /// "Chi detrae cosa": the space may see whether this person has tax to deduct from (never amounts).
+  shareCapacity    Boolean   @default(false) @map("share_capacity")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, year])
+  @@map("tax_years")
 }

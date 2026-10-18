@@ -17,20 +17,24 @@ export default function TermsPage() {
         <p>
           Orbitly ti aiuta a registrare entrate e spese, a pianificare budget e obiettivi e a capire
           le tue abitudini. Il piano gratuito comprende tutte le funzioni tranne la chat con il
-          coach AI e i dettagli di Soldi ritrovati (le spese una per una, il dossier 730 e le
-          lettere di disdetta), che fanno parte di Orbitly Pro.
+          coach AI, «Spiegami questa lettera», i dettagli di Soldi ritrovati (le spese una per una,
+          il dossier 730 e le lettere di disdetta) e, nel «Mio 730», la lettura del PDF del
+          precompilato, la cartellina delle ricevute e il promemoria in PDF, che fanno parte di
+          Orbitly Pro.
         </p>
       </section>
 
       <section>
         <h2>Non è consulenza finanziaria</h2>
         <p>
-          Previsioni, punteggi, consigli, risposte del coach (anche AI) e stime del rimborso 730
-          sono calcoli automatici basati sui dati che inserisci, a scopo informativo. Non sono
-          consulenza finanziaria, fiscale o sugli investimenti: le regole fiscali cambiano e la
-          dichiarazione dei redditi va verificata con il CAF o un professionista. Le decisioni
-          restano tue: per scelte importanti rivolgiti a un professionista abilitato. Le risposte
-          del coach AI possono contenere errori.
+          Previsioni, punteggi, consigli, risposte del coach (anche AI), stime del rimborso 730, il
+          percorso del «Mio 730», le spiegazioni delle lettere e i bonus suggeriti sono calcoli
+          automatici basati sui dati che inserisci, a scopo informativo. Non sono consulenza
+          finanziaria, fiscale o sugli investimenti: le regole fiscali cambiano e la dichiarazione
+          dei redditi va verificata con il CAF o un professionista. Orbitly non compila, non firma e
+          non trasmette dichiarazioni o domande per tuo conto: il promemoria del 730 è personale e
+          non è un documento fiscale. Le decisioni restano tue: per scelte importanti rivolgiti a un
+          professionista abilitato. Le risposte del coach AI possono contenere errori.
         </p>
       </section>
 

@@ -9,6 +9,8 @@ import { getPactsForDigest } from "@/lib/data/pacts";
 import { KIND_LABELS } from "@/lib/finance/claims";
 import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
 import { readTaxProfile, welfareDeadline } from "@/lib/finance/rights";
+import { getMy730 } from "@/lib/data/my730";
+import { digestNote } from "@/lib/tax/next-step";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -93,6 +95,11 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
   const todayIso = toDateInputValue(today);
   const weekAhead = toDateInputValue(addDays(today, 7));
   const welfare = welfareDeadline(readTaxProfile(user.taxProfile).welfare, todayIso);
+  // "Il mio 730" is a nice-to-have in the summary: if it fails, the email goes out without it.
+  const my730 = await getMy730(userId, householdId).catch((error) => {
+    console.error("[digest] 730", error instanceof Error ? error.message : error);
+    return null;
+  });
 
   return {
     name: user.name,
@@ -141,6 +148,7 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       step: c.step.text,
       urgent: c.step.tone === "urgent",
     })),
+    tax730: my730 ? digestNote(my730.next, my730.stage, my730.today) : null,
     welfare:
       welfare?.state === "soon"
         ? { balance: welfare.balance, expiresOn: welfare.expiresOn, days: welfare.days }

@@ -34,8 +34,18 @@ export default function PrivacyPage() {
             netto e le ore di lavoro se li imposti, le preferenze del coach, le spese grosse
             dell&apos;anno con giorno dello stipendio e tredicesima per «Lo stipendio vero», e per
             il «Radar dei diritti» fascia di reddito, anno di nascita, contratto d&apos;affitto e
-            welfare aziendale. I totali del 730 precompilato che scrivi per il confronto restano nel
-            tuo browser: non li riceviamo.
+            welfare aziendale.
+          </li>
+          <li>
+            <strong>Il mio 730 e ISEE</strong>: le risposte a «Chi sei» (lavoro, casa, familiari a
+            carico, altre entrate, cosa è successo nell&apos;anno), i numeri delle Certificazioni
+            Uniche che scrivi per la stima, i documenti che spunti, la scelta dopo il precompilato,
+            la data d&apos;invio e il risultato del 730, i bonus casa con le loro rate, il valore
+            dell&apos;ISEE se lo scrivi. Sono tuoi: le altre persone dello spazio non li vedono. Se
+            scegli di condividere la tua «capienza», vedono solo se hai abbastanza imposta per le
+            detrazioni, mai importi. Il PDF del precompilato lo leggiamo nel tuo browser e, come i
+            totali che scrivi e quelli del CAF per il controllo, non lo riceviamo: contiene dati
+            sulla salute.
           </li>
           <li>
             <strong>Il Tariffometro</strong>: la provincia e, se lo indichi, quante persone vivono
@@ -130,7 +140,10 @@ export default function PrivacyPage() {
             Sicurezza e prevenzione degli abusi (limiti ai tentativi di accesso e alle richieste):
             legittimo interesse, art. 6.1.f GDPR.
           </li>
-          <li>Il coach AI: solo con il tuo consenso esplicito, art. 6.1.a GDPR (vedi sotto).</li>
+          <li>
+            Il coach AI e «Spiegami questa lettera»: solo con il tuo consenso esplicito, art. 6.1.a
+            GDPR e, per i dati sulla salute che una lettera può contenere, art. 9.2.a (vedi sotto).
+          </li>
           <li>
             Il confronto anonimo tra utenti del Tariffometro: solo con il consenso esplicito, art.
             6.1.a GDPR (vedi sotto).
@@ -167,6 +180,12 @@ export default function PrivacyPage() {
           revocare il consenso in qualsiasi momento da <Link href="/settings">Impostazioni</Link>:
           da quel momento non inviamo più niente.
         </p>
+        <p>
+          «Spiegami questa lettera» usa lo stesso consenso e solo Anthropic: la foto o il PDF della
+          lettera che carichi viene inviato al fornitore per leggerla e scrivere la spiegazione, poi
+          lo scartiamo. Non lo salviamo e non lo scriviamo nei log. Le spiegazioni sono generate
+          dall&apos;intelligenza artificiale e lo diciamo sempre.
+        </p>
       </section>
 
       <section id="confronto">
@@ -193,7 +212,10 @@ export default function PrivacyPage() {
           <li>Vercel Inc. (USA): hosting dell&apos;app; le funzioni girano a Francoforte.</li>
           <li>Neon Inc.: database PostgreSQL, ospitato a Francoforte (UE).</li>
           <li>Resend Inc. (USA): invio delle email.</li>
-          <li>Groq Inc. o Anthropic PBC (USA): solo il coach AI, solo con il tuo consenso.</li>
+          <li>
+            Groq Inc. o Anthropic PBC (USA): solo il coach AI e la lettura delle lettere, solo con
+            il tuo consenso.
+          </li>
           <li>Stripe (Irlanda/USA): solo i pagamenti di Orbitly Pro.</li>
         </ul>
         <p>

@@ -8,6 +8,7 @@ const nextConfig = {
     outputFileTracingIncludes: {
       "/api/reports": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
       "/api/ritrovati/dossier": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
+      "/api/730/promemoria": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
       // Dynamic segments: a glob, since "[id]" would be read as a character class.
       "/api/ritrovati/pratiche/**": ["./node_modules/pdfkit/js/standard-fonts/**/*"],
       "/api/fascicolo/**": ["./node_modules/pdfkit/js/standard-fonts/**/*"],

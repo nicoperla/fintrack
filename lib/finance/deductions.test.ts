@@ -41,6 +41,29 @@ describe("inferDeduction", () => {
   it("ignores everyday spending", () => {
     expect(infer("Supermercato", "Esselunga", "Spesa")).toBeNull();
   });
+
+  it("recognizes university, funerals, domestic workers' contributions", () => {
+    expect(infer("Corsi", "Tasse universitarie Unibo", "Istruzione")).toMatchObject({
+      type: "universita",
+      confidence: "sure",
+    });
+    expect(infer("Libri", "Libri università", "Istruzione")).toBeNull();
+    expect(infer("Altro", "Onoranze funebri Rossi")?.type).toBe("funebri");
+    expect(infer("Tasse", "Contributi INPS colf secondo trimestre")?.type).toBe("colf");
+  });
+
+  it("asks to confirm donations, pension funds and student rooms", () => {
+    expect(infer("Regali e donazioni", "Donazione Emergency")).toMatchObject({
+      type: "donazioni",
+      confidence: "check",
+    });
+    expect(infer("Regali e donazioni", "Regalo compleanno Marco")).toBeNull();
+    expect(infer("Altro", "Versamento fondo pensione Cometa")).toMatchObject({
+      type: "previdenza",
+      confidence: "check",
+    });
+    expect(infer("Affitto", "Affitto posto letto Bologna fuori sede")?.type).toBe("studenti");
+  });
 });
 
 let id = 0;
@@ -100,8 +123,8 @@ describe("summarizeDeductions", () => {
 
   it("multiplies the per-child limits by the children", () => {
     const school = [tx(2000, "Scuola", "Retta scolastica")];
-    expect(summarizeDeductions(school, 0).refund).toBe(152); // 800 × 19%
-    expect(summarizeDeductions(school, 2).refund).toBe(304); // 1.600 × 19%
+    expect(summarizeDeductions(school, 0).refund).toBe(190); // 1.000 × 19% (from 2025)
+    expect(summarizeDeductions(school, 2).refund).toBe(380); // 2.000 × 19%
   });
 
   it("waits for confirmation on uncertain expenses, and follows the user's choice", () => {
@@ -114,6 +137,14 @@ describe("summarizeDeductions", () => {
     );
     expect(excluded.refund).toBe(0);
     expect(excluded.lines[0].status).toBe("excluded");
+  });
+
+  it("values deduzioni at the marginal rate and donations at 30%", () => {
+    const fund = { ...tx(1000, "Altro", "Fondo pensione"), override: "previdenza" };
+    expect(summarizeDeductions([fund], 0).refund).toBe(230); // at least the 23% bracket
+    expect(summarizeDeductions([fund], 0, { marginalRate: 0.33 }).refund).toBe(330);
+    const gift = { ...tx(100, "Regali e donazioni", "Donazione AIRC"), override: "donazioni" };
+    expect(summarizeDeductions([gift], 0).refund).toBe(30);
   });
 
   it("lets the user mark any expense as deductible", () => {

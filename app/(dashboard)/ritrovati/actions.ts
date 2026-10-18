@@ -24,6 +24,7 @@ async function requirePro() {
 
 function revalidate() {
   revalidatePath("/ritrovati");
+  revalidatePath("/730");
   revalidatePath("/dashboard");
 }
 

@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db/prisma";
 import { getAccountsWithBalances } from "@/lib/data/accounts";
 import { getRecurring } from "@/lib/data/intelligence";
 import { forecastBalance } from "@/lib/finance/forecast";
+import { expected730Events } from "@/lib/tax/calendar";
+import { rulesFor } from "@/lib/tax/rules";
+import { readSituation, withoutAgent } from "@/lib/tax/situation";
 import { normalizeDescription } from "@/lib/finance/recurring";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -21,7 +24,7 @@ export const getForecast = cache(async (householdId: string) => {
   const today = utcDate(t.year, t.month, t.day);
   const since = new Date(today.getTime() - SPENDING_WINDOW_DAYS * DAY_MS);
 
-  const [accounts, recurring, expenses] = await Promise.all([
+  const [accounts, recurring, expenses, household, taxYears] = await Promise.all([
     getAccountsWithBalances(householdId),
     getRecurring(householdId),
     prisma.transaction.findMany({
@@ -33,7 +36,44 @@ export const getForecast = cache(async (householdId: string) => {
       },
       select: { date: true, baseAmount: true, description: true },
     }),
+    prisma.household.findUnique({ where: { id: householdId }, select: { payday: true } }),
+    // "Il mio 730" of the space's members: a refund or a debt still to come.
+    prisma.taxYear
+      .findMany({
+        where: {
+          user: { memberships: { some: { householdId } } },
+          sentAt: { not: null },
+          result: { not: null },
+          year: { gte: t.year - 2 },
+        },
+        select: {
+          year: true,
+          sentAt: true,
+          result: true,
+          secondAdvance: true,
+          refundReceivedAt: true,
+          answers: true,
+        },
+      })
+      // The forecast must never break over the 730: without the rows it just leaves them out.
+      .catch(() => []),
   ]);
+  const oneOff = taxYears.flatMap((row) => {
+    const situation = readSituation(row.answers);
+    return expected730Events({
+      rules: rulesFor(row.year),
+      sentAt: toDateInputValue(row.sentAt!),
+      payer: withoutAgent(situation)
+        ? "agency"
+        : situation.work === "pensioner"
+          ? "pensioner"
+          : "employee",
+      result: Number(row.result),
+      refundReceived: row.refundReceivedAt !== null,
+      secondAdvance: row.secondAdvance === null ? null : Number(row.secondAdvance),
+      payday: household?.payday ?? 27,
+    });
+  });
 
   const everyday = accounts.filter((a) => EVERYDAY_TYPES.has(a.type));
   if (everyday.length === 0) return null;
@@ -66,6 +106,7 @@ export const getForecast = cache(async (householdId: string) => {
       nextDate: r.nextDate,
       frequency: r.frequency,
     })),
+    oneOff,
   });
 
   return {

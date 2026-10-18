@@ -33,5 +33,6 @@ export async function setAiConsent(consent: boolean): Promise<ActionResult> {
   });
   revalidatePath("/coach");
   revalidatePath("/settings");
+  revalidatePath("/730/lettera");
   return { ok: true };
 }
