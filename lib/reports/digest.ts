@@ -35,6 +35,10 @@ export type DigestInput = {
   welfare: { balance: number; expiresOn: string; days: number } | null;
   /** "Il mio 730": the next step, when its date is close (lib/tax/next-step.ts, digestNote). */
   tax730?: { title: string; text: string } | null;
+  /** "Percorsi": steps with a deadline within a week (or late). */
+  journeySteps?: { journey: string; key: string; title: string; due: string; days: number }[];
+  /** "Scadenze dei documenti": time to renew, or already expired. */
+  documents?: { label: string; expiresOn: string; days: number }[];
   /** "Il Tariffometro": RC auto policies and fixed light prices ending within a month. */
   renewals: { kind: "CAR_INSURANCE" | "ELECTRICITY"; label: string; date: string; days: number }[];
   /** "Il caffè dei conti": last month's talk is ready and not done yet (shared spaces). */
@@ -81,6 +85,18 @@ const when = (days: number, iso: string) =>
 
 function welfareLine(eur: (n: number) => string, w: NonNullable<DigestInput["welfare"]>) {
   return `Il credito welfare di ${eur(w.balance)} scade ${when(w.days, w.expiresOn)}: usalo prima che vada perso.`;
+}
+
+function stepLine(s: NonNullable<DigestInput["journeySteps"]>[number]) {
+  return s.days < 0
+    ? `${s.journey}: «${s.title}» era da fare entro ${onLongDay(s.due)}.`
+    : `${s.journey}: «${s.title}» entro ${s.days === 0 ? "oggi" : s.days === 1 ? "domani" : onLongDay(s.due)}.`;
+}
+
+function documentLine(d: NonNullable<DigestInput["documents"]>[number]) {
+  return d.days < 0
+    ? `${d.label} è scaduto ${onLongDay(d.expiresOn)}: rinnovalo.`
+    : `${d.label} scade ${when(d.days, d.expiresOn)}: è ora di rinnovarlo.`;
 }
 
 function talkLine(talk: NonNullable<DigestInput["talk"]>) {
@@ -171,8 +187,21 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       input.topCategories.forEach((c) => lines.push(`- ${c.name}: ${eur(c.value)}`));
     }
   }
-  if (input.talk || input.welfare || input.renewals.length || input.tax730) {
+  if (
+    input.talk ||
+    input.welfare ||
+    input.renewals.length ||
+    input.tax730 ||
+    input.journeySteps?.length ||
+    input.documents?.length
+  ) {
     lines.push("", "Da non perdere:");
+    input.journeySteps?.forEach((s) =>
+      lines.push(`- ${stepLine(s)}`, `  ${input.appUrl}/percorsi/${s.key}`),
+    );
+    input.documents?.forEach((d) =>
+      lines.push(`- ${documentLine(d)}`, `  ${input.appUrl}/percorsi`),
+    );
     if (input.tax730) {
       lines.push(`- ${input.tax730.title}: ${input.tax730.text}`, `  ${input.appUrl}/730`);
     }
@@ -273,7 +302,14 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
       );
     }
   }
-  if (input.talk || input.welfare || input.renewals.length || input.tax730) {
+  if (
+    input.talk ||
+    input.welfare ||
+    input.renewals.length ||
+    input.tax730 ||
+    input.journeySteps?.length ||
+    input.documents?.length
+  ) {
     const notice = (text: string, path: string) =>
       panel(`${e(text)} ${open(path)}`, { tone: "amber", margin: "0 0 10px" });
     parts.push(
@@ -281,6 +317,8 @@ export function buildWeeklyDigest(input: DigestInput): DigestEmail {
         "Da non perdere",
         [
           input.tax730 ? notice(`${input.tax730.title}. ${input.tax730.text}`, "/730") : "",
+          ...(input.journeySteps ?? []).map((s) => notice(stepLine(s), `/percorsi/${s.key}`)),
+          ...(input.documents ?? []).map((d) => notice(documentLine(d), "/percorsi")),
           input.talk ? notice(talkLine(input.talk), "/caffe") : "",
           input.welfare ? notice(welfareLine(eur, input.welfare), "/ritrovati/radar") : "",
           ...input.renewals.map((r) => notice(renewalLine(r), "/ritrovati/tariffometro")),

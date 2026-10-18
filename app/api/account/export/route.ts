@@ -34,6 +34,9 @@ export async function GET() {
       subscriptionStatus: true,
       planRenewsAt: true,
       memberships: { select: { role: true, joinedAt: true, householdId: true, shares: true } },
+      // "Percorsi e scadenze": personal too.
+      journeys: { select: { key: true, eventDate: true, done: true } },
+      personalDocuments: { select: { kind: true, label: true, expiresOn: true } },
       // "Il mio 730": personal, so it belongs to the profile, not to a space.
       taxYears: {
         orderBy: { year: "asc" },

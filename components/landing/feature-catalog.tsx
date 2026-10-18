@@ -25,6 +25,7 @@ import {
   Radar,
   Repeat,
   RotateCcw,
+  Route,
   ScanSearch,
   ShoppingBag,
   Sparkles,
@@ -143,7 +144,12 @@ const GROUPS: Group[] = [
       {
         icon: BadgePercent,
         name: "ISEE e bonus",
-        text: "Quando rinnovare l'ISEE, il saldo al 31 dicembre e la giacenza media di ogni conto già calcolati, e i bonus nazionali a cui potresti avere diritto.",
+        text: "Quando rinnovare l'ISEE, il saldo al 31 dicembre e la giacenza media di ogni conto già calcolati, una stima dell'ISEE prima della DSU e i bonus nazionali a cui potresti avere diritto.",
+      },
+      {
+        icon: Route,
+        name: "Percorsi e scadenze",
+        text: "Lavoro perso, un figlio, l'affitto, la casa, un lutto: cosa fare con soldi e pratiche, passo dopo passo, con le scadenze. E un promemoria quando carta d'identità o patente stanno per scadere.",
       },
       {
         icon: MailOpen,

@@ -149,6 +149,8 @@ model User {
   decisionsOwned      MoneyDecision[]          @relation("MoneyDecisionOwner")
   pacts               Pact[]
   taxYears            TaxYear[]
+  journeys            UserJourney[]
+  personalDocuments   PersonalDocument[]
 
   @@map("users")
 }
@@ -896,4 +898,43 @@ model TaxYear {
 
   @@unique([userId, year])
   @@map("tax_years")
+}
+
+/// "Percorsi": a person following a life event step by step (lib/journeys/catalog.ts): lost job,
+/// a child, renting, buying a home, a death in the family. Personal, like the 730.
+model UserJourney {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  /// Catalog key ("lavoro", "figlio", "affitto", "casa", "lutto").
+  key       String
+  /// The day of the event: every deadline is counted from it.
+  eventDate DateTime @map("event_date") @db.Date
+  /// Keys of the steps done.
+  done      String[] @default([])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@map("user_journeys")
+}
+
+/// "Scadenze dei documenti": identity card, passport, driving licence… with the day they expire,
+/// for the reminders. Only kind, name and date: never document numbers.
+model PersonalDocument {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  /// lib/journeys/documents.ts: CIE, PASSAPORTO, PATENTE, TESSERA, REVISIONE, PERMESSO, ALTRO.
+  kind      String
+  /// Whose or which one ("Carta d'identità di Luca", "Revisione Panda").
+  label     String
+  expiresOn DateTime @map("expires_on") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("personal_documents")
 }

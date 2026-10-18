@@ -52,10 +52,18 @@ Le tre fasi sono sviluppate e testate (tipi, lint, test automatici, build di pro
 2. **Un PDF vero del precompilato** per mettere a punto il lettore (la lettura oggi è «in prova» e si può sempre correggere a mano). Resta sul computer; nel progetto entra solo una copia con dati inventati.
 3. **Le date del 730/2027** da confermare quando l'Agenzia le pubblica (aprile 2027): sono in `lib/tax/rules.ts`, segnate come provvisorie.
 
-## Dopo giugno 2027
+## Fase 4 · Oltre il 730 (sviluppata a ottobre 2026)
 
-- I «Percorsi» con lo stesso motore: lavoro perso (NASpI), un figlio, casa comprata, lutto in famiglia.
-- Le regole 2027 (730/2028), con la legge di bilancio di fine 2026.
+| #   | Cosa                                                                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 4.1 | Stima dell'ISEE prima della DSU, con il calcolo 2026 per Assegno unico, nido, nuovi nati e ADI, usata in «Trova bonus»                |
+| 4.2 | Percorsi passo dopo passo: lavoro perso, un figlio, affitto, casa comprata, lutto in famiglia, con le scadenze dalla data dell'evento |
+| 4.3 | Scadenze dei documenti (carta d'identità, passaporto, patente, tessera sanitaria, revisione, permesso di soggiorno) con i promemoria  |
+
+## Ancora da fare
+
+- Le regole 2027 (730/2028), quando sarà approvata la legge di bilancio di fine 2026.
+- Mettere a punto i lettori del precompilato e della CU con PDF veri.
 
 ## Regole di sicurezza del progetto
 

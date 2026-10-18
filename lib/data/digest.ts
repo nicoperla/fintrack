@@ -11,6 +11,9 @@ import { paymentDates, paymentShare } from "@/lib/finance/true-salary";
 import { readTaxProfile, welfareDeadline } from "@/lib/finance/rights";
 import { getMy730 } from "@/lib/data/my730";
 import { digestNote } from "@/lib/tax/next-step";
+import { journeyByKey } from "@/lib/journeys/catalog";
+import { upcomingSteps } from "@/lib/journeys/progress";
+import { docStatus, daysUntil, isDocKind } from "@/lib/journeys/documents";
 import { summarizeByTopCategory } from "@/lib/finance/dashboard-math";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -96,6 +99,32 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
   const weekAhead = toDateInputValue(addDays(today, 7));
   const welfare = welfareDeadline(readTaxProfile(user.taxProfile).welfare, todayIso);
   // "Il mio 730" is a nice-to-have in the summary: if it fails, the email goes out without it.
+  // "Percorsi e scadenze": also nice-to-have, never a reason not to send the email.
+  const [journeys, documents] = await Promise.all([
+    prisma.userJourney.findMany({ where: { userId } }).catch(() => []),
+    prisma.personalDocument.findMany({ where: { userId } }).catch(() => []),
+  ]);
+  const journeySteps = journeys.flatMap((row) => {
+    const journey = journeyByKey(row.key);
+    if (!journey) return [];
+    return upcomingSteps(journey, toDateInputValue(row.eventDate), row.done, todayIso).map((s) => ({
+      journey: journey.title,
+      key: journey.key,
+      title: s.title,
+      due: s.due!,
+      days: s.days!,
+    }));
+  });
+  const documentsDue = documents.flatMap((d) => {
+    const expiresOn = toDateInputValue(d.expiresOn);
+    if (!isDocKind(d.kind)) return [];
+    const status = docStatus(d.kind, expiresOn, todayIso);
+    const days = daysUntil(todayIso, expiresOn);
+    // About once every four weeks while it is time to renew, and for two months after it expired.
+    const remind =
+      status === "expired" ? days >= -60 && -days % 28 < 7 : status === "renew" && days % 28 >= 21;
+    return remind ? [{ label: d.label, expiresOn, days }] : [];
+  });
   const my730 = await getMy730(userId, householdId).catch((error) => {
     console.error("[digest] 730", error instanceof Error ? error.message : error);
     return null;
@@ -149,6 +178,8 @@ export async function getDigestInput(userId: string): Promise<DigestInput> {
       urgent: c.step.tone === "urgent",
     })),
     tax730: my730 ? digestNote(my730.next, my730.stage, my730.today) : null,
+    journeySteps,
+    documents: documentsDue,
     welfare:
       welfare?.state === "soon"
         ? { balance: welfare.balance, expiresOn: welfare.expiresOn, days: welfare.days }

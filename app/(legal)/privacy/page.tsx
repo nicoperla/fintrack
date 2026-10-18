@@ -48,6 +48,13 @@ export default function PrivacyPage() {
             sulla salute.
           </li>
           <li>
+            <strong>Percorsi e scadenze</strong>: i percorsi che inizi (per esempio «Ho perso il
+            lavoro» o «Nasce un figlio») con la data dell&apos;evento e i passi fatti, e i documenti
+            di cui vuoi il promemoria, con tipo, nome e data di scadenza. Non chiediamo numeri dei
+            documenti né foto. La stima dell&apos;ISEE la calcoliamo nel tuo browser e non la
+            salviamo.
+          </li>
+          <li>
             <strong>Il Tariffometro</strong>: la provincia e, se lo indichi, quante persone vivono
             in casa; i premi RC auto con scadenza, classe di merito e fascia d&apos;età; il tipo e
             il costo dei conti correnti; le bollette della luce (totale, kWh e periodo). Il

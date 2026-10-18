@@ -17,6 +17,7 @@ import { useMoney } from "@/components/currency-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChoiceCard, Stepper, TaxSection, TONE_BOX } from "@/components/tax/ui";
+import { IseeEstimateCard } from "@/components/tax/isee-estimate-card";
 import { saveIsee } from "@/app/(dashboard)/isee/actions";
 import {
   BONUSES_CHECKED_AT,
@@ -41,12 +42,19 @@ const TYPE_LABELS: Record<AccountFigures["type"], string> = {
 };
 
 export function IseeView({ data }: { data: IseeData }) {
+  // The estimate, when the user chooses to use it for the bonuses.
+  const [estimate, setEstimate] = useState<{ ordinary: number; family: number } | null>(null);
   return (
     <div className="grid grid-cols-1 gap-6">
       <Hero data={data} />
       <HowTo data={data} />
       <AccountsCard data={data} />
-      <BonusFinder data={data} />
+      <IseeEstimateCard data={data} onUse={setEstimate} />
+      <BonusFinder
+        key={estimate ? `${estimate.ordinary}-${estimate.family}` : "saved"}
+        data={data}
+        estimate={estimate}
+      />
       <p className="text-muted-foreground flex items-start gap-2 text-xs">
         <ShieldCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
         <span>
@@ -282,10 +290,17 @@ const MATCH: Record<BonusMatch, { label: string; icon: typeof CheckCircle2; clas
   no: { label: "Non sembra", icon: XCircle, className: "text-muted-foreground" },
 };
 
-function BonusFinder({ data }: { data: IseeData }) {
+function BonusFinder({
+  data,
+  estimate,
+}: {
+  data: IseeData;
+  estimate: { ordinary: number; family: number } | null;
+}) {
   const [a, setA] = useState<BonusAnswers>({
     ...EMPTY_BONUS_ANSWERS,
-    isee: data.isee.value,
+    isee: estimate?.ordinary ?? data.isee.value,
+    iseeFamily: estimate?.family ?? null,
     people: Math.max(1, 1 + data.hints.children),
     childrenUnder21: data.hints.children,
     newborn: data.hints.newborn,
@@ -342,8 +357,10 @@ function BonusFinder({ data }: { data: IseeData }) {
           <span className="font-medium">ISEE</span>
           <span className="text-muted-foreground text-xs">
             {a.isee === null
-              ? "Non lo so ancora: te lo dico per ogni bonus."
-              : `Uso ${a.isee.toLocaleString("it-IT")} €, quello che hai salvato.`}
+              ? "Non lo so ancora: te lo dico per ogni bonus (o fai la stima qui sopra)."
+              : estimate
+                ? `Uso le stime: ${Math.round(a.isee).toLocaleString("it-IT")} €, e ${Math.round(a.iseeFamily ?? a.isee).toLocaleString("it-IT")} € per Assegno unico, nido, nuovi nati e ADI.`
+                : `Uso ${a.isee.toLocaleString("it-IT")} €, quello che hai salvato.`}
           </span>
           {a.isee !== null && (
             <Button
@@ -351,7 +368,7 @@ function BonusFinder({ data }: { data: IseeData }) {
               variant="ghost"
               size="xs"
               className="justify-self-start"
-              onClick={() => set({ isee: null })}
+              onClick={() => set({ isee: null, iseeFamily: null })}
             >
               Fai finta di non saperlo
             </Button>

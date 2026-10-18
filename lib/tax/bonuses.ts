@@ -10,6 +10,8 @@ export const BONUSES_CHECKED_AT = "ottobre 2026";
 export type BonusAnswers = {
   /** The ISEE value, null if not known. */
   isee: number | null;
+  /** From 2026 Assegno unico, nido, nuovi nati and ADI use their own ISEE (lib/tax/isee-estimate.ts). */
+  iseeFamily: number | null;
   /** People in the family (nucleo ISEE). */
   people: number;
   /** Children under 21 / under 6 / under 3, born this year or last, turning 18. */
@@ -25,6 +27,7 @@ export type BonusAnswers = {
 
 export const EMPTY_BONUS_ANSWERS: BonusAnswers = {
   isee: null,
+  iseeFamily: null,
   people: 1,
   childrenUnder21: 0,
   childUnder6: false,
@@ -54,6 +57,10 @@ export type Bonus = {
 const under = (a: BonusAnswers, max: number): BonusMatch =>
   a.isee === null ? "isee" : a.isee <= max ? "yes" : "no";
 
+/** The same with the ISEE of family benefits, when it's known. */
+const underFamily = (a: BonusAnswers, max: number): BonusMatch =>
+  under({ ...a, isee: a.iseeFamily ?? a.isee }, max);
+
 export const BONUSES: Bonus[] = [
   {
     key: "assegno-unico",
@@ -76,7 +83,7 @@ export const BONUSES: Bonus[] = [
     who: "Per i figli nati o adottati dal 2025, con ISEE fino a 40.000 €.",
     how: ["Domanda all'INPS entro 120 giorni dalla nascita o dall'ingresso in famiglia."],
     where: "INPS · «Bonus nuovi nati»",
-    match: (a) => (a.newborn ? under(a, 40_000) : "no"),
+    match: (a) => (a.newborn ? underFamily(a, 40_000) : "no"),
   },
   {
     key: "nido",
@@ -131,7 +138,7 @@ export const BONUSES: Bonus[] = [
     how: ["Domanda all'INPS o a un patronato, poi un patto con i servizi sociali."],
     where: "INPS · «Assegno di inclusione»",
     match: (a) =>
-      a.childrenUnder21 > 0 || (a.age !== null && a.age >= 60) ? under(a, 10_140) : "no",
+      a.childrenUnder21 > 0 || (a.age !== null && a.age >= 60) ? underFamily(a, 10_140) : "no",
   },
   {
     key: "carta-acquisti",

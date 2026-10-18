@@ -28,6 +28,7 @@ import {
   PartyPopper,
   Radar,
   Repeat,
+  Route,
   ScanSearch,
   Settings,
   Sparkles,
@@ -353,6 +354,12 @@ export const FEATURE_MAP: { title: string; features: MapFeature[] }[] = [
         label: "ISEE e bonus",
         icon: BadgePercent,
         text: "Quando rinnovare l'ISEE, i saldi e le giacenze dei conti, i bonus a cui potresti avere diritto.",
+      },
+      {
+        href: "/percorsi",
+        label: "Percorsi e scadenze",
+        icon: Route,
+        text: "Lavoro perso, un figlio, l'affitto, la casa, un lutto: cosa fare passo dopo passo. E i documenti da rinnovare.",
       },
       {
         href: "/730/lettera",

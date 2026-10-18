@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db/prisma";
 import { readTaxProfile } from "@/lib/finance/rights";
 import { readSituation } from "@/lib/tax/situation";
+import { readCu } from "@/lib/tax/simulate";
 import { accountFigures, iseeBaseYear, iseeCalendar, type IseeAccount } from "@/lib/tax/isee";
 import { todayInAppTimeZone, utcDate } from "@/lib/dates";
 import { toDateInputValue } from "@/lib/format";
@@ -16,7 +17,7 @@ export async function getIsee(userId: string, householdId: string) {
   const iseeYear = t.month >= 10 ? t.year + 1 : t.year;
   const baseYear = iseeBaseYear(iseeYear);
 
-  const [user, accounts, firstMoves, taxYear] = await Promise.all([
+  const [user, accounts, firstMoves, taxYears] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: { taxProfile: true, dependentChildren: true },
@@ -38,11 +39,14 @@ export async function getIsee(userId: string, householdId: string) {
       where: { householdId },
       _min: { date: true },
     }),
-    prisma.taxYear.findUnique({
-      where: { userId_year: { userId, year: t.year - 1 } },
-      select: { answers: true },
+    prisma.taxYear.findMany({
+      where: { userId, year: { in: [t.year - 1, iseeBaseYear(iseeYear)] } },
+      select: { year: true, answers: true, cu: true },
     }),
   ]);
+  const taxYear = taxYears.find((y) => y.year === t.year - 1) ?? null;
+  // The CU of the year the ISEE looks at, to start the estimate from a real income.
+  const baseCu = readCu(taxYears.find((y) => y.year === iseeBaseYear(iseeYear))?.cu);
   const movements = await prisma.transaction.findMany({
     where: { householdId, date: { lt: utcDate(t.year + 1, 0, 1) } },
     select: {
@@ -107,6 +111,19 @@ export async function getIsee(userId: string, householdId: string) {
       }))
       .filter((y) => y.accounts !== null && y.accounts.length > 0),
     isee: profile.isee,
+    /** Where the estimate starts from: the CU of the ISEE's year, if the user wrote it. */
+    estimateStart: {
+      employmentIncome: baseCu.entries
+        .filter((e) => e.kind === "employee")
+        .reduce((s, e) => s + e.income, 0),
+      pensionIncome: baseCu.entries
+        .filter((e) => e.kind === "pensioner")
+        .reduce((s, e) => s + e.income, 0),
+      otherIncome: baseCu.entries
+        .filter((e) => e.kind === "other")
+        .reduce((s, e) => s + e.income, 0),
+      homeOwned: situation.home === "mortgage" || situation.home === "owner",
+    },
     hints: {
       rent: profile.rent.contract !== null || situation.home === "rent",
       newborn: situation.events.includes("child"),

@@ -12,6 +12,7 @@ import {
   Info,
   KeyRound,
   MailOpen,
+  Route,
   ShieldCheck,
   Sparkles,
   UserRound,
@@ -160,7 +161,7 @@ export function My730View({ data, couple }: { data: My730; couple: CoupleView | 
 
       {ORDER[data.stage].map((key) => sections[key])}
 
-      <nav aria-label="Altri strumenti" className="grid gap-3 sm:grid-cols-3">
+      <nav aria-label="Altri strumenti" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           {
             href: "/730/lettera",
@@ -173,6 +174,12 @@ export function My730View({ data, couple }: { data: My730; couple: CoupleView | 
             icon: BadgePercent,
             title: "ISEE e bonus",
             text: "Quando rinnovarlo, i numeri dei conti e i bonus possibili.",
+          },
+          {
+            href: "/percorsi",
+            icon: Route,
+            title: "Percorsi e scadenze",
+            text: "Lavoro perso, un figlio, la casa: cosa fare, con le scadenze.",
           },
           {
             href: `/ritrovati/radar?anno=${data.year}`,
