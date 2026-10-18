@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Calculator, Plus, Trash2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Calculator, FileUp, Loader2, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useMoney } from "@/components/currency-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { TaxSection, TONE_BOX, TONE_TEXT } from "@/components/tax/ui";
+import { pdfPages } from "@/components/tax/read-pdf";
+import { parseCu } from "@/lib/tax/cu-reader";
 import { saveCu } from "@/app/(dashboard)/730/actions";
 import {
   CU_KINDS,
@@ -45,11 +47,14 @@ export function EstimateCard({
   cu,
   simulation,
   moreEmployers,
+  pro,
 }: {
   year: number;
   cu: CuData;
   simulation: Simulation | null;
   moreEmployers: boolean;
+  /** Reading the CU from its PDF is part of Pro, like the precompilato. */
+  pro: boolean;
 }) {
   const money = useMoney();
   const [editing, setEditing] = useState(cu.entries.length === 0);
@@ -70,6 +75,54 @@ export function EstimateCard({
   const [pending, setPending] = useState(false);
   const set = (i: number, patch: Partial<Row>) =>
     setRows((prev) => prev.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [reading, setReading] = useState(false);
+
+  /** Each PDF read fills the empty rows first, then adds new ones: the user checks and saves. */
+  async function onFiles(files: FileList | null) {
+    if (!files?.length) return;
+    setReading(true);
+    let read = 0;
+    let failed = 0;
+    for (const file of Array.from(files).slice(0, 6)) {
+      try {
+        const cuRead = parseCu(await pdfPages(file, 12));
+        if (!cuRead) {
+          failed++;
+          continue;
+        }
+        read++;
+        const filled = cuRead.entries.map((e) => ({
+          kind: e.kind,
+          income: toText(e.income),
+          days: String(e.days),
+          withheld: toText(e.withheld),
+          fixedTerm: e.fixedTerm,
+        }));
+        setRows((prev) => {
+          const next = [...prev];
+          for (const row of filled) {
+            const empty = next.findIndex((r) => !r.income.trim() && !r.withheld.trim());
+            if (empty >= 0) next[empty] = row;
+            else if (next.length < 6) next.push(row);
+          }
+          return next;
+        });
+      } catch (error) {
+        console.error("[cu]", error);
+        failed++;
+      }
+    }
+    setReading(false);
+    if (fileRef.current) fileRef.current.value = "";
+    if (read)
+      toast.success(
+        read === 1
+          ? "CU letta: controlla i numeri e premi Calcola"
+          : `${read} CU lette: controlla i numeri e premi Calcola`,
+      );
+    if (failed) toast.error("Non riesco a leggere i riquadri della CU: scrivi i numeri a mano.");
+  }
 
   async function save(entries: Row[]) {
     setPending(true);
@@ -183,6 +236,33 @@ export function EstimateCard({
             nel precompilato. Servono quattro numeri per ogni CU: il reddito, i giorni, le ritenute
             IRPEF (punto 21) e se il contratto era a tempo determinato.
           </p>
+          {pro && (
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed p-3">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/pdf"
+                multiple
+                className="sr-only"
+                id="cu-file"
+                onChange={(e) => void onFiles(e.target.files)}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={reading}
+                onClick={() => fileRef.current?.click()}
+              >
+                {reading ? <Loader2 className="animate-spin" /> : <FileUp />}
+                {reading ? "Leggo…" : "Leggi la CU dal PDF"}
+              </Button>
+              <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+                <ShieldCheck className="size-3.5" aria-hidden /> La leggo nel tuo browser: non la
+                invio e non la salvo. Lettura in prova: controlla i numeri.
+              </p>
+            </div>
+          )}
           {rows.map((r, i) => {
             const err = (field: string) => errors[`entries.${i}.${field}`]?.[0];
             return (

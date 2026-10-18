@@ -22,7 +22,7 @@ La data che non si sposta è l'uscita del precompilato, intorno al 30 aprile 202
 
 | #   | Cosa                                                                                                                             |
 | --- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 2.1 | Simulazione dalla CU, anche con più CU: rimborso o debito stimato                                                                |
+| 2.1 | Simulazione dalla CU, anche con più CU: rimborso o debito stimato; la CU in PDF letta nel browser                                |
 | 2.2 | Chi detrae cosa in coppia, solo se entrambe le persone lo attivano, senza mostrare importi dell'altra                            |
 | 2.3 | Bonus casa in 10 rate: ristrutturazione, risparmio energetico, mobili; la rata dell'anno con il rigo dove trovarla               |
 | 2.4 | Coach ISEE: scadenze, passi della DSU precompilata, soglie e cosa sbloccano; saldo al 31 dicembre e giacenza media di ogni conto |

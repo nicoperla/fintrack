@@ -100,6 +100,7 @@ export function My730View({ data, couple }: { data: My730; couple: CoupleView | 
         cu={data.cu}
         simulation={data.simulation}
         moreEmployers={data.situation.moreEmployers}
+        pro={data.pro}
       />
     ),
     couple: couple && <CoupleCard key="couple" year={data.year} couple={couple} />,
