@@ -47,6 +47,11 @@ export const RULES = {
     limit: Number(process.env.LETTER_DAILY_LIMIT) || 10,
     windowSeconds: 24 * 60 * 60,
   },
+  /** "Foto dello scontrino", per user: every reading is a call to the AI with a picture. */
+  receiptDaily: {
+    limit: Number(process.env.RECEIPT_DAILY_LIMIT) || 30,
+    windowSeconds: 24 * 60 * 60,
+  },
 } satisfies Record<string, RateLimitRule>;
 
 export async function rateLimit(key: string, rule: RateLimitRule): Promise<RateLimitResult> {

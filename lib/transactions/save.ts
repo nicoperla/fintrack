@@ -100,7 +100,7 @@ export async function saveTransactionInSpace(
   space: SpaceRef,
   id: string | null,
   input: unknown,
-): Promise<ActionResult> {
+): Promise<ActionResult & { id?: string }> {
   const parsed = transactionSchema.safeParse(input);
   if (!parsed.success) return validationError(parsed.error);
 
@@ -160,7 +160,7 @@ export async function saveTransactionInSpace(
     });
     if (note) warnings.push(note);
   }
-  return { ok: true, warnings };
+  return { ok: true, warnings, id: savedId ?? undefined };
 }
 
 /**

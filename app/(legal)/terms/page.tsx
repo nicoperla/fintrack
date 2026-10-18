@@ -17,10 +17,10 @@ export default function TermsPage() {
         <p>
           Orbitly ti aiuta a registrare entrate e spese, a pianificare budget e obiettivi e a capire
           le tue abitudini. Il piano gratuito comprende tutte le funzioni tranne la chat con il
-          coach AI, «Spiegami questa lettera», i dettagli di Soldi ritrovati (le spese una per una,
-          il dossier 730 e le lettere di disdetta) e, nel «Mio 730», la lettura del PDF del
-          precompilato, la cartellina delle ricevute e il promemoria in PDF, che fanno parte di
-          Orbitly Pro.
+          coach AI, «Spiegami questa lettera», la foto dello scontrino, i dettagli di Soldi
+          ritrovati (le spese una per una, il dossier 730 e le lettere di disdetta) e, nel «Mio
+          730», la lettura del PDF del precompilato, la cartellina delle ricevute e il promemoria in
+          PDF, che fanno parte di Orbitly Pro.
         </p>
       </section>
 

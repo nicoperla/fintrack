@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Check, FolderOpen, HelpCircle } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, Camera, Check, FolderOpen, HelpCircle } from "lucide-react";
 import { useMoney } from "@/components/currency-provider";
 import { Button } from "@/components/ui/button";
 import { DEDUCTION_ICONS } from "@/components/found-money/found-money-view";
@@ -129,6 +130,18 @@ export function FolderCard({
           })}
         </ul>
       )}
+      <Link
+        href="/transactions/scontrino"
+        className="hover:bg-muted/40 flex items-center gap-3 rounded-xl border border-dashed p-3 text-sm transition-colors"
+      >
+        <Camera className="size-4 shrink-0 text-violet-600 dark:text-violet-400" aria-hidden />
+        <span>
+          <span className="font-medium">Fotografa lo scontrino della farmacia</span>
+          <span className="text-muted-foreground block text-xs">
+            Separo i farmaci detraibili dal resto e li metto qui da soli.
+          </span>
+        </span>
+      </Link>
       {!lines && byType.length > 0 && (
         <ProLock what="vedi le spese una per una, confermi quelle incerte e segni le ricevute che hai" />
       )}

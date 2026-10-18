@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Upload } from "lucide-react";
+import { Camera, Upload } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { NewTransactionButton } from "@/components/transactions/new-transaction-button";
@@ -55,7 +55,11 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold tracking-tight">Transazioni</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Link href="/transactions/scontrino" className={buttonVariants({ variant: "outline" })}>
+            <Camera data-icon="inline-start" />
+            Scontrino
+          </Link>
           <Link href="/transactions/import" className={buttonVariants({ variant: "outline" })}>
             <Upload data-icon="inline-start" />
             Importa CSV

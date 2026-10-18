@@ -24,6 +24,7 @@ export const FREE_OPEN_CLAIMS = 1;
 export const PRO_FEATURES = [
   "Il mio 730: il PDF del precompilato letto e confrontato riga per riga, la cartellina delle ricevute e il promemoria in PDF",
   "Spiegami questa lettera: una lettera dell'Agenzia, dell'INPS o del Comune spiegata in parole semplici, con la scadenza",
+  "Foto dello scontrino: i farmaci detraibili separati dal resto e messi nel 730 da soli",
   "Soldi ritrovati: le spese detraibili una per una, il dossier 730 in PDF e le lettere di disdetta",
   "Riprenditeli: tutte le pratiche che vuoi per riavere i tuoi soldi, con le lettere in PDF per la raccomandata",
   "Coach AI: chiedi qualsiasi cosa sui tuoi soldi, risponde con i tuoi numeri",

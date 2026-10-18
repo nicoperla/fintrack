@@ -148,8 +148,9 @@ export default function PrivacyPage() {
             legittimo interesse, art. 6.1.f GDPR.
           </li>
           <li>
-            Il coach AI e «Spiegami questa lettera»: solo con il tuo consenso esplicito, art. 6.1.a
-            GDPR e, per i dati sulla salute che una lettera può contenere, art. 9.2.a (vedi sotto).
+            Il coach AI, «Spiegami questa lettera» e la foto dello scontrino: solo con il tuo
+            consenso esplicito, art. 6.1.a GDPR e, per i dati sulla salute che lettere e scontrini
+            possono contenere, art. 9.2.a (vedi sotto).
           </li>
           <li>
             Il confronto anonimo tra utenti del Tariffometro: solo con il consenso esplicito, art.
@@ -193,6 +194,11 @@ export default function PrivacyPage() {
           lo scartiamo. Non lo salviamo e non lo scriviamo nei log. Le spiegazioni sono generate
           dall&apos;intelligenza artificiale e lo diciamo sempre.
         </p>
+        <p>
+          La «Foto dello scontrino» funziona allo stesso modo: la foto va ad Anthropic solo per
+          leggere le voci e poi la scartiamo. Salviamo soltanto i movimenti che confermi, con i
+          totali: mai i nomi dei prodotti o dei farmaci.
+        </p>
       </section>
 
       <section id="confronto">
@@ -220,8 +226,8 @@ export default function PrivacyPage() {
           <li>Neon Inc.: database PostgreSQL, ospitato a Francoforte (UE).</li>
           <li>Resend Inc. (USA): invio delle email.</li>
           <li>
-            Groq Inc. o Anthropic PBC (USA): solo il coach AI e la lettura delle lettere, solo con
-            il tuo consenso.
+            Groq Inc. o Anthropic PBC (USA): solo il coach AI e la lettura di lettere e scontrini,
+            solo con il tuo consenso.
           </li>
           <li>Stripe (Irlanda/USA): solo i pagamenti di Orbitly Pro.</li>
         </ul>

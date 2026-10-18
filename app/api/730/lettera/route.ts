@@ -2,12 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getSession } from "@/lib/auth/session";
 import { getCoachAccess } from "@/lib/coach/access";
 import { rateLimit, refundRateLimit, RULES } from "@/lib/rate-limit";
-import {
-  LETTER_INSTRUCTIONS,
-  LETTER_MAX_BYTES,
-  parseLetterReply,
-  type LetterType,
-} from "@/lib/tax/letter";
+import { LETTER_INSTRUCTIONS, LETTER_MAX_BYTES, parseLetterReply } from "@/lib/tax/letter";
+import { sniffType } from "@/lib/uploads/sniff";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,22 +11,6 @@ export const maxDuration = 60;
 
 const fail = (status: number, code: string, error: string) =>
   Response.json({ code, error }, { status });
-
-/** What the file really is, from its first bytes (the browser's word isn't enough). */
-function sniff(bytes: Uint8Array): LetterType | null {
-  const starts = (...sig: number[]) => sig.every((b, i) => bytes[i] === b);
-  if (starts(0xff, 0xd8, 0xff)) return "image/jpeg";
-  if (starts(0x89, 0x50, 0x4e, 0x47)) return "image/png";
-  if (starts(0x47, 0x49, 0x46, 0x38)) return "image/gif";
-  if (
-    starts(0x52, 0x49, 0x46, 0x46) &&
-    Buffer.from(bytes.subarray(8, 12)).toString("latin1") === "WEBP"
-  ) {
-    return "image/webp";
-  }
-  if (starts(0x25, 0x50, 0x44, 0x46)) return "application/pdf";
-  return null;
-}
 
 /**
  * POST /api/730/lettera (multipart, field "file"): a letter explained by the AI. The file is read
@@ -59,7 +39,7 @@ export async function POST(request: Request) {
     return fail(413, "file", "Il file è troppo grande: al massimo 5 MB.");
   }
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const type = sniff(bytes);
+  const type = sniffType(bytes);
   if (!type) return fail(415, "file", "Serve una foto (JPG, PNG, WEBP) o un PDF.");
 
   const key = `letter:daily:${session.user.id}`;

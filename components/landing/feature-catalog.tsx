@@ -139,7 +139,7 @@ const GROUPS: Group[] = [
         icon: FileCheck2,
         name: "Il mio 730",
         text: "Il tuo 730 passo dopo passo: se puoi fare da solo, i documenti da preparare, la stima dalla CU, il precompilato confrontato riga per riga con il rigo dove scrivere, cosa portare al CAF e quando arriva il rimborso.",
-        pro: "Con Pro carichi il PDF del precompilato e lo leggo io, nel tuo browser, e scarichi il promemoria.",
+        pro: "Con Pro carichi il PDF del precompilato e lo leggo io, nel tuo browser, scarichi il promemoria e fotografi gli scontrini della farmacia: i farmaci detraibili finiscono nel 730 da soli.",
       },
       {
         icon: BadgePercent,

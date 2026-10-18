@@ -96,10 +96,10 @@ export function LetterView({ status, provider }: { status: Status; provider: str
         {state === "consent" && (
           <div className="grid gap-3 rounded-xl border p-4 text-sm">
             <p>
-              Per leggerla, la foto viene inviata a {provider ?? "un fornitore di AI"}: la usa solo
-              per rispondere e Orbitly non la conserva. Le lettere possono contenere dati personali
-              e di salute, quindi serve il tuo consenso (lo stesso del coach AI, puoi toglierlo
-              dalle impostazioni).
+              Per leggerla, la foto viene inviata al fornitore di intelligenza artificiale (
+              {provider ?? "esterno"}): la usa solo per rispondere e Orbitly non la conserva. Le
+              lettere possono contenere dati personali e di salute, quindi serve il tuo consenso (lo
+              stesso del coach AI, puoi toglierlo dalle impostazioni).
             </p>
             <Button className="justify-self-start" onClick={() => void consent()}>
               Accetto, attiva la lettura
